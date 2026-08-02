@@ -1,0 +1,102 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: rgba(15,15,26,.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-text);
+  flex-shrink: 0;
+
+  &-icon { font-size: 1.3rem; }
+  &-text { color: var(--color-primary); }
+  &:hover { text-decoration: none; }
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  flex: 1;
+
+  a {
+    padding: .4rem .75rem;
+    border-radius: var(--radius-sm);
+    font-size: .9rem;
+    color: var(--color-text-muted);
+    transition: color .15s, background .15s;
+
+    &:hover { color: var(--color-text); background: rgba(255,255,255,.05); text-decoration: none; }
+    &.active { color: var(--color-primary); background: rgba(123,47,190,.1); }
+  }
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-left: auto;
+}
+
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  margin-left: auto;
+
+  span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--color-text);
+    border-radius: 2px;
+    transition: all .3s;
+  }
+  &.open {
+    span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    span:nth-child(2) { opacity: 0; }
+    span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-actions { display: none; }
+  .burger       { display: flex; }
+
+  .nav {
+    display: none;
+    position: fixed;
+    inset: 64px 0 0 0;
+    background: var(--color-background);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+
+    &.open { display: flex; }
+    a { font-size: 1.25rem; padding: .75rem 2rem; }
+  }
+}

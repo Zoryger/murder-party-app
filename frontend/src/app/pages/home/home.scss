@@ -1,0 +1,94 @@
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  padding: 4rem 0 3rem;
+
+  @media (max-width: 768px) { flex-direction: column; text-align: center; padding: 2rem 0; }
+}
+
+.hero-content { flex: 1; max-width: 560px; }
+
+.hero-tag {
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  span { color: var(--color-primary); }
+}
+
+.hero-subtitle {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  @media (max-width: 768px) { justify-content: center; }
+}
+
+.hero-emoji {
+  font-size: 7rem;
+  opacity: .12;
+  @media (max-width: 768px) { display: none; }
+}
+
+// Games
+.games-section   { padding: 2rem 0; }
+.games-header    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.games-header .section-title { margin-bottom: 0; }
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.25rem;
+}
+
+.game-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: border-color .2s, transform .2s;
+
+  &:hover { border-color: var(--color-primary); transform: translateY(-2px); }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .75rem;
+    h3 { font-size: 1rem; font-weight: 600; }
+  }
+
+  &__theme { color: var(--color-text-muted); font-size: .875rem; margin-bottom: 1.25rem; line-height: 1.5; }
+
+  &__footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+}
+
+.players { font-size: .85rem; color: var(--color-text-muted); }
+.ended   { font-size: .8rem;  color: var(--color-text-muted); }
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  p { font-size: 1.1rem; color: var(--color-text-muted); margin-bottom: 1.5rem; }
+}

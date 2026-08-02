@@ -1,0 +1,85 @@
+<div class="create-page">
+  <div class="page-header">
+    <a routerLink="/" class="back">← Retour</a>
+    <h1>Créer une <span>partie</span></h1>
+    <p>Définissez le scénario et les paramètres de votre Murder Party.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form-card card">
+    <!-- Nom -->
+    <div class="form-group">
+      <label for="name">Nom de la partie *</label>
+      <input
+        id="name"
+        formControlName="name"
+        placeholder="Ex : Harry Potter 2027 — L'assassin de Poudlard"
+      />
+      @if (f['name'].invalid && f['name'].touched) {
+        @if (f['name'].errors?.['required']) {
+          <span class="error-msg">Le nom est requis.</span>
+        } @else if (f['name'].errors?.['minlength']) {
+          <span class="error-msg">Minimum 3 caractères.</span>
+        }
+      }
+    </div>
+
+    <!-- Thème -->
+    <div class="form-group">
+      <label for="theme">Thème *</label>
+      <input
+        id="theme"
+        formControlName="theme"
+        placeholder="Ex : Poudlard 2027, monde magique modernisé"
+      />
+      @if (f['theme'].invalid && f['theme'].touched) {
+        <span class="error-msg">Le thème est requis.</span>
+      }
+      <div class="suggestions">
+        <span class="suggestions__label">Suggestions rapides :</span>
+        <div class="suggestions__list">
+          @for (t of themes; track t) {
+            <button type="button" class="chip" (click)="pickTheme(t)">{{ t }}</button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Synopsis -->
+    <div class="form-group">
+      <label for="synopsis">Synopsis du meurtre *</label>
+      <textarea
+        id="synopsis"
+        formControlName="synopsis"
+        rows="5"
+        placeholder="Décrivez le contexte, la victime et les grandes lignes du mystère. (min 30 car.)"
+      >
+      </textarea>
+      @if (f['synopsis'].invalid && f['synopsis'].touched) {
+        @if (f['synopsis'].errors?.['required']) {
+          <span class="error-msg">Le synopsis est requis.</span>
+        } @else if (f['synopsis'].errors?.['minlength']) {
+          <span class="error-msg">Minimum 30 caractères.</span>
+        }
+      }
+      <span class="char-count">{{ f['synopsis'].value?.length ?? 0 }} / 1000</span>
+    </div>
+
+    <!-- Nombre max de joueurs -->
+    <div class="form-group">
+      <label for="maxPlayers">Nombre maximum de joueurs *</label>
+      <input id="maxPlayers" type="number" formControlName="maxPlayers" min="4" max="20" />
+      @if (f['maxPlayers'].invalid && f['maxPlayers'].touched) {
+        <span class="error-msg">Entre 4 et 20 joueurs.</span>
+      }
+      <span class="hint">Les rôles seront générés automatiquement en Phase 5.</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <a routerLink="/" class="btn btn--ghost">Annuler</a>
+      <button type="submit" class="btn btn--primary" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Création...' : '✨ Créer la partie' }}
+      </button>
+    </div>
+  </form>
+</div>

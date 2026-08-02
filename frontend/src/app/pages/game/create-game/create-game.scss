@@ -1,0 +1,43 @@
+.create-page { max-width: 680px; margin: 0 auto; }
+
+.page-header {
+  margin-bottom: 2rem;
+  .back { display: inline-block; color: var(--color-text-muted); font-size: .875rem;
+    margin-bottom: 1rem; &:hover { color: var(--color-text); text-decoration: none; } }
+  h1 { font-size: 2rem; font-weight: 800; margin-bottom: .5rem;
+    span { color: var(--color-primary); } }
+  p  { color: var(--color-text-muted); }
+}
+
+.form-card { padding: 2rem; }
+
+.suggestions {
+  margin-top: .75rem;
+  &__label { font-size: .75rem; color: var(--color-text-muted); display: block; margin-bottom: .5rem; }
+  &__list  { display: flex; flex-wrap: wrap; gap: .5rem; }
+}
+
+.chip {
+  padding: .3rem .75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all .2s;
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); background: rgba(123,47,190,.05); }
+}
+
+.char-count { font-size: .75rem; color: var(--color-text-muted); text-align: right; display: block; margin-top: .25rem; }
+.hint       { font-size: .8rem;  color: var(--color-text-muted); display: block; margin-top: .25rem; }
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  @media (max-width: 480px) { flex-direction: column-reverse; .btn { width: 100%; } }
+}

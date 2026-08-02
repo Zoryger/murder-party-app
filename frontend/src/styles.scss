@@ -1,0 +1,121 @@
+// ── Variables ────────────────────────────────────────────────────────────
+:root {
+  --color-primary:     #7B2FBE;
+  --color-primary-h:   #6B1FAE;
+  --color-accent:      #F5C518;
+  --color-danger:      #E53E3E;
+  --color-success:     #38A169;
+  --color-background:  #0F0F1A;
+  --color-surface:     #1A1B2E;
+  --color-surface-2:   #252640;
+  --color-text:        #E8E8F0;
+  --color-text-muted:  #9090A8;
+  --color-border:      rgba(255,255,255,0.08);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+// ── Reset ────────────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+// ── Boutons ──────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .6rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  text-decoration: none !important;
+  transition: all .2s;
+
+  &:hover   { transform: translateY(-1px); }
+  &:active  { transform: translateY(0); }
+  &:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  &--primary { background: var(--color-primary); color: #fff;
+    &:hover { background: var(--color-primary-h); } }
+  &--ghost   { background: transparent; color: var(--color-text);
+    border: 1px solid var(--color-border);
+    &:hover { border-color: var(--color-primary); color: var(--color-primary); } }
+  &--danger  { background: var(--color-danger); color: #fff; }
+  &--sm      { padding: .4rem .9rem; font-size: .8rem; }
+}
+
+// ── Badges ───────────────────────────────────────────────────────────────
+.badge {
+  display: inline-block;
+  padding: .2rem .65rem;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+
+  &--waiting  { background: rgba(245,197,24,.12); color: var(--color-accent);  }
+  &--active   { background: rgba(56,161,105,.12); color: var(--color-success); }
+  &--finished { background: rgba(144,144,168,.12); color: var(--color-text-muted); }
+  &--alive    { background: rgba(56,161,105,.12); color: var(--color-success); }
+  &--ghost    { background: rgba(144,144,168,.12); color: var(--color-text-muted); }
+}
+
+// ── Card ─────────────────────────────────────────────────────────────────
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+// ── Formulaires ──────────────────────────────────────────────────────────
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  margin-bottom: 1.25rem;
+}
+
+label { font-size: .875rem; font-weight: 500; color: var(--color-text-muted); }
+
+input, textarea, select {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  padding: .65rem .9rem;
+  font-size: .9rem;
+  font-family: inherit;
+  width: 100%;
+  transition: border-color .2s;
+
+  &:focus { outline: none; border-color: var(--color-primary); }
+  &.ng-invalid.ng-touched { border-color: var(--color-danger); }
+}
+
+.error-msg { font-size: .8rem; color: var(--color-danger); }
+
+// ── Titres ───────────────────────────────────────────────────────────────
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  span { color: var(--color-primary); }
+}

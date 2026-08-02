@@ -1,0 +1,36 @@
+<header class="header">
+  <div class="header-inner">
+    <a routerLink="/" class="logo" (click)="closeMenu()">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">MurderParty</span>
+    </a>
+
+    <nav class="nav" [class.open]="isMenuOpen" aria-label="Navigation principale">
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMenu()"
+        >Accueil</a
+      >
+      <a routerLink="/game/create" routerLinkActive="active" (click)="closeMenu()"
+        >Créer une partie</a
+      >
+    </nav>
+
+    <div class="auth-actions">
+      <a routerLink="/auth/login" class="btn btn--ghost btn--sm">Se connecter</a>
+      <a routerLink="/auth/register" class="btn btn--primary btn--sm">S'inscrire</a>
+    </div>
+
+    <button
+      class="burger"
+      [class.open]="isMenuOpen"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="isMenuOpen"
+      aria-label="Ouvrir le menu"
+    >
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
