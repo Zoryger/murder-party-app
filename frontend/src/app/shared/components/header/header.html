@@ -18,10 +18,18 @@
       >
     </nav>
 
-    <div class="auth-actions">
-      <a routerLink="/auth/login" class="btn btn--ghost btn--sm">Se connecter</a>
-      <a routerLink="/auth/register" class="btn btn--primary btn--sm">S'inscrire</a>
-    </div>
+    <!-- Connecté -->
+    @if (auth.isLoggedIn()) {
+      <div class="auth-actions">
+        <span class="username">👤 {{ auth.currentUser()?.username }}</span>
+        <button class="btn btn--ghost btn--sm" (click)="logout()">Déconnexion</button>
+      </div>
+    } @else {
+      <div class="auth-actions">
+        <a routerLink="/auth/login" class="btn btn--ghost btn--sm">Se connecter</a>
+        <a routerLink="/auth/register" class="btn btn--primary btn--sm">S'inscrire</a>
+      </div>
+    }
 
     <button
       class="burger"

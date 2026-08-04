@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { GameService } from '../../../core/services/game.service';
 
 @Component({
   selector: 'app-create-game',
@@ -10,10 +11,12 @@ import { Router, RouterLink } from '@angular/router';
   styleUrl: './create-game.scss',
 })
 export class CreateGame {
-  private fb     = inject(FormBuilder);
-  private router = inject(Router);
+  private fb          = inject(FormBuilder);
+  private router      = inject(Router);
+  private gameService = inject(GameService);
 
   isSubmitting = false;
+  errorMsg     = '';
 
   themes = [
     'Harry Potter 2027 — Poudlard',
@@ -41,7 +44,19 @@ export class CreateGame {
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.isSubmitting = true;
-    console.log('Nouvelle partie :', this.form.value);
-    setTimeout(() => this.router.navigate(['/game', 1, 'lobby']), 800);
+    this.errorMsg     = '';
+
+    const { name, theme, synopsis, maxPlayers } = this.form.value;
+
+    this.gameService.createGame({
+      name: name!, theme: theme!, synopsis: synopsis!,
+      maxPlayers: Number(maxPlayers),
+    }).subscribe({
+      next:  (res) => this.router.navigate(['/game', res.data.id, 'lobby']),
+      error: (err) => {
+        this.errorMsg     = err.error?.message ?? 'Erreur lors de la création.';
+        this.isSubmitting = false;
+      },
+    });
   }
 }

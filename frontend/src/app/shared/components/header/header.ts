@@ -1,5 +1,6 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -9,6 +10,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './header.scss',
 })
 export class Header {
+  auth = inject(AuthService);
+
   isMenuOpen = false;
 
   toggleMenu(): void { this.isMenuOpen = !this.isMenuOpen; }
@@ -16,4 +19,9 @@ export class Header {
 
   @HostListener('document:keydown.escape')
   onEscape(): void   { this.isMenuOpen = false; }
+
+  logout(): void {
+    this.auth.logout();
+    this.closeMenu();
+  }
 }

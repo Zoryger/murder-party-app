@@ -1,11 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { GameStatus } from '../../core/types/common.types';
-
-interface MockGame {
-  id: number; name: string; theme: string;
-  playerCount: number; maxPlayers: number; status: GameStatus;
-}
+import { of } from 'rxjs';
+import { catchError, finalize, timeout } from 'rxjs/operators';
+import { AuthService } from '../../core/services/auth.service';
+import { ApiResponse, Game, GameService } from '../../core/services/game.service';
 
 @Component({
   selector: 'app-home',
@@ -14,21 +12,35 @@ interface MockGame {
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class Home {
-  readonly GameStatus = GameStatus;
+export class Home implements OnInit {
+  private gameService = inject(GameService);
+  auth = inject(AuthService);
 
-  games: MockGame[] = [
-    { id: 1, name: 'Harry Potter 2027', theme: 'Poudlard — Vote pour le directeur',
-      playerCount: 3, maxPlayers: 12, status: GameStatus.Waiting },
-    { id: 2, name: 'Le Manoir Maudit',  theme: 'Famille noble dans un château',
-      playerCount: 6, maxPlayers: 8,  status: GameStatus.Active },
-    { id: 3, name: 'Meurtre au Gala',   theme: 'Soirée politique — Qui a tué le ministre ?',
-      playerCount: 10, maxPlayers: 10, status: GameStatus.Finished },
-  ];
+  games: Game[] = [];
+  isLoading = true;
+  errorMsg = '';
 
-  statusLabel: Record<GameStatus, string> = {
-    [GameStatus.Waiting]:  'En attente',
-    [GameStatus.Active]:   'En cours',
-    [GameStatus.Finished]: 'Terminée',
+  statusLabel: Record<string, string> = {
+    waiting: 'En attente',
+    active: 'En cours',
+    finished: 'Terminée',
   };
+
+  ngOnInit(): void {
+    this.gameService.getGames()
+      .pipe(
+        timeout(10000),
+        catchError(() => {
+          this.errorMsg = 'Impossible de charger les parties.';
+          return of({ success: false, data: [] } as ApiResponse<Game[]>);
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
+      .subscribe((res) => {
+        this.games = Array.isArray(res.data) ? res.data : [];
+        this.errorMsg = '';
+      });
+  }
 }

@@ -1,17 +1,44 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div style="max-width:480px;margin:5rem auto;text-align:center">
-      <p style="font-size:3rem;margin-bottom:1rem">🔐</p>
-      <h1 style="margin-bottom:.75rem">Connexion</h1>
-      <p style="color:var(--color-text-muted);margin-bottom:2rem">Disponible en Phase 3.</p>
-      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
-    </div>
-  `,
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './login.html',
+  styleUrl: './login.scss',
 })
-export class Login {}
+export class Login {
+  private fb   = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
+  isSubmitting = false;
+  errorMsg     = '';
+
+  form = this.fb.group({
+    email:    ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
+
+  get f() { return this.form.controls; }
+
+  submit(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+
+    this.isSubmitting = true;
+    this.errorMsg     = '';
+
+    const { email, password } = this.form.value;
+
+    this.auth.login(email!, password!).subscribe({
+      next:  () => this.router.navigate(['/']),
+      error: (err) => {
+        this.errorMsg     = err.error?.message ?? 'Erreur de connexion.';
+        this.isSubmitting = false;
+      },
+    });
+  }
+}

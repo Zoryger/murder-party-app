@@ -8,8 +8,12 @@
       amis ou en famille.
     </p>
     <div class="hero-actions">
-      <a routerLink="/game/create" class="btn btn--primary">✨ Créer une partie</a>
-      <a routerLink="/auth/login" class="btn btn--ghost">Se connecter</a>
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/game/create" class="btn btn--primary">✨ Créer une partie</a>
+      } @else {
+        <a routerLink="/auth/register" class="btn btn--primary">✨ Commencer gratuitement</a>
+        <a routerLink="/auth/login" class="btn btn--ghost">Se connecter</a>
+      }
     </div>
   </div>
   <div class="hero-emoji" aria-hidden="true">⚗️</div>
@@ -19,10 +23,20 @@
 <section class="games-section">
   <div class="games-header">
     <h2 class="section-title">Parties <span>disponibles</span></h2>
-    <a routerLink="/game/create" class="btn btn--ghost btn--sm">+ Nouvelle</a>
+    @if (auth.isLoggedIn()) {
+      <a routerLink="/game/create" class="btn btn--ghost btn--sm">+ Nouvelle</a>
+    }
   </div>
 
-  @if (games.length > 0) {
+  @if (isLoading) {
+    <div class="loading-state">
+      <p>🔍 Chargement des parties...</p>
+    </div>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+    </div>
+  } @else if (games.length > 0) {
     <div class="games-grid">
       @for (game of games; track game.id) {
         <article class="game-card">
@@ -34,22 +48,17 @@
           </div>
           <p class="game-card__theme">{{ game.theme }}</p>
           <div class="game-card__footer">
-            <span class="players">👥 {{ game.playerCount }} / {{ game.maxPlayers }}</span>
-
-            @switch (game.status) {
-              @case (GameStatus.Waiting) {
-                <a [routerLink]="['/game', game.id, 'lobby']" class="btn btn--primary btn--sm"
-                  >Rejoindre</a
-                >
-              }
-              @case (GameStatus.Active) {
-                <a [routerLink]="['/game', game.id, 'play']" class="btn btn--ghost btn--sm"
-                  >Observer</a
-                >
-              }
-              @default {
-                <span class="ended">Terminée</span>
-              }
+            <span class="players">👥 {{ game.maxPlayers }} max</span>
+            @if (game.status === 'waiting') {
+              <a [routerLink]="['/game', game.id, 'lobby']" class="btn btn--primary btn--sm"
+                >Rejoindre</a
+              >
+            } @else if (game.status === 'active') {
+              <a [routerLink]="['/game', game.id, 'play']" class="btn btn--ghost btn--sm"
+                >Observer</a
+              >
+            } @else {
+              <span class="ended">Terminée</span>
             }
           </div>
         </article>
@@ -58,7 +67,11 @@
   } @else {
     <div class="empty-state">
       <p>🕵️ Aucune partie disponible.</p>
-      <a routerLink="/game/create" class="btn btn--primary">Créer la première</a>
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/game/create" class="btn btn--primary">Créer la première</a>
+      } @else {
+        <a routerLink="/auth/register" class="btn btn--primary">S'inscrire pour jouer</a>
+      }
     </div>
   }
 </section>
