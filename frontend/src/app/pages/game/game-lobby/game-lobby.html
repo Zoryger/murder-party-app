@@ -1,1 +1,77 @@
-<p>game-lobby works!</p>
+<div class="lobby-page">
+  @if (isLoading) {
+    <p class="loading">🔍 Chargement de la partie...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (game) {
+    <div class="lobby-header">
+      <a routerLink="/" class="back">← Retour</a>
+      <h1>{{ game.name }}</h1>
+      <p class="theme">{{ game.theme }}</p>
+      <div class="join-code">
+        Code de la partie : <strong>{{ game.joinCode }}</strong>
+      </div>
+    </div>
+
+    @if (isGm) {
+      <div class="gm-panel card">
+        <p class="gm-label">🎬 Panneau du Maître du Jeu</p>
+
+        @if (actionMsg) {
+          <div class="alert-error">{{ actionMsg }}</div>
+        }
+
+        <div class="gm-actions">
+          <button
+            class="btn btn--ghost"
+            [disabled]="isAssigning || players.length === 0"
+            (click)="assignCharacters()"
+          >
+            {{ isAssigning ? 'Assignation...' : '🎭 Assigner les personnages' }}
+          </button>
+          <button
+            class="btn btn--primary"
+            [disabled]="isStarting || !allAssigned"
+            (click)="startGame()"
+          >
+            {{ isStarting ? 'Démarrage...' : '▶️ Démarrer la partie' }}
+          </button>
+        </div>
+        @if (!allAssigned && players.length > 0) {
+          <p class="hint">Assigne les personnages avant de démarrer.</p>
+        }
+      </div>
+    }
+
+    <div class="roster card">
+      <div class="roster-header">
+        <h2>Joueurs</h2>
+        <span class="count">{{ players.length }} / {{ game.maxPlayers }}</span>
+      </div>
+
+      @if (players.length > 0) {
+        <div class="players-grid">
+          @for (p of players; track p.id) {
+            <div class="player-chip" [class.assigned]="p.isAssigned">
+              <span class="username">{{ p.username }}</span>
+              @if (p.isAssigned) {
+                <span class="char-name">{{ p.characterName }}</span>
+              } @else {
+                <span class="char-name pending">En attente d'assignation…</span>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty">Aucun joueur n'a encore rejoint.</p>
+      }
+    </div>
+
+    @if (!isGm) {
+      <p class="waiting-note">⏳ En attente que le MJ lance la partie…</p>
+    }
+  }
+</div>

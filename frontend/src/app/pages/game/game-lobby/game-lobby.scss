@@ -1,0 +1,70 @@
+.lobby-page { max-width: 720px; margin: 0 auto; }
+
+.loading { text-align: center; padding: 4rem 0; color: var(--color-text-muted); }
+
+.lobby-header {
+  margin-bottom: 1.5rem;
+  .back { display: inline-block; color: var(--color-text-muted); font-size: .875rem; margin-bottom: 1rem;
+    &:hover { color: var(--color-text); text-decoration: none; } }
+  h1     { font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+  .theme { color: var(--color-text-muted); margin-bottom: .75rem; }
+}
+
+.join-code {
+  display: inline-block;
+  padding: .4rem .9rem;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  font-size: .85rem;
+  color: var(--color-text-muted);
+  strong { color: var(--color-accent); letter-spacing: .05em; }
+}
+
+.gm-panel {
+  margin-bottom: 1.5rem;
+  border-color: rgba(245,197,24,.3);
+  .gm-label { font-size: .8rem; font-weight: 600; color: var(--color-accent); margin-bottom: 1rem; }
+}
+
+.gm-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+.hint { font-size: .8rem; color: var(--color-text-muted); margin-top: .75rem; }
+
+.roster { margin-bottom: 1.5rem; }
+
+.roster-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+  h2     { font-size: 1.1rem; }
+  .count { font-size: .85rem; color: var(--color-text-muted); }
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .6rem;
+}
+
+.player-chip {
+  padding: .75rem .9rem;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+
+  &.assigned { border-color: rgba(56,161,105,.4); }
+
+  .username  { font-size: .8rem; color: var(--color-text-muted); }
+  .char-name { font-size: .9rem; font-weight: 500; }
+  .char-name.pending { color: var(--color-text-muted); font-weight: 400; font-style: italic; }
+}
+
+.empty { color: var(--color-text-muted); font-size: .875rem; }
+
+.waiting-note {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: .9rem;
+  padding: 1rem;
+}

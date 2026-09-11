@@ -2,11 +2,38 @@
   <div class="page-header">
     <a routerLink="/" class="back">← Retour</a>
     <h1>Créer une <span>partie</span></h1>
-    <p>Définissez le scénario et les paramètres de votre Murder Party.</p>
+    <p>Choisissez un scénario prêt à l'emploi, ou définissez le vôtre.</p>
   </div>
 
+  @if (scenarios.length > 0) {
+    <div class="scenario-picker card">
+      <label>Scénario prédéfini (optionnel)</label>
+      <div class="scenario-list">
+        @for (s of scenarios; track s.id) {
+          <button
+            type="button"
+            class="scenario-card"
+            [class.selected]="f['scenarioId'].value === s.id"
+            (click)="pickScenario(s)"
+          >
+            <strong>{{ s.name }}</strong>
+            <span>{{ s.minPlayers }}–{{ s.maxPlayers }} joueurs · {{ s.durationMinutes }} min</span>
+          </button>
+        }
+      </div>
+      @if (f['scenarioId'].value) {
+        <button type="button" class="chip" (click)="clearScenario()">
+          ✕ Ne pas utiliser de scénario
+        </button>
+      }
+    </div>
+  }
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="form-card card">
-    <!-- Nom -->
+    @if (errorMsg) {
+      <div class="alert-error">{{ errorMsg }}</div>
+    }
+
     <div class="form-group">
       <label for="name">Nom de la partie *</label>
       <input
@@ -23,7 +50,6 @@
       }
     </div>
 
-    <!-- Thème -->
     <div class="form-group">
       <label for="theme">Thème *</label>
       <input
@@ -34,17 +60,8 @@
       @if (f['theme'].invalid && f['theme'].touched) {
         <span class="error-msg">Le thème est requis.</span>
       }
-      <div class="suggestions">
-        <span class="suggestions__label">Suggestions rapides :</span>
-        <div class="suggestions__list">
-          @for (t of themes; track t) {
-            <button type="button" class="chip" (click)="pickTheme(t)">{{ t }}</button>
-          }
-        </div>
-      </div>
     </div>
 
-    <!-- Synopsis -->
     <div class="form-group">
       <label for="synopsis">Synopsis du meurtre *</label>
       <textarea
@@ -64,17 +81,19 @@
       <span class="char-count">{{ f['synopsis'].value?.length ?? 0 }} / 1000</span>
     </div>
 
-    <!-- Nombre max de joueurs -->
     <div class="form-group">
       <label for="maxPlayers">Nombre maximum de joueurs *</label>
       <input id="maxPlayers" type="number" formControlName="maxPlayers" min="4" max="20" />
       @if (f['maxPlayers'].invalid && f['maxPlayers'].touched) {
         <span class="error-msg">Entre 4 et 20 joueurs.</span>
       }
-      <span class="hint">Les rôles seront générés automatiquement en Phase 5.</span>
+      @if (f['scenarioId'].value) {
+        <span class="hint"
+          >Ajusté selon le scénario choisi — les personnages seront assignés automatiquement.</span
+        >
+      }
     </div>
 
-    <!-- Actions -->
     <div class="form-actions">
       <a routerLink="/" class="btn btn--ghost">Annuler</a>
       <button type="submit" class="btn btn--primary" [disabled]="isSubmitting">

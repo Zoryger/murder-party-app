@@ -1,1 +1,108 @@
-<p>player-dashboard works!</p>
+<div class="dashboard-page">
+  @if (isLoading) {
+    <p class="loading">🔍 Chargement de votre dossier...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (sheet?.isGm) {
+    <div class="gm-view">
+      <p class="gm-emoji">🎬</p>
+      <h1>Vous êtes le Maître du Jeu</h1>
+      <p>Gérez la partie depuis le salon d'attente.</p>
+      <a [routerLink]="['/game', gameId, 'lobby']" class="btn btn--primary">Retour au salon</a>
+    </div>
+  } @else if (!sheet?.isAssigned) {
+    <div class="empty-state">
+      <p>⏳ Votre personnage n'a pas encore été assigné.</p>
+      <a [routerLink]="['/game', gameId, 'lobby']" class="btn btn--ghost">← Salon d'attente</a>
+    </div>
+  } @else if (sheet?.character) {
+    <div class="char-header">
+      @if (sheet.character.isMurderer) {
+        <span class="murderer-badge">🔪 Meurtrier</span>
+      }
+      <h1>{{ sheet.character.name }}</h1>
+      <p class="title">{{ sheet.character.title }}</p>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>📖 Histoire</h2>
+        <p>{{ sheet.character.backstory }}</p>
+      </section>
+
+      <section class="card">
+        <h2>🕊️ Lien avec la victime</h2>
+        <p>{{ sheet.character.linkToVictim }}</p>
+      </section>
+
+      <section class="card">
+        <h2>🎯 Objectif</h2>
+        <p>{{ sheet.character.objective }}</p>
+      </section>
+
+      @if (sheet.character.isMurderer) {
+        <section class="card murderer-card">
+          <h2>🔪 Votre implication</h2>
+          <p>{{ murderKnowledgeLabel[sheet.character.murderKnowledge] }}</p>
+        </section>
+      }
+
+      <section class="card power-card">
+        <h2>✨ {{ sheet.character.power.name }}</h2>
+        <p>{{ sheet.character.power.description }}</p>
+        <div class="power-meta">
+          <span>{{
+            sheet.character.power.maxUses === 0
+              ? 'Passif'
+              : sheet.character.power.maxUses + ' utilisation(s)'
+          }}</span>
+          @if (sheet.character.power.durationSeconds) {
+            <span>{{ sheet.character.power.durationSeconds }}s d'effet</span>
+          }
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>💰 Statut</h2>
+        <div class="stat-row">
+          <span>Argent</span><strong>{{ sheet.player?.money }} G</strong>
+        </div>
+        <div class="stat-row">
+          <span>État</span
+          ><strong>{{ sheet.player?.status === 'alive' ? 'Vivant' : 'Fantôme' }}</strong>
+        </div>
+        <div class="stat-row">
+          <span>Code de messagerie</span><strong>{{ sheet.player?.messagingCode }}</strong>
+        </div>
+      </section>
+    </div>
+
+    @if (sheet.relations && sheet.relations.length > 0) {
+      <section class="relations-section">
+        <h2>🕸️ Vos relations</h2>
+        <div class="relations-grid">
+          @for (r of sheet.relations; track r.withCharacterName) {
+            <div class="relation-card relation--{{ r.relationType }}">
+              <div class="relation-top">
+                <span class="emoji">{{ r.emoji }}</span>
+                <div>
+                  <strong>{{ r.withCharacterName }}</strong>
+                  @if (r.withUsername) {
+                    <span class="real-name">({{ r.withUsername }})</span>
+                  }
+                </div>
+                @if (r.isSecret) {
+                  <span class="secret-badge">🤫 secret</span>
+                }
+              </div>
+              <p>{{ r.description }}</p>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

@@ -21,7 +21,7 @@ export async function getGameById(req: Request, res: Response): Promise<void> {
 }
 
 export async function createGame(req: Request, res: Response): Promise<void> {
-  const { name, theme, synopsis, maxPlayers } = req.body;
+  const { name, theme, synopsis, maxPlayers, scenarioId } = req.body;
 
   const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -31,6 +31,7 @@ export async function createGame(req: Request, res: Response): Promise<void> {
     createdBy:  req.user!.userId,
     joinCode,
     status:     'waiting',
+    scenarioId: scenarioId ? Number(scenarioId) : null,
   });
 
   res.status(201).json({

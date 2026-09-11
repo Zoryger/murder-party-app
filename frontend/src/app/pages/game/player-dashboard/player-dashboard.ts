@@ -1,17 +1,34 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { GameService, MyCharacterSheet } from '../../../core/services/game.service';
 
 @Component({
   selector: 'app-player-dashboard',
   standalone: true,
   imports: [RouterLink],
-  template: `
-    <div style="max-width:480px;margin:5rem auto;text-align:center">
-      <p style="font-size:3rem;margin-bottom:1rem">🕵️</p>
-      <h1 style="margin-bottom:.75rem">Tableau de bord joueur</h1>
-      <p style="color:var(--color-text-muted);margin-bottom:2rem">Disponible en Phase 5.</p>
-      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
-    </div>
-  `,
+  templateUrl: './player-dashboard.html',
+  styleUrl: './player-dashboard.scss',
 })
-export class PlayerDashboard {}
+export class PlayerDashboard implements OnInit {
+  private route        = inject(ActivatedRoute);
+  private gameService    = inject(GameService);
+
+  gameId!:   number;
+  sheet:     MyCharacterSheet | null = null;
+  isLoading = true;
+  errorMsg  = '';
+
+  murderKnowledgeLabel: Record<string, string> = {
+    full:    "Vous savez tout de l'organisation du meurtre.",
+    partial: "Vous savez que vous n'avez pas agi seul.",
+    none:    'Vous pensez avoir agi seul.',
+  };
+
+  ngOnInit(): void {
+    this.gameId = Number(this.route.snapshot.paramMap.get('id'));
+    this.gameService.getMyCharacterSheet(this.gameId).subscribe({
+      next:  (res) => { this.sheet = res.data; this.isLoading = false; },
+      error: (err) => { this.errorMsg = err.error?.message ?? 'Erreur de chargement.'; this.isLoading = false; },
+    });
+  }
+}
