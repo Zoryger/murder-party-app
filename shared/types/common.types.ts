@@ -1,14 +1,13 @@
-// ── Enums ─────────────────────────────────────────────────────────────────
-
 export enum PlayerStatus {
   Alive = 'alive',
   Ghost = 'ghost',
 }
 
 export enum MurderKnowledge {
-  Full    = 'full',    // Rusard — sait tout
-  Partial = 'partial', // Lockhart — sait pour Rusard, pas pour le loup-garou
-  None    = 'none',    // L'étudiant — ne sait pas qu'il est utilisé
+  Full          = 'full',           // Rusard — sait tout
+  Partial       = 'partial',        // Lockhart — sait qu'ils sont 2
+  None          = 'none',           // Dylan Vance — pense être seul responsable
+  NotApplicable = 'not_applicable', // Personnage non-meurtrier
 }
 
 export enum GameStatus {
@@ -23,14 +22,13 @@ export enum PowerCategory {
   Social       = 'social',
   Life         = 'life',
   Economy      = 'economy',
+  Sabotage     = 'sabotage',
 }
 
 export enum RelationType {
-  Love      = 'love',
-  Friendship= 'friendship',
-  Neutral   = 'neutral',
-  Rivalry   = 'rivalry',
-  Hate      = 'hate',
+  Positive = 'positive',
+  Neutral  = 'neutral',
+  Negative = 'negative',
 }
 
 export enum DuelStatus {
@@ -39,14 +37,18 @@ export enum DuelStatus {
   Finished = 'finished',
 }
 
-// ── Interfaces de base ────────────────────────────────────────────────────
+export enum CharacterGroup {
+  TrioCriminel       = 'trio_criminel',
+  CorpsEnseignant    = 'corps_enseignant',
+  Eleves             = 'eleves',
+  VisiteursMinistere = 'visiteurs_ministere',
+}
 
 export interface BaseEntity {
   id:        number;
   createdAt: Date;
 }
 
-// Réponse générique de l'API — T est le type de data
 export interface ApiResponse<T> {
   data:     T;
   success:  boolean;

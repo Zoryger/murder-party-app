@@ -1,16 +1,18 @@
 import { Request, Response } from 'express';
-import { GameModel } from '../models/game.model';
+import { Game, User } from '../models/sequelize';
 
-// GET /api/games
-export function getGames(req: Request, res: Response): void {
-  const games = GameModel.findAll();
+export async function getGames(req: Request, res: Response): Promise<void> {
+  const games = await Game.findAll({
+    include: [{ model: User, as: 'creator', attributes: ['id', 'username'] }],
+    order: [['createdAt', 'DESC']],
+  });
   res.json({ success: true, data: games });
 }
 
-// GET /api/games/:id
-export function getGameById(req: Request, res: Response): void {
-  const id   = Number(req.params['id']);
-  const game = GameModel.findById(id);
+export async function getGameById(req: Request, res: Response): Promise<void> {
+  const game = await Game.findByPk(Number(req.params['id']), {
+    include: [{ model: User, as: 'creator', attributes: ['id', 'username'] }],
+  });
   if (!game) {
     res.status(404).json({ success: false, message: 'Partie introuvable.' });
     return;
@@ -18,31 +20,32 @@ export function getGameById(req: Request, res: Response): void {
   res.json({ success: true, data: game });
 }
 
-// POST /api/games  (protégé — requiert JWT)
-export function createGame(req: Request, res: Response): void {
+export async function createGame(req: Request, res: Response): Promise<void> {
   const { name, theme, synopsis, maxPlayers } = req.body;
 
-  const game = GameModel.create({
-    name,
-    theme,
-    synopsis,
+  const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const game = await Game.create({
+    name, theme, synopsis,
     maxPlayers: Number(maxPlayers),
-    createdBy: req.user!.userId,
+    createdBy:  req.user!.userId,
+    joinCode,
+    status:     'waiting',
   });
 
   res.status(201).json({
     success: true,
     message: 'Partie créée avec succès.',
-    data: game,
+    data:    game,
   });
 }
 
-// GET /api/games/join/:code  (rejoindre via code)
-export function getGameByCode(req: Request, res: Response): void {
+export async function getGameByCode(req: Request, res: Response): Promise<void> {
   const code = req.params['code'].toUpperCase();
-  const game = GameModel.findByJoinCode(code);
+  const game = await Game.findOne({ where: { joinCode: code } });
+
   if (!game) {
-    res.status(404).json({ success: false, message: 'Code de partie invalide.' });
+    res.status(404).json({ success: false, message: 'Code invalide.' });
     return;
   }
   if (game.status !== 'waiting') {
@@ -52,21 +55,22 @@ export function getGameByCode(req: Request, res: Response): void {
   res.json({ success: true, data: game });
 }
 
-// PATCH /api/games/:id/status  (protégé — changer le statut)
-export function updateGameStatus(req: Request, res: Response): void {
-  const id     = Number(req.params['id']);
-  const { status } = req.body;
-
-  const game = GameModel.findById(id);
+export async function updateGameStatus(req: Request, res: Response): Promise<void> {
+  const game = await Game.findByPk(Number(req.params['id']));
   if (!game) {
     res.status(404).json({ success: false, message: 'Partie introuvable.' });
     return;
   }
   if (game.createdBy !== req.user!.userId) {
-    res.status(403).json({ success: false, message: 'Seul le créateur peut modifier cette partie.' });
+    res.status(403).json({ success: false, message: 'Accès refusé.' });
     return;
   }
 
-  const updated = GameModel.updateStatus(id, status);
-  res.json({ success: true, data: updated });
+  const { status } = req.body;
+  game.status = status;
+  if (status === 'active')   game.startedAt  = new Date();
+  if (status === 'finished') game.finishedAt = new Date();
+  await game.save();
+
+  res.json({ success: true, data: game });
 }

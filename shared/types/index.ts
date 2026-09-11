@@ -6,3 +6,4 @@ export * from './power.types';
 export * from './clue.types';
 export * from './conversation.types';
 export * from './social.types';
+export * from './scenario.types';   // ← nouveau

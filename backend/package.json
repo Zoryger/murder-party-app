@@ -17,7 +17,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.4",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -25,6 +27,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.2",
+    "@types/sequelize": "^6.12.0",
     "tsx": "^4.23.4",
     "typescript": "^7.0.2"
   }
