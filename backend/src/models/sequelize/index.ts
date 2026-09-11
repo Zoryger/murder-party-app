@@ -1,22 +1,63 @@
 import sequelize from '../../config/database';
-import User       from './User.model';
-import Game       from './Game.model';
-import GamePlayer from './GamePlayer.model';
-import Power      from './Power.model';
+import User                 from './User.model';
+import Game                 from './Game.model';
+import GamePlayer           from './GamePlayer.model';
+import Power                from './Power.model';
+import Scenario             from './Scenario.model';
+import ScenarioCharacter    from './ScenarioCharacter.model';
+import ScenarioRelation     from './ScenarioRelation.model';
+import ScenarioRiddle       from './ScenarioRiddle.model';
+import ScenarioPhysicalClue from './ScenarioPhysicalClue.model';
+import ScenarioQrClue       from './ScenarioQrClue.model';
+import ScenarioPlotThread   from './ScenarioPlotThread.model';
+import { seedPowers }       from '../../seed/powers.seed';
+import { seedHp2027 }       from '../../seed/hp2027.seed';
 
-// ── Associations ──────────────────────────────────────────────────────────
-
-// Un user crée plusieurs parties
+// ── Associations existantes ──────────────────────────────────────────────
 User.hasMany(Game,       { foreignKey: 'createdBy', as: 'createdGames' });
 Game.belongsTo(User,     { foreignKey: 'createdBy', as: 'creator' });
 
-// Une partie a plusieurs joueurs
 Game.hasMany(GamePlayer, { foreignKey: 'gameId', as: 'players' });
 GamePlayer.belongsTo(Game, { foreignKey: 'gameId', as: 'game' });
 
-// Un user peut être plusieurs joueurs (dans différentes parties)
 User.hasMany(GamePlayer, { foreignKey: 'userId', as: 'playerProfiles' });
 GamePlayer.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// ── Associations — contenu du scénario ───────────────────────────────────
+Scenario.hasMany(ScenarioCharacter,   { foreignKey: 'scenarioId', as: 'characters' });
+ScenarioCharacter.belongsTo(Scenario, { foreignKey: 'scenarioId', as: 'scenario' });
+
+Power.hasMany(ScenarioCharacter,      { foreignKey: 'powerId', as: 'scenarioCharacters' });
+ScenarioCharacter.belongsTo(Power,    { foreignKey: 'powerId', as: 'power' });
+
+Scenario.hasMany(ScenarioRelation,    { foreignKey: 'scenarioId', as: 'relations' });
+ScenarioRelation.belongsTo(Scenario,  { foreignKey: 'scenarioId', as: 'scenario' });
+ScenarioCharacter.hasMany(ScenarioRelation,   { foreignKey: 'characterId', as: 'outgoingRelations' });
+ScenarioRelation.belongsTo(ScenarioCharacter, { foreignKey: 'characterId', as: 'character' });
+ScenarioRelation.belongsTo(ScenarioCharacter, { foreignKey: 'relatedCharacterId', as: 'relatedCharacter' });
+
+Scenario.hasMany(ScenarioRiddle,      { foreignKey: 'scenarioId', as: 'riddles' });
+ScenarioRiddle.belongsTo(Scenario,    { foreignKey: 'scenarioId', as: 'scenario' });
+ScenarioCharacter.hasOne(ScenarioRiddle,      { foreignKey: 'characterId', as: 'riddle' });
+ScenarioRiddle.belongsTo(ScenarioCharacter,   { foreignKey: 'characterId', as: 'character' });
+
+Scenario.hasMany(ScenarioPhysicalClue,     { foreignKey: 'scenarioId', as: 'physicalClues' });
+ScenarioPhysicalClue.belongsTo(Scenario,   { foreignKey: 'scenarioId', as: 'scenario' });
+ScenarioCharacter.hasMany(ScenarioPhysicalClue,   { foreignKey: 'relatedCharacterId', as: 'physicalClues' });
+ScenarioPhysicalClue.belongsTo(ScenarioCharacter, { foreignKey: 'relatedCharacterId', as: 'relatedCharacter' });
+
+Scenario.hasMany(ScenarioQrClue,      { foreignKey: 'scenarioId', as: 'qrClues' });
+ScenarioQrClue.belongsTo(Scenario,    { foreignKey: 'scenarioId', as: 'scenario' });
+
+Scenario.hasMany(ScenarioPlotThread,  { foreignKey: 'scenarioId', as: 'plotThreads' });
+ScenarioPlotThread.belongsTo(Scenario,{ foreignKey: 'scenarioId', as: 'scenario' });
+
+// ── Liens Game / GamePlayer ↔ Scénario ───────────────────────────────────
+Scenario.hasMany(Game,   { foreignKey: 'scenarioId', as: 'games' });
+Game.belongsTo(Scenario, { foreignKey: 'scenarioId', as: 'scenario' });
+
+ScenarioCharacter.hasMany(GamePlayer,   { foreignKey: 'scenarioCharacterId', as: 'gamePlayers' });
+GamePlayer.belongsTo(ScenarioCharacter, { foreignKey: 'scenarioCharacterId', as: 'scenarioCharacter' });
 
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
@@ -24,62 +65,19 @@ export async function syncDatabase(): Promise<void> {
     await sequelize.authenticate();
     console.log('✅ Connexion MySQL établie');
 
-    // alter:true met à jour les tables existantes sans les supprimer
     await sequelize.sync({ alter: true });
     console.log('✅ Tables synchronisées');
 
     await seedPowers();
+    await seedHp2027();
   } catch (error) {
     console.error('❌ Erreur de connexion MySQL :', error);
     process.exit(1);
   }
 }
 
-// ── Seed des pouvoirs (insérés une seule fois) ────────────────────────────
-async function seedPowers(): Promise<void> {
-  const count = await Power.count();
-  if (count > 0) return; // déjà insérés
-
-  await Power.bulkCreate([
-    { name: 'Informaticien',  slug: 'informaticien',  category: 'info',
-      description: 'Voit 3 conversations entre joueurs en hackant leur messagerie.',
-      maxUses: 3 },
-    { name: 'Voyante',        slug: 'voyante',         category: 'info',
-      description: 'Voit tous les rôles de la partie, mais sans savoir qui les possède.',
-      maxUses: 1 },
-    { name: 'Vision absolue', slug: 'vision-absolue',  category: 'info',
-      description: 'Voit tout ce qui est falsifié ou modifié par un autre pouvoir (×2, 1 min).',
-      maxUses: 2, durationSeconds: 60 },
-    { name: 'Usurpateur',     slug: 'usurpateur',      category: 'manipulation',
-      description: 'Crée 2 fausses conversations entre 2 joueurs de son choix.',
-      maxUses: 2 },
-    { name: 'Falsificateur',  slug: 'falsificateur',   category: 'manipulation',
-      description: 'Modifie le nom d\'un joueur sur 1 indice.',
-      maxUses: 1 },
-    { name: 'Cupidon',        slug: 'cupidon',         category: 'social',
-      description: 'Force 2 joueurs à s\'aimer — leur objectif devient survivre ensemble.',
-      maxUses: 1 },
-    { name: 'Duelliste',      slug: 'duelliste',       category: 'social',
-      description: 'Force 2 joueurs en joute verbale 3 min, puis vote des autres.',
-      maxUses: 1 },
-    { name: 'Orcrux',         slug: 'orcrux',          category: 'social',
-      description: 'En devenant fantôme, choisit un vivant comme substitut et utilise son pouvoir.',
-      maxUses: 1 },
-    { name: 'Chasseur de prime', slug: 'chasseur-de-prime', category: 'life',
-      description: 'Tue un joueur (→ fantôme) en connaissant son code de messagerie.',
-      maxUses: 1 },
-    { name: 'Nécromancie',    slug: 'necromancie',     category: 'life',
-      description: 'Réanime 2 fantômes pour leur permettre d\'utiliser à nouveau leurs pouvoirs.',
-      maxUses: 2 },
-    { name: 'Moldue',         slug: 'moldue',          category: 'economy',
-      description: 'Aucun pouvoir magique, mais dispose de beaucoup d\'argent en début de partie.',
-      maxUses: 0 },
-    { name: 'Alchimiste',     slug: 'alchimiste',      category: 'economy',
-      description: 'Convertit de l\'argent en indice supplémentaire (via le MJ).',
-      maxUses: 99 },
-  ]);
-
-  console.log('✅ 12 pouvoirs insérés en base');
-}
-
-export { sequelize, User, Game, GamePlayer, Power };
+export {
+  sequelize, User, Game, GamePlayer, Power,
+  Scenario, ScenarioCharacter, ScenarioRelation,
+  ScenarioRiddle, ScenarioPhysicalClue, ScenarioQrClue, ScenarioPlotThread,
+};

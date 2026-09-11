@@ -10,13 +10,15 @@ interface GameAttributes {
   joinCode:    string;
   createdBy:   number;
   maxPlayers:  number;
+  scenarioId?: number | null;
   startedAt?:  Date | null;
   finishedAt?: Date | null;
   createdAt?:  Date;
   updatedAt?:  Date;
 }
 
-interface GameCreationAttributes extends Optional<GameAttributes, 'id' | 'startedAt' | 'finishedAt'> {}
+interface GameCreationAttributes
+  extends Optional<GameAttributes, 'id' | 'startedAt' | 'finishedAt' | 'scenarioId'> {}
 
 class Game extends Model<GameAttributes, GameCreationAttributes>
   implements GameAttributes {
@@ -28,6 +30,7 @@ class Game extends Model<GameAttributes, GameCreationAttributes>
   declare joinCode:    string;
   declare createdBy:   number;
   declare maxPlayers:  number;
+  declare scenarioId:  number | null;
   declare startedAt:   Date | null;
   declare finishedAt:  Date | null;
   declare createdAt:   Date;
@@ -45,14 +48,11 @@ Game.init(
     joinCode:   { type: DataTypes.STRING(10),  allowNull: false, unique: true },
     createdBy:  { type: DataTypes.INTEGER,     allowNull: false },
     maxPlayers: { type: DataTypes.INTEGER,     allowNull: false, defaultValue: 8 },
+    scenarioId: { type: DataTypes.INTEGER,     allowNull: true },
     startedAt:  { type: DataTypes.DATE,        allowNull: true },
     finishedAt: { type: DataTypes.DATE,        allowNull: true },
   },
-  {
-    sequelize,
-    tableName:  'games',
-    timestamps: true,
-  }
+  { sequelize, tableName: 'games', timestamps: true }
 );
 
 export default Game;
