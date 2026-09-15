@@ -17,5 +17,9 @@ export const routes: Routes = [
     path: 'game/:id/play', canActivate: [authGuard],
     loadComponent: () => import('./pages/game/player-dashboard/player-dashboard').then(m => m.PlayerDashboard),
   },
+  {
+  path: 'game/:id/messages', canActivate: [authGuard],
+  loadComponent: () => import('./pages/game/messaging/messaging').then(m => m.Messaging),
+},
   { path: '**', loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFound) },
 ];

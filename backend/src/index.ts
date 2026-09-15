@@ -4,9 +4,10 @@ import cors    from 'cors';
 import { createServer } from 'http';
 import { syncDatabase } from './models/sequelize';
 import { initSockets }  from './sockets';
-import authRoutes     from './routes/auth.routes';
-import gameRoutes     from './routes/game.routes';
-import scenarioRoutes from './routes/scenario.routes';
+import authRoutes         from './routes/auth.routes';
+import gameRoutes         from './routes/game.routes';
+import scenarioRoutes     from './routes/scenario.routes';
+import conversationRoutes from './routes/conversation.routes';
 
 const app        = express();
 const httpServer = createServer(app);
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/auth',      authRoutes);
 app.use('/api/games',     gameRoutes);
 app.use('/api/scenarios', scenarioRoutes);
+app.use('/api/games/:id/conversations', conversationRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'API Murder Party opérationnelle 🔍' });

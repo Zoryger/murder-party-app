@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, finalize, timeout } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { ApiResponse, Game, GameService } from '../../core/services/game.service
 })
 export class Home implements OnInit {
   private gameService = inject(GameService);
+  private changeDetector = inject(ChangeDetectorRef);
   auth = inject(AuthService);
 
   games: Game[] = [];
@@ -36,6 +37,7 @@ export class Home implements OnInit {
         }),
         finalize(() => {
           this.isLoading = false;
+          this.changeDetector.markForCheck();
         }),
       )
       .subscribe((res) => {

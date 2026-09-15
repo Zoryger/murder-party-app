@@ -10,6 +10,9 @@ import ScenarioRiddle       from './ScenarioRiddle.model';
 import ScenarioPhysicalClue from './ScenarioPhysicalClue.model';
 import ScenarioQrClue       from './ScenarioQrClue.model';
 import ScenarioPlotThread   from './ScenarioPlotThread.model';
+import Conversation         from './Conversation.model';
+import Message              from './Message.model';
+import CodeUnlock           from './CodeUnlock.model';
 import { seedPowers }       from '../../seed/powers.seed';
 import { seedHp2027 }       from '../../seed/hp2027.seed';
 
@@ -59,6 +62,22 @@ Game.belongsTo(Scenario, { foreignKey: 'scenarioId', as: 'scenario' });
 ScenarioCharacter.hasMany(GamePlayer,   { foreignKey: 'scenarioCharacterId', as: 'gamePlayers' });
 GamePlayer.belongsTo(ScenarioCharacter, { foreignKey: 'scenarioCharacterId', as: 'scenarioCharacter' });
 
+// ── Associations — messagerie ─────────────────────────────────────────────
+GamePlayer.hasMany(Conversation, { foreignKey: 'player1Id', as: 'conversationsAsP1' });
+GamePlayer.hasMany(Conversation, { foreignKey: 'player2Id', as: 'conversationsAsP2' });
+Conversation.belongsTo(GamePlayer, { foreignKey: 'player1Id', as: 'player1' });
+Conversation.belongsTo(GamePlayer, { foreignKey: 'player2Id', as: 'player2' });
+
+Conversation.hasMany(Message, { foreignKey: 'conversationId', as: 'messages' });
+Message.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
+GamePlayer.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' });
+Message.belongsTo(GamePlayer, { foreignKey: 'senderId', as: 'sender' });
+
+GamePlayer.hasMany(CodeUnlock, { foreignKey: 'unlockedByPlayerId', as: 'unlocksMade' });
+GamePlayer.hasMany(CodeUnlock, { foreignKey: 'targetPlayerId', as: 'unlocksReceived' });
+CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'unlockedByPlayerId', as: 'unlockedBy' });
+CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'targetPlayerId', as: 'target' });
+
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
   try {
@@ -80,4 +99,5 @@ export {
   sequelize, User, Game, GamePlayer, Power,
   Scenario, ScenarioCharacter, ScenarioRelation,
   ScenarioRiddle, ScenarioPhysicalClue, ScenarioQrClue, ScenarioPlotThread,
+  Conversation, Message, CodeUnlock,
 };

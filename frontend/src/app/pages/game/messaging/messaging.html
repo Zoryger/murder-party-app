@@ -1,0 +1,110 @@
+<div class="messaging-page">
+  <div class="msg-header">
+    <a [routerLink]="['/game', gameId, 'play']" class="back">← Fiche personnage</a>
+    <h1>💬 Messagerie</h1>
+  </div>
+
+  <div class="code-redeem card">
+    <label>🔓 Débloquer un compte piraté</label>
+    <div class="code-row">
+      <input
+        type="text"
+        [(ngModel)]="codeInput"
+        placeholder="Code secret trouvé en jeu"
+        (keyup.enter)="redeemCode()"
+      />
+      <button class="btn btn--primary btn--sm" (click)="redeemCode()">Valider</button>
+    </div>
+    @if (codeMsg) {
+      <p class="code-feedback" [class.error]="codeError">{{ codeMsg }}</p>
+    }
+  </div>
+
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else {
+    <div class="messaging-layout">
+      <aside class="contacts">
+        <h2>Conversations</h2>
+        @if (conversations.length > 0) {
+          <div class="contact-list">
+            @for (c of conversations; track c.id) {
+              <button
+                class="contact"
+                [class.selected]="c.id === selectedConversationId"
+                [class.hacked]="!c.isOwn"
+                (click)="openConversation(c.id)"
+              >
+                <span class="name">{{ !c.isOwn ? '🔓 ' : '' }}{{ c.displayLabel }}</span>
+                @if (c.lastMessage) {
+                  <span class="preview"
+                    >{{ c.lastMessage.senderName }} : {{ c.lastMessage.content }}</span
+                  >
+                } @else {
+                  <span class="preview empty">Aucun message</span>
+                }
+              </button>
+            }
+          </div>
+        }
+
+        <button class="new-convo-toggle" (click)="showNewConvo = !showNewConvo">
+          + Nouvelle conversation
+        </button>
+        @if (showNewConvo) {
+          <div class="new-convo-list">
+            @for (p of contactsWithoutConversation; track p.id) {
+              <button class="contact-option" (click)="startConversation(p.id)">
+                {{ p.characterName }}
+              </button>
+            }
+            @if (contactsWithoutConversation.length === 0) {
+              <p class="empty-hint">Vous avez déjà une conversation avec tout le monde.</p>
+            }
+          </div>
+        }
+      </aside>
+
+      <main class="thread">
+        @if (selectedConversationId) {
+          <div class="thread-header">
+            @for (p of participants; track p.id) {
+              <span class="participant">{{ p.characterName }}</span>
+            }
+            @if (!isParticipant) {
+              <span class="spy-badge">🕵️ Lecture seule — compte piraté</span>
+            }
+          </div>
+
+          <div class="messages-list">
+            @for (m of messages; track m.id) {
+              <div class="message">
+                <strong>{{ m.senderName }}</strong>
+                <p>{{ m.content }}</p>
+              </div>
+            }
+            @if (messages.length === 0) {
+              <p class="empty-hint">Aucun message pour l'instant.</p>
+            }
+          </div>
+
+          @if (isParticipant) {
+            <div class="composer">
+              <input
+                type="text"
+                [(ngModel)]="newMessage"
+                placeholder="Écrire un message..."
+                (keyup.enter)="send()"
+              />
+              <button class="btn btn--primary btn--sm" [disabled]="isSending" (click)="send()">
+                Envoyer
+              </button>
+            </div>
+          }
+        } @else {
+          <p class="empty-hint">Sélectionnez une conversation.</p>
+        }
+      </main>
+    </div>
+  }
+</div>

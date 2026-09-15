@@ -9,6 +9,9 @@ node_modules/
 # Build Angular
 frontend/dist/
 
+# Build backend
+backend/dist/
+
 # Logs
 *.log
 npm-debug.log*

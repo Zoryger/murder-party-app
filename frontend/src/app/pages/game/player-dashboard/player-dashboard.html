@@ -19,6 +19,13 @@
       <a [routerLink]="['/game', gameId, 'lobby']" class="btn btn--ghost">← Salon d'attente</a>
     </div>
   } @else if (sheet?.character) {
+    @if (sheet?.isAssigned && !sheet?.isGm) {
+      <div class="dash-nav">
+        <a [routerLink]="['/game', gameId, 'messages']" class="btn btn--ghost btn--sm"
+          >💬 Messagerie</a
+        >
+      </div>
+    }
     <div class="char-header">
       @if (sheet.character.isMurderer) {
         <span class="murderer-badge">🔪 Meurtrier</span>
