@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
-import { Game, GamePlayer, Conversation, Message, CodeUnlock } from '../models/sequelize';
+import { Game, GamePlayer, Conversation, Message, CodeUnlock, PowerUse } from '../models/sequelize';
 import { getIO } from '../sockets';
 
 async function getMyGamePlayer(gameId: number, userId: number) {
@@ -48,12 +48,13 @@ export async function getMyConversations(req: Request, res: Response): Promise<v
     where: { gameId, [Op.or]: [{ player1Id: me.id }, { player2Id: me.id }] },
   });
 
+  // Accès via code piraté — toutes les conversations du joueur ciblé
   const unlocks   = await CodeUnlock.findAll({ where: { gameId, unlockedByPlayerId: me.id } });
   const hackedIds = unlocks.map(u => u.targetPlayerId);
 
-  let hackedConversations: Conversation[] = [];
+  let codeHackedConversations: Conversation[] = [];
   if (hackedIds.length > 0) {
-    hackedConversations = await Conversation.findAll({
+    codeHackedConversations = await Conversation.findAll({
       where: {
         gameId,
         [Op.or]: [
@@ -64,7 +65,17 @@ export async function getMyConversations(req: Request, res: Response): Promise<v
     });
   }
 
-  const allConversations = [...ownConversations, ...hackedConversations]
+  // Accès via pouvoir Informaticien — conversation précise piratée
+  const powerHacks = await PowerUse.findAll({
+    where: { gameId, gamePlayerId: me.id, powerSlug: 'informaticien', conversationId: { [Op.not]: null } },
+  });
+  const powerHackedIds = powerHacks.map(h => h.conversationId!).filter(id => id !== null);
+  let powerHackedConversations: Conversation[] = [];
+  if (powerHackedIds.length > 0) {
+    powerHackedConversations = await Conversation.findAll({ where: { id: { [Op.in]: powerHackedIds } } });
+  }
+
+  const allConversations = [...ownConversations, ...codeHackedConversations, ...powerHackedConversations]
     .filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
 
   const players  = await GamePlayer.findAll({ where: { gameId } });
@@ -136,6 +147,7 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
   const isParticipant = conversation.player1Id === me.id || conversation.player2Id === me.id;
 
   let hasAccess = isParticipant;
+
   if (!hasAccess) {
     const unlock = await CodeUnlock.findOne({
       where: {
@@ -144,6 +156,13 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
       },
     });
     hasAccess = !!unlock;
+  }
+
+  if (!hasAccess) {
+    const powerHack = await PowerUse.findOne({
+      where: { gameId, gamePlayerId: me.id, powerSlug: 'informaticien', conversationId },
+    });
+    hasAccess = !!powerHack;
   }
 
   if (!hasAccess) { res.status(403).json({ success: false, message: "Vous n'avez pas accès à cette conversation." }); return; }

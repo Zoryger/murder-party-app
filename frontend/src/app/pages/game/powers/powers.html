@@ -1,0 +1,130 @@
+<p>powers works!</p>
+<div class="powers-page">
+  <div class="pw-header">
+    <a [routerLink]="['/game', gameId, 'play']" class="back">← Fiche personnage</a>
+    <h1>✨ Mon pouvoir</h1>
+  </div>
+
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+    </div>
+  } @else if (power) {
+    <div class="power-summary card">
+      <h2>{{ power.name }}</h2>
+      <p>{{ power.description }}</p>
+      <div class="uses">
+        @if (power.maxUses === 0) {
+          <span class="badge">Pouvoir passif</span>
+        } @else {
+          <span class="badge"
+            >{{ power.usesRemaining }} / {{ power.maxUses }} utilisation(s) restante(s)</span
+          >
+        }
+      </div>
+    </div>
+
+    @if (power.maxUses === 0) {
+      <div class="action-card card">
+        <p class="soon">Ce pouvoir est passif — rien à activer ici.</p>
+      </div>
+    } @else {
+      @switch (power.slug) {
+        @case ('voyante') {
+          <div class="action-card card">
+            <button
+              class="btn btn--primary"
+              [disabled]="power.usesRemaining <= 0 || isActivating"
+              (click)="activateVoyante()"
+            >
+              {{ isActivating ? 'Consultation...' : '🔮 Consulter tous les rôles et pouvoirs' }}
+            </button>
+            @if (voyanteResult) {
+              <div class="voyante-list">
+                @for (r of voyanteResult; track r.characterTitle) {
+                  <div class="voyante-row">
+                    <span>{{ r.characterTitle }}</span
+                    ><strong>{{ r.powerName }}</strong>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @case ('analyseur-de-relations') {
+          <div class="action-card card">
+            <div class="target-pickers">
+              <select [(ngModel)]="target1">
+                <option [ngValue]="null">Joueur 1...</option>
+                @for (p of otherPlayers; track p.id) {
+                  <option [ngValue]="p.id">{{ p.characterName }}</option>
+                }
+              </select>
+              <select [(ngModel)]="target2">
+                <option [ngValue]="null">Joueur 2...</option>
+                @for (p of otherPlayers; track p.id) {
+                  <option [ngValue]="p.id">{{ p.characterName }}</option>
+                }
+              </select>
+            </div>
+            <button
+              class="btn btn--primary"
+              [disabled]="!target1 || !target2 || power.usesRemaining <= 0 || isActivating"
+              (click)="activateAnalyseur()"
+            >
+              {{ isActivating ? 'Analyse...' : '🔍 Analyser la relation' }}
+            </button>
+            @if (relationResult) {
+              <div class="relation-result">
+                <strong>{{ relationResult.player1 }}</strong> ↔
+                <strong>{{ relationResult.player2 }}</strong>
+                <p>{{ relationLabel[relationResult.relationType] }}</p>
+              </div>
+            }
+          </div>
+        }
+
+        @case ('informaticien') {
+          <div class="action-card card">
+            <div class="target-pickers">
+              <select [(ngModel)]="target1">
+                <option [ngValue]="null">Joueur 1...</option>
+                @for (p of otherPlayers; track p.id) {
+                  <option [ngValue]="p.id">{{ p.characterName }}</option>
+                }
+              </select>
+              <select [(ngModel)]="target2">
+                <option [ngValue]="null">Joueur 2...</option>
+                @for (p of otherPlayers; track p.id) {
+                  <option [ngValue]="p.id">{{ p.characterName }}</option>
+                }
+              </select>
+            </div>
+            <button
+              class="btn btn--primary"
+              [disabled]="!target1 || !target2 || power.usesRemaining <= 0 || isActivating"
+              (click)="activateInformaticien()"
+            >
+              {{ isActivating ? 'Piratage...' : '💻 Pirater leur messagerie' }}
+            </button>
+            @if (informaticienResult) {
+              <p class="hack-result">
+                {{ informaticienResult }}
+                <a [routerLink]="['/game', gameId, 'messages']">Voir dans la messagerie →</a>
+              </p>
+            }
+          </div>
+        }
+
+        @default {
+          <div class="action-card card">
+            <p class="soon">🚧 L'activation de ce pouvoir arrive dans une prochaine mise à jour.</p>
+          </div>
+        }
+      }
+    }
+  }
+</div>

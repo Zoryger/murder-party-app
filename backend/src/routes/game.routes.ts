@@ -8,6 +8,9 @@ import {
   joinGame, getPlayers, assignCharacters, startGame, getMyCharacterSheet,
 } from '../controllers/gamePlayer.controller';
 import { redeemCode } from '../controllers/conversation.controller';
+import {
+  getMyPower, useVoyante, useAnalyseurRelations, useInformaticien,
+} from '../controllers/power.controller';
 import { validate }    from '../middleware/validate.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 
@@ -36,5 +39,11 @@ router.post('/:id/assign-characters', requireAuth, assignCharacters);
 router.post('/:id/start',             requireAuth, startGame);
 router.get('/:id/me',                 requireAuth, getMyCharacterSheet);
 router.post('/:id/redeem-code',       requireAuth, redeemCode);
+
+// ── Pouvoirs ───────────────────────────────────────────────────────────────
+router.get('/:id/my-power',                    requireAuth, getMyPower);
+router.post('/:id/powers/voyante',             requireAuth, useVoyante);
+router.post('/:id/powers/analyseur-relations', requireAuth, useAnalyseurRelations);
+router.post('/:id/powers/informaticien',       requireAuth, useInformaticien);
 
 export default router;

@@ -13,6 +13,7 @@ import ScenarioPlotThread   from './ScenarioPlotThread.model';
 import Conversation         from './Conversation.model';
 import Message              from './Message.model';
 import CodeUnlock           from './CodeUnlock.model';
+import PowerUse             from './PowerUse.model';
 import { seedPowers }       from '../../seed/powers.seed';
 import { seedHp2027 }       from '../../seed/hp2027.seed';
 
@@ -78,6 +79,10 @@ GamePlayer.hasMany(CodeUnlock, { foreignKey: 'targetPlayerId', as: 'unlocksRecei
 CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'unlockedByPlayerId', as: 'unlockedBy' });
 CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'targetPlayerId', as: 'target' });
 
+// ── Associations — pouvoirs ────────────────────────────────────────────────
+GamePlayer.hasMany(PowerUse, { foreignKey: 'gamePlayerId', as: 'powerUses' });
+PowerUse.belongsTo(GamePlayer, { foreignKey: 'gamePlayerId', as: 'activator' });
+
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
   try {
@@ -99,5 +104,5 @@ export {
   sequelize, User, Game, GamePlayer, Power,
   Scenario, ScenarioCharacter, ScenarioRelation,
   ScenarioRiddle, ScenarioPhysicalClue, ScenarioQrClue, ScenarioPlotThread,
-  Conversation, Message, CodeUnlock,
+  Conversation, Message, CodeUnlock, PowerUse,
 };

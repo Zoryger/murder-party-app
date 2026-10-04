@@ -21,6 +21,9 @@
   } @else if (sheet?.character) {
     @if (sheet?.isAssigned && !sheet?.isGm) {
       <div class="dash-nav">
+        <a [routerLink]="['/game', gameId, 'powers']" class="btn btn--ghost btn--sm"
+          >✨ Mon pouvoir</a
+        >
         <a [routerLink]="['/game', gameId, 'messages']" class="btn btn--ghost btn--sm"
           >💬 Messagerie</a
         >
