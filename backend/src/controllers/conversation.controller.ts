@@ -1,7 +1,15 @@
-import { Request, Response } from 'express';
-import { Op } from 'sequelize';
-import { Game, GamePlayer, Conversation, Message, CodeUnlock, PowerUse } from '../models/sequelize';
-import { getIO } from '../sockets';
+import { Request, Response } from "express";
+import { Op } from "sequelize";
+import {
+  Game,
+  GamePlayer,
+  Conversation,
+  Message,
+  CodeUnlock,
+  PowerUse,
+} from "../models/sequelize";
+import { getIO } from "../sockets";
+import { hasActiveVisionAbsolue } from "../utils/vision.util";
 
 async function getMyGamePlayer(gameId: number, userId: number) {
   return GamePlayer.findOne({ where: { gameId, userId } });
@@ -12,6 +20,7 @@ function formatConversation(
   meId: number,
   nameById: Map<number, string>,
   lastMessage: Message | null,
+  visionActive: boolean,
 ) {
   const isOwn = conv.player1Id === meId || conv.player2Id === meId;
   let otherPlayerId: number | null = null;
@@ -19,38 +28,54 @@ function formatConversation(
 
   if (isOwn) {
     otherPlayerId = conv.player1Id === meId ? conv.player2Id : conv.player1Id;
-    displayLabel  = nameById.get(otherPlayerId) ?? '???';
+    displayLabel = nameById.get(otherPlayerId) ?? "???";
   } else {
-    displayLabel = `${nameById.get(conv.player1Id) ?? '???'} ↔ ${nameById.get(conv.player2Id) ?? '???'}`;
+    displayLabel = `${nameById.get(conv.player1Id) ?? "???"} ↔ ${nameById.get(conv.player2Id) ?? "???"}`;
   }
 
   return {
     id: conv.id,
     isOwn,
-    isFake: conv.isFake,
+    isFake: visionActive ? conv.isFake : false,
     otherPlayerId,
     displayLabel,
-    lastMessage: lastMessage ? {
-      content:    lastMessage.content,
-      sentAt:     lastMessage.createdAt,
-      senderName: nameById.get(lastMessage.senderId) ?? '???',
-    } : null,
+    lastMessage: lastMessage
+      ? {
+          content: lastMessage.content,
+          sentAt: lastMessage.createdAt,
+          senderName: nameById.get(lastMessage.senderId) ?? "???",
+        }
+      : null,
   };
 }
 
 // ── GET /api/games/:id/conversations ──────────────────────────────────────
-export async function getMyConversations(req: Request, res: Response): Promise<void> {
-  const gameId = Number(req.params['id']);
+export async function getMyConversations(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const gameId = Number(req.params["id"]);
   const me = await getMyGamePlayer(gameId, req.user!.userId);
-  if (!me) { res.status(403).json({ success: false, message: "Vous n'êtes pas dans cette partie." }); return; }
+  if (!me) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
 
+  // Jamais les fausses conversations fabriquées sur mon compte — sinon je saurais tout de suite que c'est faux
   const ownConversations = await Conversation.findAll({
-    where: { gameId, [Op.or]: [{ player1Id: me.id }, { player2Id: me.id }] },
+    where: {
+      gameId,
+      isFake: false,
+      [Op.or]: [{ player1Id: me.id }, { player2Id: me.id }],
+    },
   });
 
-  // Accès via code piraté — toutes les conversations du joueur ciblé
-  const unlocks   = await CodeUnlock.findAll({ where: { gameId, unlockedByPlayerId: me.id } });
-  const hackedIds = unlocks.map(u => u.targetPlayerId);
+  const unlocks = await CodeUnlock.findAll({
+    where: { gameId, unlockedByPlayerId: me.id },
+  });
+  const hackedIds = unlocks.map((u) => u.targetPlayerId);
 
   let codeHackedConversations: Conversation[] = [];
   if (hackedIds.length > 0) {
@@ -65,30 +90,48 @@ export async function getMyConversations(req: Request, res: Response): Promise<v
     });
   }
 
-  // Accès via pouvoir Informaticien — conversation précise piratée
   const powerHacks = await PowerUse.findAll({
-    where: { gameId, gamePlayerId: me.id, powerSlug: 'informaticien', conversationId: { [Op.not]: null } },
+    where: {
+      gameId,
+      gamePlayerId: me.id,
+      powerSlug: "informaticien",
+      conversationId: { [Op.not]: null },
+    },
   });
-  const powerHackedIds = powerHacks.map(h => h.conversationId!).filter(id => id !== null);
+  const powerHackedIds = powerHacks
+    .map((h) => h.conversationId!)
+    .filter((id) => id !== null);
   let powerHackedConversations: Conversation[] = [];
   if (powerHackedIds.length > 0) {
-    powerHackedConversations = await Conversation.findAll({ where: { id: { [Op.in]: powerHackedIds } } });
+    powerHackedConversations = await Conversation.findAll({
+      where: { id: { [Op.in]: powerHackedIds } },
+    });
   }
 
-  const allConversations = [...ownConversations, ...codeHackedConversations, ...powerHackedConversations]
-    .filter((c, i, arr) => arr.findIndex(x => x.id === c.id) === i);
+  const allConversations = [
+    ...ownConversations,
+    ...codeHackedConversations,
+    ...powerHackedConversations,
+  ].filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i);
 
-  const players  = await GamePlayer.findAll({ where: { gameId } });
-  const nameById = new Map(players.map(p => [p.id, p.characterName]));
+  const players = await GamePlayer.findAll({ where: { gameId } });
+  const nameById = new Map(players.map((p) => [p.id, p.characterName]));
+  const visionActive = await hasActiveVisionAbsolue(me.id);
 
   const result = await Promise.all(
     allConversations.map(async (conv) => {
       const lastMessage = await Message.findOne({
         where: { conversationId: conv.id },
-        order: [['createdAt', 'DESC']],
+        order: [["createdAt", "DESC"]],
       });
-      return formatConversation(conv, me.id, nameById, lastMessage);
-    })
+      return formatConversation(
+        conv,
+        me.id,
+        nameById,
+        lastMessage,
+        visionActive,
+      );
+    }),
   );
 
   result.sort((a, b) => {
@@ -101,24 +144,54 @@ export async function getMyConversations(req: Request, res: Response): Promise<v
 }
 
 // ── POST /api/games/:id/conversations ─────────────────────────────────────
-export async function getOrCreateConversation(req: Request, res: Response): Promise<void> {
-  const gameId = Number(req.params['id']);
+export async function getOrCreateConversation(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const gameId = Number(req.params["id"]);
   const game = await Game.findByPk(gameId);
-  if (!game) { res.status(404).json({ success: false, message: 'Partie introuvable.' }); return; }
-  if (game.status !== 'active') { res.status(400).json({ success: false, message: "La partie n'a pas encore commencé." }); return; }
+  if (!game) {
+    res.status(404).json({ success: false, message: "Partie introuvable." });
+    return;
+  }
+  if (game.status !== "active") {
+    res
+      .status(400)
+      .json({ success: false, message: "La partie n'a pas encore commencé." });
+    return;
+  }
 
   const me = await getMyGamePlayer(gameId, req.user!.userId);
-  if (!me) { res.status(403).json({ success: false, message: "Vous n'êtes pas dans cette partie." }); return; }
+  if (!me) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
 
   const withPlayerId = Number(req.body.withPlayerId);
-  if (withPlayerId === me.id) { res.status(400).json({ success: false, message: 'Impossible de discuter avec vous-même.' }); return; }
+  if (withPlayerId === me.id) {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Impossible de discuter avec vous-même.",
+      });
+    return;
+  }
 
-  const other = await GamePlayer.findOne({ where: { id: withPlayerId, gameId } });
-  if (!other) { res.status(404).json({ success: false, message: 'Joueur introuvable.' }); return; }
+  const other = await GamePlayer.findOne({
+    where: { id: withPlayerId, gameId },
+  });
+  if (!other) {
+    res.status(404).json({ success: false, message: "Joueur introuvable." });
+    return;
+  }
 
   let conversation = await Conversation.findOne({
     where: {
       gameId,
+      isFake: false,
       [Op.or]: [
         { player1Id: me.id, player2Id: withPlayerId },
         { player1Id: withPlayerId, player2Id: me.id },
@@ -127,7 +200,12 @@ export async function getOrCreateConversation(req: Request, res: Response): Prom
   });
 
   if (!conversation) {
-    conversation = await Conversation.create({ gameId, player1Id: me.id, player2Id: withPlayerId, isFake: false });
+    conversation = await Conversation.create({
+      gameId,
+      player1Id: me.id,
+      player2Id: withPlayerId,
+      isFake: false,
+    });
   }
 
   res.status(201).json({ success: true, data: { id: conversation.id } });
@@ -135,24 +213,41 @@ export async function getOrCreateConversation(req: Request, res: Response): Prom
 
 // ── GET /api/games/:id/conversations/:conversationId/messages ────────────
 export async function getMessages(req: Request, res: Response): Promise<void> {
-  const gameId         = Number(req.params['id']);
-  const conversationId = Number(req.params['conversationId']);
+  const gameId = Number(req.params["id"]);
+  const conversationId = Number(req.params["conversationId"]);
 
   const me = await getMyGamePlayer(gameId, req.user!.userId);
-  if (!me) { res.status(403).json({ success: false, message: "Vous n'êtes pas dans cette partie." }); return; }
+  if (!me) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
 
-  const conversation = await Conversation.findOne({ where: { id: conversationId, gameId } });
-  if (!conversation) { res.status(404).json({ success: false, message: 'Conversation introuvable.' }); return; }
+  const conversation = await Conversation.findOne({
+    where: { id: conversationId, gameId },
+  });
+  if (!conversation) {
+    res
+      .status(404)
+      .json({ success: false, message: "Conversation introuvable." });
+    return;
+  }
 
-  const isParticipant = conversation.player1Id === me.id || conversation.player2Id === me.id;
-
-  let hasAccess = isParticipant;
+  // Une fausse conversation ne compte jamais comme "participant" pour ses cibles — seul le piratage y donne accès
+  const isRealParticipant =
+    !conversation.isFake &&
+    (conversation.player1Id === me.id || conversation.player2Id === me.id);
+  let hasAccess = isRealParticipant;
 
   if (!hasAccess) {
     const unlock = await CodeUnlock.findOne({
       where: {
-        gameId, unlockedByPlayerId: me.id,
-        targetPlayerId: { [Op.in]: [conversation.player1Id, conversation.player2Id] },
+        gameId,
+        unlockedByPlayerId: me.id,
+        targetPlayerId: {
+          [Op.in]: [conversation.player1Id, conversation.player2Id],
+        },
       },
     });
     hasAccess = !!unlock;
@@ -160,28 +255,57 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
 
   if (!hasAccess) {
     const powerHack = await PowerUse.findOne({
-      where: { gameId, gamePlayerId: me.id, powerSlug: 'informaticien', conversationId },
+      where: {
+        gameId,
+        gamePlayerId: me.id,
+        powerSlug: "informaticien",
+        conversationId,
+      },
     });
     hasAccess = !!powerHack;
   }
 
-  if (!hasAccess) { res.status(403).json({ success: false, message: "Vous n'avez pas accès à cette conversation." }); return; }
+  if (!hasAccess && conversation.createdBy === me.id) hasAccess = true; // l'Usurpateur peut relire ce qu'il a fabriqué
 
-  const messages = await Message.findAll({ where: { conversationId }, order: [['createdAt', 'ASC']] });
-  const players  = await GamePlayer.findAll({ where: { gameId } });
-  const nameById = new Map(players.map(p => [p.id, p.characterName]));
+  if (!hasAccess) {
+    res
+      .status(403)
+      .json({
+        success: false,
+        message: "Vous n'avez pas accès à cette conversation.",
+      });
+    return;
+  }
+
+  const visionActive = await hasActiveVisionAbsolue(me.id);
+  const messages = await Message.findAll({
+    where: { conversationId },
+    order: [["createdAt", "ASC"]],
+  });
+  const players = await GamePlayer.findAll({ where: { gameId } });
+  const nameById = new Map(players.map((p) => [p.id, p.characterName]));
 
   res.json({
     success: true,
     data: {
-      isParticipant,
+      isParticipant: isRealParticipant,
+      isFake: visionActive ? conversation.isFake : false,
       participants: [
-        { id: conversation.player1Id, characterName: nameById.get(conversation.player1Id) ?? '???' },
-        { id: conversation.player2Id, characterName: nameById.get(conversation.player2Id) ?? '???' },
+        {
+          id: conversation.player1Id,
+          characterName: nameById.get(conversation.player1Id) ?? "???",
+        },
+        {
+          id: conversation.player2Id,
+          characterName: nameById.get(conversation.player2Id) ?? "???",
+        },
       ],
-      messages: messages.map(m => ({
-        id: m.id, senderId: m.senderId, senderName: nameById.get(m.senderId) ?? '???',
-        content: m.content, sentAt: m.createdAt,
+      messages: messages.map((m) => ({
+        id: m.id,
+        senderId: m.senderId,
+        senderName: nameById.get(m.senderId) ?? "???",
+        content: m.content,
+        sentAt: m.createdAt,
       })),
     },
   });
@@ -189,64 +313,141 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
 
 // ── POST /api/games/:id/conversations/:conversationId/messages ───────────
 export async function sendMessage(req: Request, res: Response): Promise<void> {
-  const gameId         = Number(req.params['id']);
-  const conversationId = Number(req.params['conversationId']);
+  const gameId = Number(req.params["id"]);
+  const conversationId = Number(req.params["conversationId"]);
 
   const game = await Game.findByPk(gameId);
-  if (!game) { res.status(404).json({ success: false, message: 'Partie introuvable.' }); return; }
-  if (game.status !== 'active') { res.status(400).json({ success: false, message: "La partie n'a pas encore commencé." }); return; }
+  if (!game) {
+    res.status(404).json({ success: false, message: "Partie introuvable." });
+    return;
+  }
+  if (game.status !== "active") {
+    res
+      .status(400)
+      .json({ success: false, message: "La partie n'a pas encore commencé." });
+    return;
+  }
 
   const me = await getMyGamePlayer(gameId, req.user!.userId);
-  if (!me) { res.status(403).json({ success: false, message: "Vous n'êtes pas dans cette partie." }); return; }
+  if (!me) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
 
-  const content = String(req.body.content ?? '').trim();
-  if (!content) { res.status(400).json({ success: false, message: 'Message vide.' }); return; }
+  const content = String(req.body.content ?? "").trim();
+  if (!content) {
+    res.status(400).json({ success: false, message: "Message vide." });
+    return;
+  }
 
-  const conversation = await Conversation.findOne({ where: { id: conversationId, gameId } });
-  if (!conversation) { res.status(404).json({ success: false, message: 'Conversation introuvable.' }); return; }
+  const conversation = await Conversation.findOne({
+    where: { id: conversationId, gameId },
+  });
+  if (!conversation) {
+    res
+      .status(404)
+      .json({ success: false, message: "Conversation introuvable." });
+    return;
+  }
 
-  const isParticipant = conversation.player1Id === me.id || conversation.player2Id === me.id;
-  if (!isParticipant) { res.status(403).json({ success: false, message: 'Vous ne pouvez pas écrire dans cette conversation.' }); return; }
+  // Impossible d'écrire dans une conversation falsifiée — c'est une preuve figée
+  const isParticipant =
+    !conversation.isFake &&
+    (conversation.player1Id === me.id || conversation.player2Id === me.id);
+  if (!isParticipant) {
+    res
+      .status(403)
+      .json({
+        success: false,
+        message: "Vous ne pouvez pas écrire dans cette conversation.",
+      });
+    return;
+  }
 
-  const message = await Message.create({ conversationId, senderId: me.id, content });
+  const message = await Message.create({
+    conversationId,
+    senderId: me.id,
+    content,
+  });
 
-  getIO().to(`game:${gameId}`).emit('message:new', { conversationId });
+  getIO().to(`game:${gameId}`).emit("message:new", { conversationId });
 
   res.status(201).json({
     success: true,
-    data: { id: message.id, senderId: me.id, content: message.content, sentAt: message.createdAt },
+    data: {
+      id: message.id,
+      senderId: me.id,
+      content: message.content,
+      sentAt: message.createdAt,
+    },
   });
 }
 
 // ── POST /api/games/:id/redeem-code ───────────────────────────────────────
 export async function redeemCode(req: Request, res: Response): Promise<void> {
-  const gameId = Number(req.params['id']);
+  const gameId = Number(req.params["id"]);
 
   const game = await Game.findByPk(gameId);
-  if (!game) { res.status(404).json({ success: false, message: 'Partie introuvable.' }); return; }
-  if (game.status !== 'active') { res.status(400).json({ success: false, message: "La partie n'a pas encore commencé." }); return; }
+  if (!game) {
+    res.status(404).json({ success: false, message: "Partie introuvable." });
+    return;
+  }
+  if (game.status !== "active") {
+    res
+      .status(400)
+      .json({ success: false, message: "La partie n'a pas encore commencé." });
+    return;
+  }
 
   const me = await getMyGamePlayer(gameId, req.user!.userId);
-  if (!me) { res.status(403).json({ success: false, message: "Vous n'êtes pas dans cette partie." }); return; }
+  if (!me) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
 
-  const code = String(req.body.code ?? '').trim();
-  if (!code) { res.status(400).json({ success: false, message: 'Code requis.' }); return; }
+  const code = String(req.body.code ?? "").trim();
+  if (!code) {
+    res.status(400).json({ success: false, message: "Code requis." });
+    return;
+  }
 
-  const target = await GamePlayer.findOne({ where: { gameId, messagingCode: code } });
-  if (!target) { res.status(404).json({ success: false, message: 'Code invalide.' }); return; }
-  if (target.id === me.id) { res.status(400).json({ success: false, message: "C'est votre propre code." }); return; }
+  const target = await GamePlayer.findOne({
+    where: { gameId, messagingCode: code },
+  });
+  if (!target) {
+    res.status(404).json({ success: false, message: "Code invalide." });
+    return;
+  }
+  if (target.id === me.id) {
+    res
+      .status(400)
+      .json({ success: false, message: "C'est votre propre code." });
+    return;
+  }
 
   const existing = await CodeUnlock.findOne({
     where: { gameId, unlockedByPlayerId: me.id, targetPlayerId: target.id },
   });
   if (existing) {
-    res.json({ success: true, message: `Vous avez déjà piraté ${target.characterName}.`, data: { characterName: target.characterName } });
+    res.json({
+      success: true,
+      message: `Vous avez déjà piraté ${target.characterName}.`,
+      data: { characterName: target.characterName },
+    });
     return;
   }
 
-  await CodeUnlock.create({ gameId, unlockedByPlayerId: me.id, targetPlayerId: target.id });
+  await CodeUnlock.create({
+    gameId,
+    unlockedByPlayerId: me.id,
+    targetPlayerId: target.id,
+  });
 
-  getIO().to(`game:${gameId}`).emit('code:unlocked', {});
+  getIO().to(`game:${gameId}`).emit("code:unlocked", {});
 
   res.status(201).json({
     success: true,

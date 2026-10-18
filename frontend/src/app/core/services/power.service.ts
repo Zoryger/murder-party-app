@@ -4,38 +4,92 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface MyPower {
-  slug:            string;
-  name:            string;
-  category:        string;
-  description:     string;
-  maxUses:         number;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  maxUses: number;
   durationSeconds: number | null;
-  usesRemaining:   number;
+  usesRemaining: number;
 }
 
-export interface ApiResponse<T> { success: boolean; data: T; message?: string; }
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PowerService {
   private http = inject(HttpClient);
-  private API  = environment.apiUrl;
+  private API = environment.apiUrl;
 
   getMyPower(gameId: number): Observable<ApiResponse<MyPower>> {
     return this.http.get<ApiResponse<MyPower>>(`${this.API}/games/${gameId}/my-power`);
   }
 
-  useVoyante(gameId: number): Observable<ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>> {
-    return this.http.post<ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>>(
-      `${this.API}/games/${gameId}/powers/voyante`, {});
+  useVoyante(
+    gameId: number,
+  ): Observable<
+    ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>
+  > {
+    return this.http.post<
+      ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>
+    >(`${this.API}/games/${gameId}/powers/voyante`, {});
   }
 
-  useAnalyseurRelations(gameId: number, targetPlayerId1: number, targetPlayerId2: number): Observable<ApiResponse<{ player1: string; player2: string; relationType: string }>> {
+  useAnalyseurRelations(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+  ): Observable<ApiResponse<{ player1: string; player2: string; relationType: string }>> {
     return this.http.post<ApiResponse<{ player1: string; player2: string; relationType: string }>>(
-      `${this.API}/games/${gameId}/powers/analyseur-relations`, { targetPlayerId1, targetPlayerId2 });
+      `${this.API}/games/${gameId}/powers/analyseur-relations`,
+      { targetPlayerId1, targetPlayerId2 },
+    );
   }
 
-  useInformaticien(gameId: number, targetPlayerId1: number, targetPlayerId2: number): Observable<ApiResponse<{ conversationId: number }>> {
+  useInformaticien(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+  ): Observable<ApiResponse<{ conversationId: number }>> {
     return this.http.post<ApiResponse<{ conversationId: number }>>(
-      `${this.API}/games/${gameId}/powers/informaticien`, { targetPlayerId1, targetPlayerId2 });
+      `${this.API}/games/${gameId}/powers/informaticien`,
+      { targetPlayerId1, targetPlayerId2 },
+    );
+  }
+
+  useFalsificateur(
+    gameId: number,
+    clueId: number,
+    newGamePlayerId: number,
+  ): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.API}/games/${gameId}/powers/falsificateur`,
+      { clueId, newGamePlayerId },
+    );
+  }
+
+  useUsurpateur(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+    fakeSenderId: number,
+    content: string,
+  ): Observable<ApiResponse<{ conversationId: number }>> {
+    return this.http.post<ApiResponse<{ conversationId: number }>>(
+      `${this.API}/games/${gameId}/powers/usurpateur`,
+      { targetPlayerId1, targetPlayerId2, fakeSenderId, content },
+    );
+  }
+
+  useVisionAbsolue(
+    gameId: number,
+  ): Observable<ApiResponse<{ activatedAt: string; expiresAt: string }>> {
+    return this.http.post<ApiResponse<{ activatedAt: string; expiresAt: string }>>(
+      `${this.API}/games/${gameId}/powers/vision-absolue`,
+      {},
+    );
   }
 }

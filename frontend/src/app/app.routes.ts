@@ -41,4 +41,9 @@ export const routes: Routes = [
     path: '**',
     loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
   },
+  {
+    path: 'game/:id/clues',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/game/clue-board/clue-board').then((m) => m.ClueBoard),
+  },
 ];

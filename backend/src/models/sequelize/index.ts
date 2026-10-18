@@ -1,108 +1,223 @@
-import sequelize from '../../config/database';
-import User                 from './User.model';
-import Game                 from './Game.model';
-import GamePlayer           from './GamePlayer.model';
-import Power                from './Power.model';
-import Scenario             from './Scenario.model';
-import ScenarioCharacter    from './ScenarioCharacter.model';
-import ScenarioRelation     from './ScenarioRelation.model';
-import ScenarioRiddle       from './ScenarioRiddle.model';
-import ScenarioPhysicalClue from './ScenarioPhysicalClue.model';
-import ScenarioQrClue       from './ScenarioQrClue.model';
-import ScenarioPlotThread   from './ScenarioPlotThread.model';
-import Conversation         from './Conversation.model';
-import Message              from './Message.model';
-import CodeUnlock           from './CodeUnlock.model';
-import PowerUse             from './PowerUse.model';
-import { seedPowers }       from '../../seed/powers.seed';
-import { seedHp2027 }       from '../../seed/hp2027.seed';
+import sequelize from "../../config/database";
+import User from "./User.model";
+import Game from "./Game.model";
+import GamePlayer from "./GamePlayer.model";
+import Power from "./Power.model";
+import Scenario from "./Scenario.model";
+import ScenarioCharacter from "./ScenarioCharacter.model";
+import ScenarioRelation from "./ScenarioRelation.model";
+import ScenarioRiddle from "./ScenarioRiddle.model";
+import ScenarioPhysicalClue from "./ScenarioPhysicalClue.model";
+import ScenarioQrClue from "./ScenarioQrClue.model";
+import ScenarioPlotThread from "./ScenarioPlotThread.model";
+import Conversation from "./Conversation.model";
+import Message from "./Message.model";
+import CodeUnlock from "./CodeUnlock.model";
+import PowerUse from "./PowerUse.model";
+import GameClue from "./GameClue.model";
+import { seedPowers } from "../../seed/powers.seed";
+import { seedHp2027 } from "../../seed/hp2027.seed";
 
 // ── Associations existantes ──────────────────────────────────────────────
-User.hasMany(Game,       { foreignKey: 'createdBy', as: 'createdGames' });
-Game.belongsTo(User,     { foreignKey: 'createdBy', as: 'creator' });
+User.hasMany(Game, { foreignKey: "createdBy", as: "createdGames" });
+Game.belongsTo(User, { foreignKey: "createdBy", as: "creator" });
 
-Game.hasMany(GamePlayer, { foreignKey: 'gameId', as: 'players' });
-GamePlayer.belongsTo(Game, { foreignKey: 'gameId', as: 'game' });
+Game.hasMany(GamePlayer, { foreignKey: "gameId", as: "players" });
+GamePlayer.belongsTo(Game, { foreignKey: "gameId", as: "game" });
 
-User.hasMany(GamePlayer, { foreignKey: 'userId', as: 'playerProfiles' });
-GamePlayer.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(GamePlayer, { foreignKey: "userId", as: "playerProfiles" });
+GamePlayer.belongsTo(User, { foreignKey: "userId", as: "user" });
 
 // ── Associations — contenu du scénario ───────────────────────────────────
-Scenario.hasMany(ScenarioCharacter,   { foreignKey: 'scenarioId', as: 'characters' });
-ScenarioCharacter.belongsTo(Scenario, { foreignKey: 'scenarioId', as: 'scenario' });
+Scenario.hasMany(ScenarioCharacter, {
+  foreignKey: "scenarioId",
+  as: "characters",
+});
+ScenarioCharacter.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
 
-Power.hasMany(ScenarioCharacter,      { foreignKey: 'powerId', as: 'scenarioCharacters' });
-ScenarioCharacter.belongsTo(Power,    { foreignKey: 'powerId', as: 'power' });
+Power.hasMany(ScenarioCharacter, {
+  foreignKey: "powerId",
+  as: "scenarioCharacters",
+});
+ScenarioCharacter.belongsTo(Power, { foreignKey: "powerId", as: "power" });
 
-Scenario.hasMany(ScenarioRelation,    { foreignKey: 'scenarioId', as: 'relations' });
-ScenarioRelation.belongsTo(Scenario,  { foreignKey: 'scenarioId', as: 'scenario' });
-ScenarioCharacter.hasMany(ScenarioRelation,   { foreignKey: 'characterId', as: 'outgoingRelations' });
-ScenarioRelation.belongsTo(ScenarioCharacter, { foreignKey: 'characterId', as: 'character' });
-ScenarioRelation.belongsTo(ScenarioCharacter, { foreignKey: 'relatedCharacterId', as: 'relatedCharacter' });
+Scenario.hasMany(ScenarioRelation, {
+  foreignKey: "scenarioId",
+  as: "relations",
+});
+ScenarioRelation.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
+ScenarioCharacter.hasMany(ScenarioRelation, {
+  foreignKey: "characterId",
+  as: "outgoingRelations",
+});
+ScenarioRelation.belongsTo(ScenarioCharacter, {
+  foreignKey: "characterId",
+  as: "character",
+});
+ScenarioRelation.belongsTo(ScenarioCharacter, {
+  foreignKey: "relatedCharacterId",
+  as: "relatedCharacter",
+});
 
-Scenario.hasMany(ScenarioRiddle,      { foreignKey: 'scenarioId', as: 'riddles' });
-ScenarioRiddle.belongsTo(Scenario,    { foreignKey: 'scenarioId', as: 'scenario' });
-ScenarioCharacter.hasOne(ScenarioRiddle,      { foreignKey: 'characterId', as: 'riddle' });
-ScenarioRiddle.belongsTo(ScenarioCharacter,   { foreignKey: 'characterId', as: 'character' });
+Scenario.hasMany(ScenarioRiddle, { foreignKey: "scenarioId", as: "riddles" });
+ScenarioRiddle.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
+ScenarioCharacter.hasOne(ScenarioRiddle, {
+  foreignKey: "characterId",
+  as: "riddle",
+});
+ScenarioRiddle.belongsTo(ScenarioCharacter, {
+  foreignKey: "characterId",
+  as: "character",
+});
 
-Scenario.hasMany(ScenarioPhysicalClue,     { foreignKey: 'scenarioId', as: 'physicalClues' });
-ScenarioPhysicalClue.belongsTo(Scenario,   { foreignKey: 'scenarioId', as: 'scenario' });
-ScenarioCharacter.hasMany(ScenarioPhysicalClue,   { foreignKey: 'relatedCharacterId', as: 'physicalClues' });
-ScenarioPhysicalClue.belongsTo(ScenarioCharacter, { foreignKey: 'relatedCharacterId', as: 'relatedCharacter' });
+Scenario.hasMany(ScenarioPhysicalClue, {
+  foreignKey: "scenarioId",
+  as: "physicalClues",
+});
+ScenarioPhysicalClue.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
+ScenarioCharacter.hasMany(ScenarioPhysicalClue, {
+  foreignKey: "relatedCharacterId",
+  as: "physicalClues",
+});
+ScenarioPhysicalClue.belongsTo(ScenarioCharacter, {
+  foreignKey: "relatedCharacterId",
+  as: "relatedCharacter",
+});
 
-Scenario.hasMany(ScenarioQrClue,      { foreignKey: 'scenarioId', as: 'qrClues' });
-ScenarioQrClue.belongsTo(Scenario,    { foreignKey: 'scenarioId', as: 'scenario' });
+Scenario.hasMany(ScenarioQrClue, { foreignKey: "scenarioId", as: "qrClues" });
+ScenarioQrClue.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
 
-Scenario.hasMany(ScenarioPlotThread,  { foreignKey: 'scenarioId', as: 'plotThreads' });
-ScenarioPlotThread.belongsTo(Scenario,{ foreignKey: 'scenarioId', as: 'scenario' });
+Scenario.hasMany(ScenarioPlotThread, {
+  foreignKey: "scenarioId",
+  as: "plotThreads",
+});
+ScenarioPlotThread.belongsTo(Scenario, {
+  foreignKey: "scenarioId",
+  as: "scenario",
+});
 
 // ── Liens Game / GamePlayer ↔ Scénario ───────────────────────────────────
-Scenario.hasMany(Game,   { foreignKey: 'scenarioId', as: 'games' });
-Game.belongsTo(Scenario, { foreignKey: 'scenarioId', as: 'scenario' });
+Scenario.hasMany(Game, { foreignKey: "scenarioId", as: "games" });
+Game.belongsTo(Scenario, { foreignKey: "scenarioId", as: "scenario" });
 
-ScenarioCharacter.hasMany(GamePlayer,   { foreignKey: 'scenarioCharacterId', as: 'gamePlayers' });
-GamePlayer.belongsTo(ScenarioCharacter, { foreignKey: 'scenarioCharacterId', as: 'scenarioCharacter' });
+ScenarioCharacter.hasMany(GamePlayer, {
+  foreignKey: "scenarioCharacterId",
+  as: "gamePlayers",
+});
+GamePlayer.belongsTo(ScenarioCharacter, {
+  foreignKey: "scenarioCharacterId",
+  as: "scenarioCharacter",
+});
 
 // ── Associations — messagerie ─────────────────────────────────────────────
-GamePlayer.hasMany(Conversation, { foreignKey: 'player1Id', as: 'conversationsAsP1' });
-GamePlayer.hasMany(Conversation, { foreignKey: 'player2Id', as: 'conversationsAsP2' });
-Conversation.belongsTo(GamePlayer, { foreignKey: 'player1Id', as: 'player1' });
-Conversation.belongsTo(GamePlayer, { foreignKey: 'player2Id', as: 'player2' });
+GamePlayer.hasMany(Conversation, {
+  foreignKey: "player1Id",
+  as: "conversationsAsP1",
+});
+GamePlayer.hasMany(Conversation, {
+  foreignKey: "player2Id",
+  as: "conversationsAsP2",
+});
+Conversation.belongsTo(GamePlayer, { foreignKey: "player1Id", as: "player1" });
+Conversation.belongsTo(GamePlayer, { foreignKey: "player2Id", as: "player2" });
 
-Conversation.hasMany(Message, { foreignKey: 'conversationId', as: 'messages' });
-Message.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversation' });
-GamePlayer.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' });
-Message.belongsTo(GamePlayer, { foreignKey: 'senderId', as: 'sender' });
+Conversation.hasMany(Message, { foreignKey: "conversationId", as: "messages" });
+Message.belongsTo(Conversation, {
+  foreignKey: "conversationId",
+  as: "conversation",
+});
+GamePlayer.hasMany(Message, { foreignKey: "senderId", as: "sentMessages" });
+Message.belongsTo(GamePlayer, { foreignKey: "senderId", as: "sender" });
 
-GamePlayer.hasMany(CodeUnlock, { foreignKey: 'unlockedByPlayerId', as: 'unlocksMade' });
-GamePlayer.hasMany(CodeUnlock, { foreignKey: 'targetPlayerId', as: 'unlocksReceived' });
-CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'unlockedByPlayerId', as: 'unlockedBy' });
-CodeUnlock.belongsTo(GamePlayer, { foreignKey: 'targetPlayerId', as: 'target' });
+GamePlayer.hasMany(CodeUnlock, {
+  foreignKey: "unlockedByPlayerId",
+  as: "unlocksMade",
+});
+GamePlayer.hasMany(CodeUnlock, {
+  foreignKey: "targetPlayerId",
+  as: "unlocksReceived",
+});
+CodeUnlock.belongsTo(GamePlayer, {
+  foreignKey: "unlockedByPlayerId",
+  as: "unlockedBy",
+});
+CodeUnlock.belongsTo(GamePlayer, {
+  foreignKey: "targetPlayerId",
+  as: "target",
+});
 
 // ── Associations — pouvoirs ────────────────────────────────────────────────
-GamePlayer.hasMany(PowerUse, { foreignKey: 'gamePlayerId', as: 'powerUses' });
-PowerUse.belongsTo(GamePlayer, { foreignKey: 'gamePlayerId', as: 'activator' });
+GamePlayer.hasMany(PowerUse, { foreignKey: "gamePlayerId", as: "powerUses" });
+PowerUse.belongsTo(GamePlayer, { foreignKey: "gamePlayerId", as: "activator" });
+
+// ── Associations — indices d'une partie ────────────────────────────────────
+Game.hasMany(GameClue, { foreignKey: "gameId", as: "clues" });
+GameClue.belongsTo(Game, { foreignKey: "gameId", as: "game" });
+ScenarioPhysicalClue.hasOne(GameClue, {
+  foreignKey: "physicalClueId",
+  as: "gameInstance",
+});
+GameClue.belongsTo(ScenarioPhysicalClue, {
+  foreignKey: "physicalClueId",
+  as: "template",
+});
+ScenarioCharacter.hasMany(GameClue, {
+  foreignKey: "currentCharacterId",
+  as: "attributedClues",
+});
+GameClue.belongsTo(ScenarioCharacter, {
+  foreignKey: "currentCharacterId",
+  as: "currentCharacter",
+});
 
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
   try {
     await sequelize.authenticate();
-    console.log('✅ Connexion MySQL établie');
+    console.log("✅ Connexion MySQL établie");
 
     await sequelize.sync({ alter: true });
-    console.log('✅ Tables synchronisées');
+    console.log("✅ Tables synchronisées");
 
     await seedPowers();
     await seedHp2027();
   } catch (error) {
-    console.error('❌ Erreur de connexion MySQL :', error);
+    console.error("❌ Erreur de connexion MySQL :", error);
     process.exit(1);
   }
 }
 
 export {
-  sequelize, User, Game, GamePlayer, Power,
-  Scenario, ScenarioCharacter, ScenarioRelation,
-  ScenarioRiddle, ScenarioPhysicalClue, ScenarioQrClue, ScenarioPlotThread,
-  Conversation, Message, CodeUnlock, PowerUse,
+  sequelize,
+  User,
+  Game,
+  GamePlayer,
+  Power,
+  Scenario,
+  ScenarioCharacter,
+  ScenarioRelation,
+  ScenarioRiddle,
+  ScenarioPhysicalClue,
+  ScenarioQrClue,
+  ScenarioPlotThread,
+  Conversation,
+  Message,
+  CodeUnlock,
+  PowerUse,
+  GameClue,
 };
