@@ -19,17 +19,16 @@
       <a [routerLink]="['/game', gameId, 'lobby']" class="btn btn--ghost">← Salon d'attente</a>
     </div>
   } @else if (sheet?.character) {
-    @if (sheet?.isAssigned && !sheet?.isGm) {
-      <div class="dash-nav">
-        <a [routerLink]="['/game', gameId, 'powers']" class="btn btn--ghost btn--sm"
-          >✨ Mon pouvoir</a
-        >
-        <a [routerLink]="['/game', gameId, 'clues']" class="btn btn--ghost btn--sm">🔎 Indices</a>
-        <a [routerLink]="['/game', gameId, 'messages']" class="btn btn--ghost btn--sm"
-          >💬 Messagerie</a
-        >
-      </div>
-    }
+    <div class="dash-nav">
+      <a [routerLink]="['/game', gameId, 'powers']" class="btn btn--ghost btn--sm"
+        >✨ Mon pouvoir</a
+      >
+      <a [routerLink]="['/game', gameId, 'clues']" class="btn btn--ghost btn--sm">🔎 Indices</a>
+      <a [routerLink]="['/game', gameId, 'messages']" class="btn btn--ghost btn--sm"
+        >💬 Messagerie</a
+      >
+    </div>
+
     <div class="char-header">
       @if (sheet.character.isMurderer) {
         <span class="murderer-badge">🔪 Meurtrier</span>
@@ -37,6 +36,17 @@
       <h1>{{ sheet.character.name }}</h1>
       <p class="title">{{ sheet.character.title }}</p>
     </div>
+
+    @if (sheet.player?.status === 'ghost') {
+      <div class="ghost-banner">
+        <strong>👻 Vous êtes un fantôme.</strong>
+        Vous ne pouvez plus utiliser votre pouvoir tant qu'un Nécromancien ne vous a pas réanimé.
+        @if (sheet.character.power.slug === 'horcruxe') {
+          <br />Votre Horcruxe peut encore vous sauver : rendez-vous sur
+          <a [routerLink]="['/game', gameId, 'powers']">✨ Mon pouvoir</a>.
+        }
+      </div>
+    }
 
     <div class="grid">
       <section class="card">
@@ -49,10 +59,33 @@
         <p>{{ sheet.character.linkToVictim }}</p>
       </section>
 
-      <section class="card">
-        <h2>🎯 Objectif</h2>
-        <p>{{ sheet.character.objective }}</p>
-      </section>
+      @if (sheet.loveBond) {
+        <section class="card love-card">
+          <h2>💘 Lien de Cupidon</h2>
+          <p>
+            <strong>Nouvel objectif :</strong> survivre et être innocenté(e) avec
+            <strong>{{ sheet.loveBond.partnerCharacterName }}</strong>
+            @if (sheet.loveBond.partnerUsername) {
+              <span class="real-name">({{ sheet.loveBond.partnerUsername }})</span>
+            }
+            — quoi qu'il arrive.
+          </p>
+          @if (sheet.loveBond.partnerStatus === 'ghost') {
+            <p class="love-warning">
+              👻 Votre moitié est actuellement un fantôme : trouvez un moyen de la réanimer.
+            </p>
+          }
+          <p class="replaced">
+            Objectif initial remplacé :
+            <span class="original">{{ sheet.character.objective }}</span>
+          </p>
+        </section>
+      } @else {
+        <section class="card">
+          <h2>🎯 Objectif</h2>
+          <p>{{ sheet.character.objective }}</p>
+        </section>
+      }
 
       @if (sheet.character.isMurderer) {
         <section class="card murderer-card">
@@ -83,7 +116,7 @@
         </div>
         <div class="stat-row">
           <span>État</span
-          ><strong>{{ sheet.player?.status === 'alive' ? 'Vivant' : 'Fantôme' }}</strong>
+          ><strong>{{ sheet.player?.status === 'alive' ? 'Vivant' : 'Fantôme 👻' }}</strong>
         </div>
         <div class="stat-row">
           <span>Code de messagerie</span><strong>{{ sheet.player?.messagingCode }}</strong>

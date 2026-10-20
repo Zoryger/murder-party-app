@@ -4,69 +4,89 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface Game {
-  id:          number;
-  name:        string;
-  theme:       string;
-  synopsis:    string;
-  status:      'waiting' | 'active' | 'finished';
-  joinCode:    string;
-  createdBy:   number;
-  maxPlayers:  number;
+  id: number;
+  name: string;
+  theme: string;
+  synopsis: string;
+  status: 'waiting' | 'active' | 'finished';
+  joinCode: string;
+  createdBy: number;
+  maxPlayers: number;
   scenarioId?: number | null;
-  createdAt:   Date;
+  createdAt: Date;
 }
 
 export interface ApiResponse<T> {
   success: boolean;
-  data:    T;
+  data: T;
   message?: string;
 }
 
 export interface CreateGameDto {
-  name:        string;
-  theme:       string;
-  synopsis:    string;
-  maxPlayers:  number;
+  name: string;
+  theme: string;
+  synopsis: string;
+  maxPlayers: number;
   scenarioId?: number | null;
 }
 
 export interface PublicPlayer {
-  id:            number;
-  userId:        number;
-  username:      string;
+  id: number;
+  userId: number;
+  username: string;
   characterName: string;
   characterRole: string;
-  isAssigned:    boolean;
-  status:        'alive' | 'ghost';
+  isAssigned: boolean;
+  status: 'alive' | 'ghost';
 }
 
 export interface MyCharacterSheet {
-  isGm:        boolean;
+  isGm: boolean;
   isAssigned?: boolean;
-  game?:       Game;
+  game?: Game;
   player?: {
-    id: number; status: string; money: number; messagingCode: string;
+    id: number;
+    status: 'alive' | 'ghost';
+    money: number;
+    messagingCode: string;
   };
   character?: {
-    id: number; name: string; title: string; backstory: string;
-    linkToVictim: string; objective: string; isMurderer: boolean;
+    id: number;
+    name: string;
+    title: string;
+    backstory: string;
+    linkToVictim: string;
+    objective: string;
+    isMurderer: boolean;
     murderKnowledge: string;
-    power: { name: string; description: string; category: string; maxUses: number; durationSeconds: number | null };
+    power: {
+      slug: string;
+      name: string;
+      description: string;
+      category: string;
+      maxUses: number;
+      durationSeconds: number | null;
+    };
   };
   relations?: Array<{
     relationType: 'positive' | 'neutral' | 'negative';
-    description:  string;
-    isSecret:     boolean;
-    emoji:        string | null;
+    description: string;
+    isSecret: boolean;
+    emoji: string | null;
     withCharacterName: string;
-    withUsername:       string | null;
+    withUsername: string | null;
   }>;
+  loveBond?: {
+    partnerCharacterName: string;
+    partnerUsername: string | null;
+    partnerStatus: 'alive' | 'ghost';
+  } | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private http = inject(HttpClient);
-  private API  = environment.apiUrl;
+  private API = environment.apiUrl;
 
   getGames(): Observable<ApiResponse<Game[]>> {
     return this.http.get<ApiResponse<Game[]>>(`${this.API}/games`);
@@ -97,7 +117,10 @@ export class GameService {
   }
 
   assignCharacters(gameId: number): Observable<ApiResponse<unknown>> {
-    return this.http.post<ApiResponse<unknown>>(`${this.API}/games/${gameId}/assign-characters`, {});
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.API}/games/${gameId}/assign-characters`,
+      {},
+    );
   }
 
   startGame(gameId: number): Observable<ApiResponse<Game>> {

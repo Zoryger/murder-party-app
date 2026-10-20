@@ -1,9 +1,16 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { PowerService, MyPower } from '../../../core/services/power.service';
+import { Observable } from 'rxjs';
+import {
+  PowerService,
+  PowerInfo,
+  MyPowerOverview,
+  ApiResponse,
+} from '../../../core/services/power.service';
 import { GameService, PublicPlayer } from '../../../core/services/game.service';
 import { ClueService, GameClue } from '../../../core/services/clue.service';
+import { SocketService } from '../../../core/services/socket.service';
 
 @Component({
   selector: 'app-powers',
@@ -17,31 +24,36 @@ export class Powers implements OnInit, OnDestroy {
   private powerService = inject(PowerService);
   private gameService = inject(GameService);
   private clueService = inject(ClueService);
+  private socketService = inject(SocketService);
 
   gameId!: number;
   myPlayerId: number | null = null;
-  power: MyPower | null = null;
+  overview: MyPowerOverview | null = null;
+  activeTab: 'own' | 'borrowed' = 'own';
   players: PublicPlayer[] = [];
   clues: GameClue[] = [];
-  isLoading = true;
-  errorMsg = '';
 
-  target1: number | null = null;
-  target2: number | null = null;
+  isLoading = true;
+  loadError = '';
+  actionError = '';
+  successMsg = '';
   isActivating = false;
 
+  // Champs de formulaire (partagés — remis à zéro au changement d'onglet)
+  target1: number | null = null;
+  target2: number | null = null;
+  codeInput = '';
+  substituteId: number | null = null;
+  selectedClueId: number | null = null;
+  fakeSenderId: number | null = null;
+  fakeContent = '';
+
+  // Résultats structurés
   voyanteResult: { characterTitle: string; powerName: string; powerCategory: string }[] | null =
     null;
   relationResult: { player1: string; player2: string; relationType: string } | null = null;
-  informaticienResult = '';
 
-  selectedClueId: number | null = null;
-  falsificateurResult = '';
-
-  fakeSenderId: number | null = null;
-  fakeContent = '';
-  usurpateurResult = '';
-
+  // Vision absolue
   visionExpiresAt: Date | null = null;
   visionSecondsLeft = 0;
   private visionTimer: ReturnType<typeof setInterval> | null = null;
@@ -62,143 +74,201 @@ export class Powers implements OnInit, OnDestroy {
       },
     });
 
-    this.gameService.getPlayers(this.gameId).subscribe({
-      next: (res) => (this.players = res.data),
-    });
+    this.loadPlayers();
+    this.loadClues();
+    this.loadPower(true);
 
-    this.clueService.getClueBoard(this.gameId).subscribe({
-      next: (res) => (this.clues = res.data),
-      error: () => {},
-    });
-
-    this.powerService.getMyPower(this.gameId).subscribe({
-      next: (res) => {
-        this.power = res.data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isLoading = false;
-      },
+    // Si quelqu'un me tue / me réanime pendant que je suis sur cette page, tout se met à jour
+    this.socketService.joinLobby(this.gameId);
+    this.socketService.on('player:status', () => {
+      this.loadPlayers();
+      this.loadPower(false);
     });
   }
 
   ngOnDestroy(): void {
+    this.socketService.off('player:status');
     if (this.visionTimer) clearInterval(this.visionTimer);
+  }
+
+  // ── Données ──────────────────────────────────────────────────────────────
+  get power(): PowerInfo | null {
+    if (!this.overview) return null;
+    return this.activeTab === 'borrowed' && this.overview.borrowed
+      ? this.overview.borrowed
+      : this.overview.own;
   }
 
   get otherPlayers(): PublicPlayer[] {
     return this.players.filter((p) => p.id !== this.myPlayerId);
   }
 
+  get livingOthers(): PublicPlayer[] {
+    return this.otherPlayers.filter((p) => p.status === 'alive');
+  }
+
+  label(p: PublicPlayer): string {
+    return (
+      p.characterName +
+      (p.status === 'ghost' ? ' 👻' : '') +
+      (p.id === this.myPlayerId ? ' (vous)' : '')
+    );
+  }
+
   nameOf(playerId: number | null): string {
     return this.players.find((p) => p.id === playerId)?.characterName ?? '???';
   }
 
-  activateVoyante(): void {
-    this.isActivating = true;
-    this.powerService.useVoyante(this.gameId).subscribe({
+  private loadPlayers(): void {
+    this.gameService
+      .getPlayers(this.gameId)
+      .subscribe({ next: (res) => (this.players = res.data) });
+  }
+
+  private loadClues(): void {
+    this.clueService
+      .getClueBoard(this.gameId)
+      .subscribe({ next: (res) => (this.clues = res.data), error: () => {} });
+  }
+
+  private loadPower(initial: boolean): void {
+    this.powerService.getMyPower(this.gameId).subscribe({
       next: (res) => {
-        this.voyanteResult = res.data;
-        this.isActivating = false;
-        this.refreshPower();
+        this.overview = res.data;
+        if (!res.data.borrowed) this.activeTab = 'own';
+        this.isLoading = false;
       },
       error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
+        if (initial) this.loadError = err.error?.message ?? 'Erreur de chargement.';
+        this.isLoading = false;
+      },
+    });
+  }
+
+  selectTab(tab: 'own' | 'borrowed'): void {
+    this.activeTab = tab;
+    this.target1 =
+      this.target2 =
+      this.substituteId =
+      this.selectedClueId =
+      this.fakeSenderId =
+        null;
+    this.codeInput = this.fakeContent = '';
+    this.actionError = this.successMsg = '';
+    this.voyanteResult = null;
+    this.relationResult = null;
+  }
+
+  // ── Lancement générique d'une action ─────────────────────────────────────
+  private run<T>(
+    request: Observable<ApiResponse<T>>,
+    onSuccess?: (res: ApiResponse<T>) => void,
+  ): void {
+    this.isActivating = true;
+    this.actionError = '';
+    this.successMsg = '';
+
+    request.subscribe({
+      next: (res) => {
+        onSuccess?.(res);
+        this.isActivating = false;
+        this.loadPower(false);
+        this.loadPlayers();
+      },
+      error: (err) => {
+        this.actionError = err.error?.message ?? 'Erreur.';
         this.isActivating = false;
       },
+    });
+  }
+
+  // ── Pouvoirs ─────────────────────────────────────────────────────────────
+  activateVoyante(): void {
+    this.run(this.powerService.useVoyante(this.gameId), (res) => {
+      this.voyanteResult = res.data;
     });
   }
 
   activateAnalyseur(): void {
     if (!this.target1 || !this.target2) return;
-    this.isActivating = true;
-    this.powerService.useAnalyseurRelations(this.gameId, this.target1, this.target2).subscribe({
-      next: (res) => {
+    this.run(
+      this.powerService.useAnalyseurRelations(this.gameId, this.target1, this.target2),
+      (res) => {
         this.relationResult = res.data;
-        this.isActivating = false;
-        this.refreshPower();
       },
-      error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isActivating = false;
-      },
-    });
+    );
   }
 
   activateInformaticien(): void {
     if (!this.target1 || !this.target2) return;
-    this.isActivating = true;
-    this.powerService.useInformaticien(this.gameId, this.target1, this.target2).subscribe({
-      next: (res) => {
-        this.informaticienResult = res.message ?? '';
-        this.isActivating = false;
-        this.refreshPower();
-      },
-      error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isActivating = false;
-      },
+    this.run(this.powerService.useInformaticien(this.gameId, this.target1, this.target2), (res) => {
+      this.successMsg = res.message ?? '';
     });
   }
 
   activateFalsificateur(): void {
     if (!this.selectedClueId || !this.target1) return;
-    this.isActivating = true;
-    this.powerService.useFalsificateur(this.gameId, this.selectedClueId, this.target1).subscribe({
-      next: (res) => {
-        this.falsificateurResult = res.message ?? '';
-        this.isActivating = false;
-        this.refreshPower();
-        this.clueService
-          .getClueBoard(this.gameId)
-          .subscribe({ next: (r) => (this.clues = r.data) });
+    this.run(
+      this.powerService.useFalsificateur(this.gameId, this.selectedClueId, this.target1),
+      (res) => {
+        this.successMsg = res.message ?? '';
+        this.loadClues();
       },
-      error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isActivating = false;
-      },
-    });
+    );
   }
 
   activateUsurpateur(): void {
     if (!this.target1 || !this.target2 || !this.fakeSenderId || !this.fakeContent.trim()) return;
-    this.isActivating = true;
-    this.powerService
-      .useUsurpateur(
+    this.run(
+      this.powerService.useUsurpateur(
         this.gameId,
         this.target1,
         this.target2,
         this.fakeSenderId,
         this.fakeContent.trim(),
-      )
-      .subscribe({
-        next: (res) => {
-          this.usurpateurResult = res.message ?? '';
-          this.fakeContent = '';
-          this.isActivating = false;
-          this.refreshPower();
-        },
-        error: (err) => {
-          this.errorMsg = err.error?.message ?? 'Erreur.';
-          this.isActivating = false;
-        },
-      });
+      ),
+      (res) => {
+        this.successMsg = res.message ?? '';
+        this.fakeContent = '';
+      },
+    );
   }
 
   activateVisionAbsolue(): void {
-    this.isActivating = true;
-    this.powerService.useVisionAbsolue(this.gameId).subscribe({
-      next: (res) => {
-        this.visionExpiresAt = new Date(res.data.expiresAt);
-        this.isActivating = false;
-        this.refreshPower();
-        this.startVisionCountdown();
-      },
-      error: (err) => {
-        this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isActivating = false;
-      },
+    this.run(this.powerService.useVisionAbsolue(this.gameId), (res) => {
+      this.visionExpiresAt = new Date(res.data.expiresAt);
+      this.startVisionCountdown();
+    });
+  }
+
+  activateChasseur(): void {
+    if (!this.codeInput.trim()) return;
+    this.run(this.powerService.useChasseurDePrimes(this.gameId, this.codeInput.trim()), (res) => {
+      this.successMsg = res.message ?? '';
+      this.codeInput = '';
+    });
+  }
+
+  activateNecromancien(): void {
+    if (!this.codeInput.trim()) return;
+    this.run(this.powerService.useNecromancien(this.gameId, this.codeInput.trim()), (res) => {
+      this.successMsg = res.message ?? '';
+      this.codeInput = '';
+    });
+  }
+
+  activateHorcruxe(): void {
+    if (!this.substituteId) return;
+    this.run(this.powerService.useHorcruxe(this.gameId, this.substituteId), (res) => {
+      this.successMsg = res.message ?? '';
+      this.substituteId = null;
+    });
+  }
+
+  activateCupidon(): void {
+    if (!this.target1 || !this.target2) return;
+    this.run(this.powerService.useCupidon(this.gameId, this.target1, this.target2), (res) => {
+      this.successMsg = res.message ?? '';
     });
   }
 
@@ -210,9 +280,5 @@ export class Powers implements OnInit, OnDestroy {
       this.visionSecondsLeft = diff;
       if (diff <= 0 && this.visionTimer) clearInterval(this.visionTimer);
     }, 1000);
-  }
-
-  private refreshPower(): void {
-    this.powerService.getMyPower(this.gameId).subscribe({ next: (res) => (this.power = res.data) });
   }
 }

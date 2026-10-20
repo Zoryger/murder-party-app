@@ -10,90 +10,125 @@ import {
   Message,
   PowerUse,
   GameClue,
+  GhostSubstitution,
+  LoveBond,
 } from "../models/sequelize";
+import {
+  resolvePowerAccess,
+  getUsesRemaining,
+  getPowerOfPlayer,
+  computeAvailability,
+} from "../utils/power.util";
+import type { PowerAccessError } from "../utils/power.util";
+import {
+  makeGhost,
+  revivePlayer,
+  notifyStatusChange,
+} from "../utils/status.util";
+import { getIO } from "../sockets";
 
-async function getMyActivePlayer(gameId: number, userId: number) {
-  const game = await Game.findByPk(gameId);
-  if (!game || game.status !== "active")
-    return { error: "La partie n'est pas en cours." };
-
-  const player = await GamePlayer.findOne({ where: { gameId, userId } });
-  if (!player) return { error: "Vous n'êtes pas dans cette partie." };
-  if (player.status !== "alive")
-    return { error: "Les fantômes ne peuvent plus utiliser leur pouvoir." };
-  if (!player.scenarioCharacterId)
-    return { error: "Aucun personnage assigné." };
-
-  return { game, player };
+function denied(res: Response, access: PowerAccessError): void {
+  res.status(access.status).json({ success: false, message: access.error });
 }
 
-async function getUsesRemaining(
-  gamePlayerId: number,
-  powerSlug: string,
-  maxUses: number,
-): Promise<number> {
-  if (maxUses === 0) return 0;
-  const used = await PowerUse.count({ where: { gamePlayerId, powerSlug } });
-  return Math.max(0, maxUses - used);
-}
-
-async function requirePower(player: GamePlayer, slug: string) {
-  const character = await ScenarioCharacter.findByPk(
-    player.scenarioCharacterId!,
-  );
-  const power = character ? await Power.findByPk(character.powerId) : null;
-  if (!power || power.slug !== slug)
-    return { error: "Vous ne possédez pas ce pouvoir." };
-  const usesRemaining = await getUsesRemaining(
-    player.id,
+function powerInfo(
+  power: Power,
+  usesRemaining: number,
+  status: "alive" | "ghost",
+) {
+  const { canUse, lockedReason } = computeAvailability(
+    status,
     power.slug,
     power.maxUses,
+    usesRemaining,
   );
-  if (usesRemaining <= 0) return { error: "Vous avez épuisé ce pouvoir." };
-  return { power };
+  return {
+    slug: power.slug,
+    name: power.name,
+    category: power.category,
+    description: power.description,
+    maxUses: power.maxUses,
+    durationSeconds: power.durationSeconds,
+    usesRemaining,
+    canUse,
+    lockedReason,
+  };
 }
 
 // ── GET /api/games/:id/my-power ─────────────────────────────────────────────
 export async function getMyPower(req: Request, res: Response): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
-    return;
-  }
-  const { player } = result;
 
-  const character = await ScenarioCharacter.findByPk(
-    player.scenarioCharacterId!,
-  );
-  if (!character) {
+  const game = await Game.findByPk(gameId);
+  if (!game || game.status !== "active") {
     res
-      .status(404)
-      .json({ success: false, message: "Personnage introuvable." });
+      .status(400)
+      .json({ success: false, message: "La partie n'est pas en cours." });
     return;
   }
-  const power = await Power.findByPk(character.powerId);
-  if (!power) {
+
+  const actor = await GamePlayer.findOne({
+    where: { gameId, userId: req.user!.userId },
+  });
+  if (!actor) {
+    res
+      .status(403)
+      .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
+  if (!actor.scenarioCharacterId) {
+    res
+      .status(400)
+      .json({ success: false, message: "Aucun personnage assigné." });
+    return;
+  }
+
+  const ownPower = await getPowerOfPlayer(actor);
+  if (!ownPower) {
     res.status(404).json({ success: false, message: "Pouvoir introuvable." });
     return;
   }
 
-  const usesRemaining = await getUsesRemaining(
-    player.id,
-    power.slug,
-    power.maxUses,
+  const ownRemaining = await getUsesRemaining(
+    actor.id,
+    ownPower.slug,
+    ownPower.maxUses,
   );
+
+  let borrowed:
+    | (ReturnType<typeof powerInfo> & { fromCharacterName: string })
+    | null = null;
+  if (actor.status === "alive") {
+    const substitution = await GhostSubstitution.findOne({
+      where: { gameId, holderPlayerId: actor.id, isActive: true },
+    });
+    if (substitution) {
+      const substitute = await GamePlayer.findByPk(
+        substitution.substitutePlayerId,
+      );
+      if (substitute && substitute.status === "ghost") {
+        const borrowedPower = await getPowerOfPlayer(substitute);
+        if (borrowedPower) {
+          const remaining = await getUsesRemaining(
+            substitute.id,
+            borrowedPower.slug,
+            borrowedPower.maxUses,
+          );
+          borrowed = {
+            ...powerInfo(borrowedPower, remaining, "alive"),
+            fromCharacterName: substitute.characterName,
+          };
+        }
+      }
+    }
+  }
 
   res.json({
     success: true,
     data: {
-      slug: power.slug,
-      name: power.name,
-      category: power.category,
-      description: power.description,
-      maxUses: power.maxUses,
-      durationSeconds: power.durationSeconds,
-      usesRemaining,
+      status: actor.status,
+      own: powerInfo(ownPower, ownRemaining, actor.status),
+      borrowed,
     },
   });
 }
@@ -101,18 +136,12 @@ export async function getMyPower(req: Request, res: Response): Promise<void> {
 // ── POST /api/games/:id/powers/voyante ──────────────────────────────────────
 export async function useVoyante(req: Request, res: Response): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(gameId, req.user!.userId, "voyante");
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "voyante");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner } = access;
 
   const players = await GamePlayer.findAll({ where: { gameId } });
   const characterIds = players
@@ -127,7 +156,8 @@ export async function useVoyante(req: Request, res: Response): Promise<void> {
 
   await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "voyante",
   });
 
@@ -147,18 +177,16 @@ export async function useAnalyseurRelations(
   res: Response,
 ): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "analyseur-de-relations",
+  );
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "analyseur-de-relations");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner } = access;
 
   const t1 = Number(req.body.targetPlayerId1);
   const t2 = Number(req.body.targetPlayerId2);
@@ -198,7 +226,8 @@ export async function useAnalyseurRelations(
 
   await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "analyseur-de-relations",
     targetPlayerId: t1,
     targetPlayerId2: t2,
@@ -220,18 +249,16 @@ export async function useInformaticien(
   res: Response,
 ): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "informaticien",
+  );
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "informaticien");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner } = access;
 
   const t1 = Number(req.body.targetPlayerId1);
   const t2 = Number(req.body.targetPlayerId2);
@@ -244,7 +271,7 @@ export async function useInformaticien(
       });
     return;
   }
-  if (t1 === player.id || t2 === player.id) {
+  if (t1 === actor.id || t2 === actor.id) {
     res
       .status(400)
       .json({ success: false, message: "Choisissez deux AUTRES joueurs." });
@@ -280,7 +307,8 @@ export async function useInformaticien(
 
   await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "informaticien",
     targetPlayerId: t1,
     targetPlayerId2: t2,
@@ -300,18 +328,16 @@ export async function useFalsificateur(
   res: Response,
 ): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "falsificateur",
+  );
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "falsificateur");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner } = access;
 
   const clueId = Number(req.body.clueId);
   const newGamePlayerId = Number(req.body.newGamePlayerId);
@@ -332,12 +358,13 @@ export async function useFalsificateur(
 
   clue.currentCharacterId = newTargetPlayer.scenarioCharacterId;
   clue.isFalsified = true;
-  clue.falsifiedByPlayerId = player.id;
+  clue.falsifiedByPlayerId = actor.id;
   await clue.save();
 
   await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "falsificateur",
     targetPlayerId: newGamePlayerId,
     payload: String(clueId),
@@ -355,18 +382,16 @@ export async function useUsurpateur(
   res: Response,
 ): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "usurpateur",
+  );
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "usurpateur");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner } = access;
 
   const t1 = Number(req.body.targetPlayerId1);
   const t2 = Number(req.body.targetPlayerId2);
@@ -382,7 +407,7 @@ export async function useUsurpateur(
       });
     return;
   }
-  if (t1 === player.id || t2 === player.id) {
+  if (t1 === actor.id || t2 === actor.id) {
     res
       .status(400)
       .json({ success: false, message: "Choisissez deux AUTRES joueurs." });
@@ -419,7 +444,7 @@ export async function useUsurpateur(
     player1Id: t1,
     player2Id: t2,
     isFake: true,
-    createdBy: player.id,
+    createdBy: actor.id,
   });
   await Message.create({
     conversationId: conversation.id,
@@ -429,7 +454,8 @@ export async function useUsurpateur(
 
   await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "usurpateur",
     targetPlayerId: t1,
     targetPlayerId2: t2,
@@ -449,27 +475,301 @@ export async function useVisionAbsolue(
   res: Response,
 ): Promise<void> {
   const gameId = Number(req.params["id"]);
-  const result = await getMyActivePlayer(gameId, req.user!.userId);
-  if ("error" in result) {
-    res.status(400).json({ success: false, message: result.error });
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "vision-absolue",
+  );
+  if ("error" in access) {
+    denied(res, access);
     return;
   }
-  const { player } = result;
-
-  const check = await requirePower(player, "vision-absolue");
-  if ("error" in check) {
-    res.status(403).json({ success: false, message: check.error });
-    return;
-  }
+  const { actor, owner, power } = access;
 
   const use = await PowerUse.create({
     gameId,
-    gamePlayerId: player.id,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
     powerSlug: "vision-absolue",
   });
   const expiresAt = new Date(
-    use.createdAt.getTime() + (check.power.durationSeconds ?? 60) * 1000,
+    use.createdAt.getTime() + (power.durationSeconds ?? 60) * 1000,
   );
 
   res.json({ success: true, data: { activatedAt: use.createdAt, expiresAt } });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NOUVEAUX POUVOIRS — Phase 5.5
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── POST /api/games/:id/powers/chasseur-de-primes ──────────────────────────
+export async function useChasseurDePrimes(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const gameId = Number(req.params["id"]);
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "chasseur-de-primes",
+  );
+  if ("error" in access) {
+    denied(res, access);
+    return;
+  }
+  const { actor, owner } = access;
+
+  const code = String(req.body.code ?? "").trim();
+  if (!code) {
+    res.status(400).json({ success: false, message: "Code requis." });
+    return;
+  }
+
+  // Code invalide : on s'arrête AVANT de consommer une utilisation
+  const target = await GamePlayer.findOne({
+    where: { gameId, messagingCode: code },
+  });
+  if (!target) {
+    res.status(404).json({ success: false, message: "Code invalide." });
+    return;
+  }
+  if (target.id === actor.id) {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Vous ne pouvez pas vous cibler vous-même.",
+      });
+    return;
+  }
+  if (target.status !== "alive") {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: `${target.characterName} est déjà un fantôme.`,
+      });
+    return;
+  }
+
+  await makeGhost(gameId, target.id);
+  await PowerUse.create({
+    gameId,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
+    powerSlug: "chasseur-de-primes",
+    targetPlayerId: target.id,
+  });
+  notifyStatusChange(gameId);
+
+  res.json({
+    success: true,
+    message: `${target.characterName} est devenu un fantôme.`,
+    data: { characterName: target.characterName },
+  });
+}
+
+// ── POST /api/games/:id/powers/necromancien ────────────────────────────────
+export async function useNecromancien(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const gameId = Number(req.params["id"]);
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "necromancien",
+  );
+  if ("error" in access) {
+    denied(res, access);
+    return;
+  }
+  const { actor, owner } = access;
+
+  const code = String(req.body.code ?? "").trim();
+  if (!code) {
+    res.status(400).json({ success: false, message: "Code requis." });
+    return;
+  }
+
+  const target = await GamePlayer.findOne({
+    where: { gameId, messagingCode: code },
+  });
+  if (!target) {
+    res.status(404).json({ success: false, message: "Code invalide." });
+    return;
+  }
+  if (target.status !== "ghost") {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: `${target.characterName} n'est pas un fantôme.`,
+      });
+    return;
+  }
+
+  // revivePlayer coupe aussi l'éventuel lien Horcruxe dont ce joueur était le remplaçant
+  await revivePlayer(gameId, target.id);
+  await PowerUse.create({
+    gameId,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
+    powerSlug: "necromancien",
+    targetPlayerId: target.id,
+  });
+  notifyStatusChange(gameId);
+
+  res.json({
+    success: true,
+    message: `${target.characterName} est revenu parmi les vivants.`,
+    data: { characterName: target.characterName },
+  });
+}
+
+// ── POST /api/games/:id/powers/horcruxe ────────────────────────────────────
+export async function useHorcruxe(req: Request, res: Response): Promise<void> {
+  const gameId = Number(req.params["id"]);
+  // allowGhost : c'est le seul pouvoir utilisable en étant fantôme
+  const access = await resolvePowerAccess(
+    gameId,
+    req.user!.userId,
+    "horcruxe",
+    { allowGhost: true },
+  );
+  if ("error" in access) {
+    denied(res, access);
+    return;
+  }
+  const { actor, owner } = access;
+
+  if (actor.status !== "ghost") {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "L'Horcruxe ne s'active que lorsque vous êtes un fantôme.",
+      });
+    return;
+  }
+
+  const substituteId = Number(req.body.substitutePlayerId);
+  if (!substituteId || substituteId === actor.id) {
+    res
+      .status(400)
+      .json({ success: false, message: "Choisissez un autre joueur." });
+    return;
+  }
+
+  const substitute = await GamePlayer.findOne({
+    where: { id: substituteId, gameId },
+  });
+  if (!substitute || !substitute.scenarioCharacterId) {
+    res.status(404).json({ success: false, message: "Joueur introuvable." });
+    return;
+  }
+  if (substitute.status !== "alive") {
+    res
+      .status(400)
+      .json({ success: false, message: "Le joueur choisi doit être vivant." });
+    return;
+  }
+
+  await makeGhost(gameId, substitute.id); // le remplaçant devient fantôme…
+  await revivePlayer(gameId, actor.id); // …et le porteur redevient vivant
+  await GhostSubstitution.create({
+    gameId,
+    holderPlayerId: actor.id,
+    substitutePlayerId: substitute.id,
+    isActive: true,
+  });
+
+  await PowerUse.create({
+    gameId,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
+    powerSlug: "horcruxe",
+    targetPlayerId: substitute.id,
+  });
+  notifyStatusChange(gameId);
+
+  res.json({
+    success: true,
+    message: `Horcruxe activé : ${substitute.characterName} est devenu fantôme à votre place. Vous pouvez désormais utiliser son pouvoir.`,
+  });
+}
+
+// ── POST /api/games/:id/powers/cupidon ─────────────────────────────────────
+export async function useCupidon(req: Request, res: Response): Promise<void> {
+  const gameId = Number(req.params["id"]);
+  const access = await resolvePowerAccess(gameId, req.user!.userId, "cupidon");
+  if ("error" in access) {
+    denied(res, access);
+    return;
+  }
+  const { actor, owner } = access;
+
+  const t1 = Number(req.body.targetPlayerId1);
+  const t2 = Number(req.body.targetPlayerId2);
+  if (!t1 || !t2 || t1 === t2) {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Sélectionnez deux joueurs différents.",
+      });
+    return;
+  }
+
+  const [p1, p2] = await Promise.all([
+    GamePlayer.findOne({ where: { id: t1, gameId } }),
+    GamePlayer.findOne({ where: { id: t2, gameId } }),
+  ]);
+  if (!p1 || !p2 || !p1.scenarioCharacterId || !p2.scenarioCharacterId) {
+    res.status(404).json({ success: false, message: "Joueur introuvable." });
+    return;
+  }
+
+  const existing = await LoveBond.findOne({
+    where: {
+      gameId,
+      [Op.or]: [
+        { player1Id: { [Op.in]: [t1, t2] } },
+        { player2Id: { [Op.in]: [t1, t2] } },
+      ],
+    },
+  });
+  if (existing) {
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Un de ces joueurs est déjà lié par Cupidon.",
+      });
+    return;
+  }
+
+  await LoveBond.create({
+    gameId,
+    player1Id: t1,
+    player2Id: t2,
+    createdBy: actor.id,
+  });
+  await PowerUse.create({
+    gameId,
+    gamePlayerId: actor.id,
+    ownerPlayerId: owner.id,
+    powerSlug: "cupidon",
+    targetPlayerId: t1,
+    targetPlayerId2: t2,
+  });
+
+  // Les deux amoureux voient leur fiche se mettre à jour en direct
+  getIO().to(`game:${gameId}`).emit("love:bond");
+
+  res.status(201).json({
+    success: true,
+    message: `${p1.characterName} et ${p2.characterName} sont désormais liés : leur objectif est de survivre et d'être innocentés ensemble.`,
+  });
 }

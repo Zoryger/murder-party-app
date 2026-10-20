@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export interface MyPower {
+export interface PowerInfo {
   slug: string;
   name: string;
   category: string;
@@ -11,6 +11,18 @@ export interface MyPower {
   maxUses: number;
   durationSeconds: number | null;
   usesRemaining: number;
+  canUse: boolean;
+  lockedReason: string | null;
+}
+
+export interface BorrowedPowerInfo extends PowerInfo {
+  fromCharacterName: string;
+}
+
+export interface MyPowerOverview {
+  status: 'alive' | 'ghost';
+  own: PowerInfo;
+  borrowed: BorrowedPowerInfo | null;
 }
 
 export interface ApiResponse<T> {
@@ -24,8 +36,8 @@ export class PowerService {
   private http = inject(HttpClient);
   private API = environment.apiUrl;
 
-  getMyPower(gameId: number): Observable<ApiResponse<MyPower>> {
-    return this.http.get<ApiResponse<MyPower>>(`${this.API}/games/${gameId}/my-power`);
+  getMyPower(gameId: number): Observable<ApiResponse<MyPowerOverview>> {
+    return this.http.get<ApiResponse<MyPowerOverview>>(`${this.API}/games/${gameId}/my-power`);
   }
 
   useVoyante(
@@ -91,5 +103,42 @@ export class PowerService {
       `${this.API}/games/${gameId}/powers/vision-absolue`,
       {},
     );
+  }
+
+  useChasseurDePrimes(
+    gameId: number,
+    code: string,
+  ): Observable<ApiResponse<{ characterName: string }>> {
+    return this.http.post<ApiResponse<{ characterName: string }>>(
+      `${this.API}/games/${gameId}/powers/chasseur-de-primes`,
+      { code },
+    );
+  }
+
+  useNecromancien(
+    gameId: number,
+    code: string,
+  ): Observable<ApiResponse<{ characterName: string }>> {
+    return this.http.post<ApiResponse<{ characterName: string }>>(
+      `${this.API}/games/${gameId}/powers/necromancien`,
+      { code },
+    );
+  }
+
+  useHorcruxe(gameId: number, substitutePlayerId: number): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.API}/games/${gameId}/powers/horcruxe`, {
+      substitutePlayerId,
+    });
+  }
+
+  useCupidon(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+  ): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.API}/games/${gameId}/powers/cupidon`, {
+      targetPlayerId1,
+      targetPlayerId2,
+    });
   }
 }

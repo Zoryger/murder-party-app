@@ -11,6 +11,7 @@ import {
   joinGame,
   getPlayers,
   assignCharacters,
+  assignManual,
   startGame,
   getMyCharacterSheet,
 } from "../controllers/gamePlayer.controller";
@@ -23,6 +24,10 @@ import {
   useFalsificateur,
   useUsurpateur,
   useVisionAbsolue,
+  useChasseurDePrimes,
+  useNecromancien,
+  useHorcruxe,
+  useCupidon,
 } from "../controllers/power.controller";
 import { getClueBoard } from "../controllers/clue.controller";
 import { validate } from "../middleware/validate.middleware";
@@ -64,6 +69,7 @@ router.patch(
 router.post("/:id/join", requireAuth, joinGame);
 router.get("/:id/players", requireAuth, getPlayers);
 router.post("/:id/assign-characters", requireAuth, assignCharacters);
+router.post("/:id/assign-manual", requireAuth, assignManual);
 router.post("/:id/start", requireAuth, startGame);
 router.get("/:id/me", requireAuth, getMyCharacterSheet);
 router.post("/:id/redeem-code", requireAuth, redeemCode);
@@ -81,5 +87,9 @@ router.post("/:id/powers/informaticien", requireAuth, useInformaticien);
 router.post("/:id/powers/falsificateur", requireAuth, useFalsificateur);
 router.post("/:id/powers/usurpateur", requireAuth, useUsurpateur);
 router.post("/:id/powers/vision-absolue", requireAuth, useVisionAbsolue);
+router.post("/:id/powers/chasseur-de-primes", requireAuth, useChasseurDePrimes);
+router.post("/:id/powers/necromancien", requireAuth, useNecromancien);
+router.post("/:id/powers/horcruxe", requireAuth, useHorcruxe);
+router.post("/:id/powers/cupidon", requireAuth, useCupidon);
 
 export default router;

@@ -6,249 +6,387 @@
 
   @if (isLoading) {
     <p class="loading">Chargement...</p>
-  } @else if (errorMsg) {
+  } @else if (loadError) {
     <div class="empty-state">
-      <p>⚠️ {{ errorMsg }}</p>
+      <p>⚠️ {{ loadError }}</p>
     </div>
-  } @else if (power) {
-    <div class="power-summary card">
-      <h2>{{ power.name }}</h2>
-      <p>{{ power.description }}</p>
-      <div class="uses">
-        @if (power.maxUses === 0) {
-          <span class="badge">Pouvoir passif</span>
-        } @else {
-          <span class="badge"
-            >{{ power.usesRemaining }} / {{ power.maxUses }} utilisation(s) restante(s)</span
-          >
-        }
+  } @else if (overview) {
+    @if (overview.status === 'ghost') {
+      <div class="ghost-banner">
+        👻 Vous êtes un fantôme — seul un Nécromancien peut vous réanimer.
       </div>
-    </div>
+    }
 
-    @if (power.maxUses === 0) {
-      <div class="action-card card">
-        <p class="soon">Ce pouvoir est passif — rien à activer ici.</p>
+    @if (overview.borrowed; as b) {
+      <div class="tabs">
+        <button
+          type="button"
+          class="tab"
+          [class.active]="activeTab === 'own'"
+          (click)="selectTab('own')"
+        >
+          Mon pouvoir
+        </button>
+        <button
+          type="button"
+          class="tab"
+          [class.active]="activeTab === 'borrowed'"
+          (click)="selectTab('borrowed')"
+        >
+          🕯️ {{ b.name }} (emprunté)
+        </button>
       </div>
-    } @else {
-      @switch (power.slug) {
-        @case ('voyante') {
-          <div class="action-card card">
-            <button
-              class="btn btn--primary"
-              [disabled]="power.usesRemaining <= 0 || isActivating"
-              (click)="activateVoyante()"
-            >
-              {{ isActivating ? 'Consultation...' : '🔮 Consulter tous les rôles et pouvoirs' }}
-            </button>
-            @if (voyanteResult) {
-              <div class="voyante-list">
-                @for (r of voyanteResult; track r.characterTitle) {
-                  <div class="voyante-row">
-                    <span>{{ r.characterTitle }}</span
-                    ><strong>{{ r.powerName }}</strong>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
+    }
 
-        @case ('analyseur-de-relations') {
-          <div class="action-card card">
-            <div class="target-pickers">
-              <select [(ngModel)]="target1">
-                <option [ngValue]="null">Joueur 1...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-              <select [(ngModel)]="target2">
-                <option [ngValue]="null">Joueur 2...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-            </div>
-            <button
-              class="btn btn--primary"
-              [disabled]="!target1 || !target2 || power.usesRemaining <= 0 || isActivating"
-              (click)="activateAnalyseur()"
-            >
-              {{ isActivating ? 'Analyse...' : '🔍 Analyser la relation' }}
-            </button>
-            @if (relationResult) {
-              <div class="relation-result">
-                <strong>{{ relationResult.player1 }}</strong> ↔
-                <strong>{{ relationResult.player2 }}</strong>
-                <p>{{ relationLabel[relationResult.relationType] }}</p>
-              </div>
-            }
-          </div>
+    @if (power) {
+      <div class="power-summary card">
+        <h2>{{ power.name }}</h2>
+        @if (activeTab === 'borrowed' && overview.borrowed) {
+          <p class="borrowed-note">
+            Pouvoir emprunté à {{ overview.borrowed.fromCharacterName }} via votre Horcruxe. Vous le
+            perdez si ce fantôme est réanimé ou si vous redevenez fantôme.
+          </p>
         }
-
-        @case ('informaticien') {
-          <div class="action-card card">
-            <div class="target-pickers">
-              <select [(ngModel)]="target1">
-                <option [ngValue]="null">Joueur 1...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-              <select [(ngModel)]="target2">
-                <option [ngValue]="null">Joueur 2...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-            </div>
-            <button
-              class="btn btn--primary"
-              [disabled]="!target1 || !target2 || power.usesRemaining <= 0 || isActivating"
-              (click)="activateInformaticien()"
+        <p>{{ power.description }}</p>
+        <div class="uses">
+          @if (power.maxUses === 0) {
+            <span class="badge">Pouvoir passif</span>
+          } @else {
+            <span class="badge"
+              >{{ power.usesRemaining }} / {{ power.maxUses }} utilisation(s) restante(s)</span
             >
-              {{ isActivating ? 'Piratage...' : '💻 Pirater leur messagerie' }}
-            </button>
-            @if (informaticienResult) {
-              <p class="hack-result">
-                {{ informaticienResult }}
-                <a [routerLink]="['/game', gameId, 'messages']">Voir dans la messagerie →</a>
-              </p>
-            }
-          </div>
-        }
+          }
+        </div>
+      </div>
 
-        @case ('falsificateur') {
-          <div class="action-card card">
-            <div class="field">
-              <label>Indice à falsifier</label>
-              <select [(ngModel)]="selectedClueId">
-                <option [ngValue]="null">Choisir un indice...</option>
-                @for (c of clues; track c.id) {
-                  <option [ngValue]="c.id">{{ c.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="field">
-              <label>Nouveau suspect à accuser</label>
-              <select [(ngModel)]="target1">
-                <option [ngValue]="null">Choisir un joueur...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-            </div>
-            <button
-              class="btn btn--primary"
-              [disabled]="!selectedClueId || !target1 || power.usesRemaining <= 0 || isActivating"
-              (click)="activateFalsificateur()"
-            >
-              {{ isActivating ? 'Falsification...' : "🖊️ Falsifier l'indice" }}
-            </button>
-            @if (falsificateurResult) {
-              <p class="hack-result">
-                {{ falsificateurResult }}
-                <a [routerLink]="['/game', gameId, 'clues']">Voir le tableau des indices →</a>
-              </p>
-            }
-          </div>
-        }
-
-        @case ('usurpateur') {
-          <div class="action-card card">
-            <div class="target-pickers">
-              <select [(ngModel)]="target1">
-                <option [ngValue]="null">Joueur 1...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-              <select [(ngModel)]="target2">
-                <option [ngValue]="null">Joueur 2...</option>
-                @for (p of otherPlayers; track p.id) {
-                  <option [ngValue]="p.id">{{ p.characterName }}</option>
-                }
-              </select>
-            </div>
-            <div class="field">
-              <label>Qui est censé avoir écrit le message ?</label>
-              <div class="sender-choice">
-                @if (target1) {
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.selected]="fakeSenderId === target1"
-                    (click)="fakeSenderId = target1"
-                  >
-                    {{ nameOf(target1) }}
-                  </button>
-                }
-                @if (target2) {
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.selected]="fakeSenderId === target2"
-                    (click)="fakeSenderId = target2"
-                  >
-                    {{ nameOf(target2) }}
-                  </button>
-                }
-              </div>
-            </div>
-            <div class="field">
-              <label>Contenu du faux message</label>
-              <textarea
-                [(ngModel)]="fakeContent"
-                rows="3"
-                placeholder="Ex : On se retrouve à la serre à minuit, personne ne nous verra."
-              ></textarea>
-            </div>
-            <button
-              class="btn btn--primary"
-              [disabled]="
-                !target1 ||
-                !target2 ||
-                !fakeSenderId ||
-                !fakeContent.trim() ||
-                power.usesRemaining <= 0 ||
-                isActivating
-              "
-              (click)="activateUsurpateur()"
-            >
-              {{ isActivating ? 'Création...' : '🎭 Créer la fausse conversation' }}
-            </button>
-            @if (usurpateurResult) {
-              <p class="hack-result">{{ usurpateurResult }}</p>
-            }
-          </div>
-        }
-
-        @case ('vision-absolue') {
-          <div class="action-card card">
-            @if (visionSecondsLeft > 0) {
-              <div class="vision-active">👁️ Vision active — {{ visionSecondsLeft }}s restantes</div>
-              <p class="hint">
-                Consultez le <a [routerLink]="['/game', gameId, 'clues']">tableau des indices</a> ou
-                la <a [routerLink]="['/game', gameId, 'messages']">messagerie</a> maintenant pour
-                voir les falsifications.
-              </p>
-            } @else {
+      @if (!power.canUse) {
+        <div class="action-card card">
+          <p class="soon">{{ power.lockedReason }}</p>
+        </div>
+      } @else if (power.maxUses === 0) {
+        <div class="action-card card">
+          <p class="soon">Ce pouvoir est passif — rien à activer ici.</p>
+        </div>
+      } @else {
+        @switch (power.slug) {
+          @case ('voyante') {
+            <div class="action-card card">
               <button
                 class="btn btn--primary"
-                [disabled]="power.usesRemaining <= 0 || isActivating"
-                (click)="activateVisionAbsolue()"
+                [disabled]="isActivating"
+                (click)="activateVoyante()"
               >
-                {{ isActivating ? 'Activation...' : '👁️ Activer la Vision absolue (60s)' }}
+                {{ isActivating ? 'Consultation...' : '🔮 Consulter tous les rôles et pouvoirs' }}
               </button>
-            }
-          </div>
-        }
+              @if (voyanteResult) {
+                <div class="voyante-list">
+                  @for (r of voyanteResult; track r.characterTitle) {
+                    <div class="voyante-row">
+                      <span>{{ r.characterTitle }}</span
+                      ><strong>{{ r.powerName }}</strong>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
 
-        @default {
-          <div class="action-card card">
-            <p class="soon">🚧 L'activation de ce pouvoir arrive dans une prochaine mise à jour.</p>
-          </div>
+          @case ('analyseur-de-relations') {
+            <div class="action-card card">
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Joueur 1...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Joueur 2...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!target1 || !target2 || isActivating"
+                (click)="activateAnalyseur()"
+              >
+                {{ isActivating ? 'Analyse...' : '🔍 Analyser la relation' }}
+              </button>
+              @if (relationResult) {
+                <div class="relation-result">
+                  <strong>{{ relationResult.player1 }}</strong> ↔
+                  <strong>{{ relationResult.player2 }}</strong>
+                  <p>{{ relationLabel[relationResult.relationType] }}</p>
+                </div>
+              }
+            </div>
+          }
+
+          @case ('informaticien') {
+            <div class="action-card card">
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Joueur 1...</option>
+                  @for (p of otherPlayers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Joueur 2...</option>
+                  @for (p of otherPlayers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!target1 || !target2 || isActivating"
+                (click)="activateInformaticien()"
+              >
+                {{ isActivating ? 'Piratage...' : '💻 Pirater leur messagerie' }}
+              </button>
+            </div>
+          }
+
+          @case ('falsificateur') {
+            <div class="action-card card">
+              <div class="field">
+                <label>Indice à falsifier</label>
+                <select [(ngModel)]="selectedClueId">
+                  <option [ngValue]="null">Choisir un indice...</option>
+                  @for (c of clues; track c.id) {
+                    <option [ngValue]="c.id">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label>Nouveau suspect à accuser</label>
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Choisir un joueur...</option>
+                  @for (p of otherPlayers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!selectedClueId || !target1 || isActivating"
+                (click)="activateFalsificateur()"
+              >
+                {{ isActivating ? 'Falsification...' : "🖊️ Falsifier l'indice" }}
+              </button>
+            </div>
+          }
+
+          @case ('usurpateur') {
+            <div class="action-card card">
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Joueur 1...</option>
+                  @for (p of otherPlayers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Joueur 2...</option>
+                  @for (p of otherPlayers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label>Qui est censé avoir écrit le message ?</label>
+                <div class="sender-choice">
+                  @if (target1) {
+                    <button
+                      type="button"
+                      class="chip"
+                      [class.selected]="fakeSenderId === target1"
+                      (click)="fakeSenderId = target1"
+                    >
+                      {{ nameOf(target1) }}
+                    </button>
+                  }
+                  @if (target2) {
+                    <button
+                      type="button"
+                      class="chip"
+                      [class.selected]="fakeSenderId === target2"
+                      (click)="fakeSenderId = target2"
+                    >
+                      {{ nameOf(target2) }}
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="field">
+                <label>Contenu du faux message</label>
+                <textarea
+                  [(ngModel)]="fakeContent"
+                  rows="3"
+                  placeholder="Ex : On se retrouve à la serre à minuit, personne ne nous verra."
+                ></textarea>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="
+                  !target1 || !target2 || !fakeSenderId || !fakeContent.trim() || isActivating
+                "
+                (click)="activateUsurpateur()"
+              >
+                {{ isActivating ? 'Création...' : '🎭 Créer la fausse conversation' }}
+              </button>
+            </div>
+          }
+
+          @case ('vision-absolue') {
+            <div class="action-card card">
+              @if (visionSecondsLeft > 0) {
+                <div class="vision-active">
+                  👁️ Vision active — {{ visionSecondsLeft }}s restantes
+                </div>
+                <p class="hint">
+                  Consultez le
+                  <a [routerLink]="['/game', gameId, 'clues']">tableau des indices</a> ou la
+                  <a [routerLink]="['/game', gameId, 'messages']">messagerie</a> maintenant pour
+                  voir les falsifications.
+                </p>
+              } @else {
+                <button
+                  class="btn btn--primary"
+                  [disabled]="isActivating"
+                  (click)="activateVisionAbsolue()"
+                >
+                  {{ isActivating ? 'Activation...' : '👁️ Activer la Vision absolue (60s)' }}
+                </button>
+              }
+            </div>
+          }
+
+          @case ('chasseur-de-primes') {
+            <div class="action-card card">
+              <div class="field">
+                <label>Code de messagerie de la cible</label>
+                <input
+                  type="text"
+                  [(ngModel)]="codeInput"
+                  placeholder="Code trouvé en jeu"
+                  (keyup.enter)="activateChasseur()"
+                />
+              </div>
+              <button
+                class="btn btn--danger"
+                [disabled]="!codeInput.trim() || isActivating"
+                (click)="activateChasseur()"
+              >
+                {{ isActivating ? 'Traque...' : '☠️ Éliminer ce joueur' }}
+              </button>
+              <p class="hint">Un code invalide ne consomme pas d'utilisation.</p>
+            </div>
+          }
+
+          @case ('necromancien') {
+            <div class="action-card card">
+              <div class="field">
+                <label>Code de messagerie du fantôme à réanimer</label>
+                <input
+                  type="text"
+                  [(ngModel)]="codeInput"
+                  placeholder="Code trouvé en jeu"
+                  (keyup.enter)="activateNecromancien()"
+                />
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!codeInput.trim() || isActivating"
+                (click)="activateNecromancien()"
+              >
+                {{ isActivating ? 'Invocation...' : '🕯️ Réanimer ce fantôme' }}
+              </button>
+              <p class="hint">Un code invalide ne consomme pas d'utilisation.</p>
+            </div>
+          }
+
+          @case ('horcruxe') {
+            <div class="action-card card">
+              <p class="hint intro">
+                Vous êtes un fantôme : désignez un joueur vivant qui prendra votre place. Vous
+                redevenez vivant et empruntez son pouvoir tant qu'il reste fantôme.
+              </p>
+              <div class="field">
+                <label>Joueur qui devient fantôme à votre place</label>
+                <select [(ngModel)]="substituteId">
+                  <option [ngValue]="null">Choisir un joueur vivant...</option>
+                  @for (p of livingOthers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!substituteId || isActivating"
+                (click)="activateHorcruxe()"
+              >
+                {{ isActivating ? 'Activation...' : "🕯️ Activer l'Horcruxe" }}
+              </button>
+            </div>
+          }
+
+          @case ('cupidon') {
+            <div class="action-card card">
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Amoureux 1...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Amoureux 2...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!target1 || !target2 || isActivating"
+                (click)="activateCupidon()"
+              >
+                {{ isActivating ? 'Envoi des flèches...' : '💘 Lier ces deux joueurs' }}
+              </button>
+              <p class="hint">Leur objectif devient : survivre et être innocentés ensemble.</p>
+            </div>
+          }
+
+          @default {
+            <div class="action-card card">
+              <p class="soon">
+                🚧 L'activation de ce pouvoir arrive dans une prochaine mise à jour.
+              </p>
+            </div>
+          }
         }
+      }
+
+      @if (actionError) {
+        <p class="action-error">⚠️ {{ actionError }}</p>
+      }
+
+      @if (successMsg) {
+        <p class="hack-result">
+          {{ successMsg }}
+          @switch (power.slug) {
+            @case ('informaticien') {
+              <a [routerLink]="['/game', gameId, 'messages']">Voir dans la messagerie →</a>
+            }
+            @case ('falsificateur') {
+              <a [routerLink]="['/game', gameId, 'clues']">Voir le tableau des indices →</a>
+            }
+          }
+        </p>
       }
     }
   }

@@ -15,6 +15,8 @@ import Message from "./Message.model";
 import CodeUnlock from "./CodeUnlock.model";
 import PowerUse from "./PowerUse.model";
 import GameClue from "./GameClue.model";
+import GhostSubstitution from "./GhostSubstitution.model";
+import LoveBond from "./LoveBond.model";
 import { seedPowers } from "../../seed/powers.seed";
 import { seedHp2027 } from "../../seed/hp2027.seed";
 
@@ -185,6 +187,8 @@ GameClue.belongsTo(ScenarioCharacter, {
   as: "currentCharacter",
 });
 
+// GhostSubstitution et LoveBond : volontairement sans association (aucun include nécessaire)
+
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
   try {
@@ -220,4 +224,6 @@ export {
   CodeUnlock,
   PowerUse,
   GameClue,
+  GhostSubstitution,
+  LoveBond,
 };
