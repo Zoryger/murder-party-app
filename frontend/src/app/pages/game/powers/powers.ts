@@ -78,7 +78,7 @@ export class Powers implements OnInit, OnDestroy {
     this.loadClues();
     this.loadPower(true);
 
-    // Si quelqu'un me tue / me réanime pendant que je suis sur cette page, tout se met à jour
+    // Si quelqu'un me tue / me réanimé pendant que je suis sur cette page, tout se met à jour
     this.socketService.joinLobby(this.gameId);
     this.socketService.on('player:status', () => {
       this.loadPlayers();
@@ -268,6 +268,29 @@ export class Powers implements OnInit, OnDestroy {
   activateCupidon(): void {
     if (!this.target1 || !this.target2) return;
     this.run(this.powerService.useCupidon(this.gameId, this.target1, this.target2), (res) => {
+      this.successMsg = res.message ?? '';
+    });
+  }
+
+  activateDuelliste(): void {
+    if (!this.target1 || !this.target2) return;
+    this.run(this.powerService.useDuelliste(this.gameId, this.target1, this.target2), (res) => {
+      this.successMsg = res.message ?? '';
+    });
+  }
+
+  activateInversion(): void {
+    if (!this.target1 || !this.target2) return;
+    this.run(
+      this.powerService.useInversionFrequence(this.gameId, this.target1, this.target2),
+      (res) => {
+        this.successMsg = res.message ?? '';
+      },
+    );
+  }
+
+  activateBrouilleur(): void {
+    this.run(this.powerService.useBrouilleur(this.gameId), (res) => {
       this.successMsg = res.message ?? '';
     });
   }

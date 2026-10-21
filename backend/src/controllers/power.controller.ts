@@ -25,6 +25,7 @@ import {
   revivePlayer,
   notifyStatusChange,
 } from "../utils/status.util";
+import { resolvePlayerByCode } from "../utils/event.util"; // ← 5.6
 import { getIO } from "../sockets";
 
 function denied(res: Response, access: PowerAccessError): void {
@@ -499,10 +500,6 @@ export async function useVisionAbsolue(
   res.json({ success: true, data: { activatedAt: use.createdAt, expiresAt } });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  NOUVEAUX POUVOIRS — Phase 5.5
-// ═══════════════════════════════════════════════════════════════════════════
-
 // ── POST /api/games/:id/powers/chasseur-de-primes ──────────────────────────
 export async function useChasseurDePrimes(
   req: Request,
@@ -527,9 +524,7 @@ export async function useChasseurDePrimes(
   }
 
   // Code invalide : on s'arrête AVANT de consommer une utilisation
-  const target = await GamePlayer.findOne({
-    where: { gameId, messagingCode: code },
-  });
+  const target = await resolvePlayerByCode(gameId, code); // ← 5.6 (tient compte de l'inversion)
   if (!target) {
     res.status(404).json({ success: false, message: "Code invalide." });
     return;
@@ -593,9 +588,7 @@ export async function useNecromancien(
     return;
   }
 
-  const target = await GamePlayer.findOne({
-    where: { gameId, messagingCode: code },
-  });
+  const target = await resolvePlayerByCode(gameId, code); // ← 5.6 (tient compte de l'inversion)
   if (!target) {
     res.status(404).json({ success: false, message: "Code invalide." });
     return;
@@ -765,7 +758,6 @@ export async function useCupidon(req: Request, res: Response): Promise<void> {
     targetPlayerId2: t2,
   });
 
-  // Les deux amoureux voient leur fiche se mettre à jour en direct
   getIO().to(`game:${gameId}`).emit("love:bond");
 
   res.status(201).json({

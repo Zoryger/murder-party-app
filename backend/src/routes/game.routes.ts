@@ -29,9 +29,18 @@ import {
   useHorcruxe,
   useCupidon,
 } from "../controllers/power.controller";
+import {
+  getEvents,
+  voteDuel,
+  cancelBlackout,
+  useDuelliste,
+  useInversionFrequence,
+  useBrouilleurIem,
+} from "../controllers/event.controller";
 import { getClueBoard } from "../controllers/clue.controller";
 import { validate } from "../middleware/validate.middleware";
 import { requireAuth } from "../middleware/auth.middleware";
+import { blackoutGuard } from "../middleware/blackout.middleware";
 
 const router = Router();
 
@@ -72,24 +81,75 @@ router.post("/:id/assign-characters", requireAuth, assignCharacters);
 router.post("/:id/assign-manual", requireAuth, assignManual);
 router.post("/:id/start", requireAuth, startGame);
 router.get("/:id/me", requireAuth, getMyCharacterSheet);
-router.post("/:id/redeem-code", requireAuth, redeemCode);
-router.get("/:id/clues", requireAuth, getClueBoard);
+
+// ── Soumis à la panne réseau (le MJ n'est jamais bloqué) ──────────────────────
+router.post("/:id/redeem-code", requireAuth, blackoutGuard, redeemCode);
+router.get("/:id/clues", requireAuth, blackoutGuard, getClueBoard);
+
+// ── Événements : état, vote de duel, annulation de panne (MJ) ────────────────
+router.get("/:id/events", requireAuth, getEvents);
+router.post("/:id/duels/:duelId/vote", requireAuth, voteDuel);
+router.post("/:id/events/cancel-blackout", requireAuth, cancelBlackout);
 
 // ── Pouvoirs ───────────────────────────────────────────────────────────────
 router.get("/:id/my-power", requireAuth, getMyPower);
-router.post("/:id/powers/voyante", requireAuth, useVoyante);
+router.post("/:id/powers/voyante", requireAuth, blackoutGuard, useVoyante);
 router.post(
   "/:id/powers/analyseur-relations",
   requireAuth,
+  blackoutGuard,
   useAnalyseurRelations,
 );
-router.post("/:id/powers/informaticien", requireAuth, useInformaticien);
-router.post("/:id/powers/falsificateur", requireAuth, useFalsificateur);
-router.post("/:id/powers/usurpateur", requireAuth, useUsurpateur);
-router.post("/:id/powers/vision-absolue", requireAuth, useVisionAbsolue);
-router.post("/:id/powers/chasseur-de-primes", requireAuth, useChasseurDePrimes);
-router.post("/:id/powers/necromancien", requireAuth, useNecromancien);
-router.post("/:id/powers/horcruxe", requireAuth, useHorcruxe);
-router.post("/:id/powers/cupidon", requireAuth, useCupidon);
+router.post(
+  "/:id/powers/informaticien",
+  requireAuth,
+  blackoutGuard,
+  useInformaticien,
+);
+router.post(
+  "/:id/powers/falsificateur",
+  requireAuth,
+  blackoutGuard,
+  useFalsificateur,
+);
+router.post(
+  "/:id/powers/usurpateur",
+  requireAuth,
+  blackoutGuard,
+  useUsurpateur,
+);
+router.post(
+  "/:id/powers/vision-absolue",
+  requireAuth,
+  blackoutGuard,
+  useVisionAbsolue,
+);
+router.post(
+  "/:id/powers/chasseur-de-primes",
+  requireAuth,
+  blackoutGuard,
+  useChasseurDePrimes,
+);
+router.post(
+  "/:id/powers/necromancien",
+  requireAuth,
+  blackoutGuard,
+  useNecromancien,
+);
+router.post("/:id/powers/horcruxe", requireAuth, blackoutGuard, useHorcruxe);
+router.post("/:id/powers/cupidon", requireAuth, blackoutGuard, useCupidon);
+router.post("/:id/powers/duelliste", requireAuth, blackoutGuard, useDuelliste);
+router.post(
+  "/:id/powers/inversion-de-frequence",
+  requireAuth,
+  blackoutGuard,
+  useInversionFrequence,
+);
+router.post(
+  "/:id/powers/brouilleur-iem",
+  requireAuth,
+  blackoutGuard,
+  useBrouilleurIem,
+);
 
 export default router;

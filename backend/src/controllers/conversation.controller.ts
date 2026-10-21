@@ -10,6 +10,7 @@ import {
 } from "../models/sequelize";
 import { getIO } from "../sockets";
 import { hasActiveVisionAbsolue } from "../utils/vision.util";
+import { resolvePlayerByCode } from "../utils/event.util"; // ← 5.6
 
 async function getMyGamePlayer(gameId: number, userId: number) {
   return GamePlayer.findOne({ where: { gameId, userId } });
@@ -169,6 +170,17 @@ export async function getOrCreateConversation(
     return;
   }
 
+  // ← 5.6 : un fantôme ne peut plus écrire, donc ne démarre plus de conversation
+  if (me.status !== "alive") {
+    res
+      .status(403)
+      .json({
+        success: false,
+        message: "Les fantômes ne peuvent plus écrire de messages.",
+      });
+    return;
+  }
+
   const withPlayerId = Number(req.body.withPlayerId);
   if (withPlayerId === me.id) {
     res
@@ -289,6 +301,7 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
     success: true,
     data: {
       isParticipant: isRealParticipant,
+      canWrite: isRealParticipant && me.status === "alive", // ← 5.6
       isFake: visionActive ? conversation.isFake : false,
       participants: [
         {
@@ -333,6 +346,17 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     res
       .status(403)
       .json({ success: false, message: "Vous n'êtes pas dans cette partie." });
+    return;
+  }
+
+  // ← 5.6 : les fantômes peuvent lire mais plus écrire
+  if (me.status !== "alive") {
+    res
+      .status(403)
+      .json({
+        success: false,
+        message: "Les fantômes ne peuvent plus écrire de messages.",
+      });
     return;
   }
 
@@ -415,9 +439,7 @@ export async function redeemCode(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const target = await GamePlayer.findOne({
-    where: { gameId, messagingCode: code },
-  });
+  const target = await resolvePlayerByCode(gameId, code); // ← 5.6 (tient compte de l'inversion)
   if (!target) {
     res.status(404).json({ success: false, message: "Code invalide." });
     return;

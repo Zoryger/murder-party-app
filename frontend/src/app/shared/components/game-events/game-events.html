@@ -1,0 +1,148 @@
+@if (state; as s) {
+  <!-- Panne réseau : écran bloquant sur messagerie, pouvoirs et indices -->
+  @if (s.blackout; as b) {
+    @if (showOverlay) {
+      <div class="blackout-overlay" role="alert">
+        <div class="blackout-card">
+          <p class="emoji">⚡</p>
+          <h2>Panne réseau magique</h2>
+          <p>
+            Les messageries, la saisie de codes, les pouvoirs et le tableau des indices sont hors
+            service pour tout le monde.
+          </p>
+          @if (b.startedByMe) {
+            <p class="note">C'est vous qui avez déclenché cette panne.</p>
+          }
+          <div class="clock">{{ clock(b.endsAt) }}</div>
+          <a [routerLink]="['/game', gameId, 'play']" class="btn btn--ghost">← Retour à ma fiche</a>
+        </div>
+      </div>
+    }
+  }
+
+  <div class="dock">
+    <!-- Panne réseau : bandeau sur les autres pages (et pour le MJ, partout) -->
+    @if (s.blackout; as b) {
+      @if (!showOverlay) {
+        <div class="dock-card blackout">
+          <div class="row">
+            <strong>⚡ Panne réseau</strong>
+            <span class="clock-inline">{{ clock(b.endsAt) }}</span>
+          </div>
+          <p class="sub">Messageries, codes, pouvoirs et indices sont coupés.</p>
+          @if (s.isGm) {
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="isBusy"
+              (click)="cancelBlackout()"
+            >
+              Annuler la panne (MJ)
+            </button>
+          }
+        </div>
+      }
+    }
+
+    <!-- Duel -->
+    @if (s.duel; as d) {
+      @if (isDuelVisible(d)) {
+        <div class="dock-card duel">
+          <div class="duel-head">
+            <strong>⚔️ Duel</strong>
+            @for (c of d.challengers; track c.id; let last = $last) {
+              <span>{{ c.characterName }}</span>
+              @if (!last) {
+                <em>contre</em>
+              }
+            }
+          </div>
+
+          @switch (d.status) {
+            @case ('joust') {
+              <p>
+                Joute verbale en cours —
+                <span class="clock-inline">{{ clock(d.joustEndsAt) }}</span>
+              </p>
+              <p class="sub">Les autres joueurs voteront à la fin du temps imparti.</p>
+            }
+            @case ('voting') {
+              <p>
+                Vote en cours — <span class="clock-inline">{{ clock(d.votingEndsAt) }}</span> ·
+                {{ d.votesCount }} / {{ d.eligibleCount }} vote(s)
+              </p>
+              @if (d.canVote) {
+                <p class="sub">Lequel des deux doit mourir (devenir fantôme) ?</p>
+                <div class="vote-row">
+                  @for (c of d.challengers; track c.id) {
+                    <button
+                      type="button"
+                      class="btn btn--danger btn--sm"
+                      [disabled]="isBusy"
+                      (click)="vote(c.id)"
+                    >
+                      ☠️ {{ c.characterName }}
+                    </button>
+                  }
+                </div>
+              } @else if (d.isChallenger) {
+                <p class="sub">Les autres joueurs décident de votre sort…</p>
+              } @else if (d.hasVoted) {
+                <p class="sub">✅ Votre vote est enregistré.</p>
+              } @else {
+                <p class="sub">Vous ne pouvez pas voter (fantôme ou spectateur).</p>
+              }
+            }
+            @default {
+              @if (d.result; as r) {
+                @switch (r.outcome) {
+                  @case ('loser') {
+                    <p>
+                      <strong>{{ r.loserName }}</strong> perd le duel et devient un fantôme 👻
+                    </p>
+                  }
+                  @case ('tie') {
+                    <p>Égalité : personne ne meurt.</p>
+                  }
+                  @default {
+                    <p>Duel annulé : un des duellistes n'est plus en vie.</p>
+                  }
+                }
+                @if (r.outcome !== 'cancelled') {
+                  <p class="sub">
+                    Votes :
+                    @for (t of r.tally; track t.name; let last = $last) {
+                      {{ t.name }} {{ t.votes }}
+                      @if (!last) {
+                        ·
+                      }
+                    }
+                  </p>
+                }
+                <button type="button" class="link" (click)="dismissResult(d)">Fermer</button>
+              }
+            }
+          }
+        </div>
+      }
+    }
+
+    <!-- Inversion de fréquence : visible du lanceur, du MJ ou d'une Vision absolue active -->
+    @if (s.inversion; as i) {
+      <div class="dock-card inversion">
+        <div class="row">
+          <strong>🔀 Inversion de Fréquence</strong>
+          <span class="clock-inline">{{ clock(i.endsAt) }}</span>
+        </div>
+        <p class="sub">Les codes de {{ i.player1Name }} et {{ i.player2Name }} sont échangés.</p>
+        @if (i.revealedByVision) {
+          <p class="sub">👁️ Révélé par votre Vision absolue.</p>
+        }
+      </div>
+    }
+
+    @if (actionError) {
+      <div class="dock-card error">{{ actionError }}</div>
+    }
+  </div>
+}

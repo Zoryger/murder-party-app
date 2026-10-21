@@ -17,6 +17,9 @@ import PowerUse from "./PowerUse.model";
 import GameClue from "./GameClue.model";
 import GhostSubstitution from "./GhostSubstitution.model";
 import LoveBond from "./LoveBond.model";
+import TimedEffect from "./TimedEffect.model";
+import Duel from "./Duel.model";
+import DuelVote from "./DuelVote.model";
 import { seedPowers } from "../../seed/powers.seed";
 import { seedHp2027 } from "../../seed/hp2027.seed";
 
@@ -187,7 +190,7 @@ GameClue.belongsTo(ScenarioCharacter, {
   as: "currentCharacter",
 });
 
-// GhostSubstitution et LoveBond : volontairement sans association (aucun include nécessaire)
+// GhostSubstitution, LoveBond, TimedEffect, Duel et DuelVote : volontairement sans association (aucun include nécessaire)
 
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
@@ -226,4 +229,7 @@ export {
   GameClue,
   GhostSubstitution,
   LoveBond,
+  TimedEffect,
+  Duel,
+  DuelVote,
 };

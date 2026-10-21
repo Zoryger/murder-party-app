@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, PublicPlayer } from '../../../core/services/game.service';
-import { ConversationService, ConversationSummary, ConversationMessage } from '../../../core/services/conversation.service';
+import {
+  ConversationService,
+  ConversationSummary,
+  ConversationMessage,
+} from '../../../core/services/conversation.service';
 import { SocketService } from '../../../core/services/socket.service';
 
 @Component({
@@ -13,50 +17,66 @@ import { SocketService } from '../../../core/services/socket.service';
   styleUrl: './messaging.scss',
 })
 export class Messaging implements OnInit, OnDestroy {
-  private route          = inject(ActivatedRoute);
-  private gameService     = inject(GameService);
-  private convService     = inject(ConversationService);
-  private socketService   = inject(SocketService);
+  private route = inject(ActivatedRoute);
+  private gameService = inject(GameService);
+  private convService = inject(ConversationService);
+  private socketService = inject(SocketService);
 
-  gameId!:      number;
-  myPlayerId:   number | null = null;
-  players:      PublicPlayer[] = [];
+  gameId!: number;
+  myPlayerId: number | null = null;
+  myStatus: 'alive' | 'ghost' = 'alive';
+  players: PublicPlayer[] = [];
   conversations: ConversationSummary[] = [];
 
   selectedConversationId: number | null = null;
   participants: { id: number; characterName: string }[] = [];
-  messages:     ConversationMessage[] = [];
+  messages: ConversationMessage[] = [];
   isParticipant = false;
+  canWrite = false;
 
-  newMessage   = '';
-  codeInput    = '';
-  codeMsg      = '';
-  codeError    = false;
-  isLoading    = true;
-  isSending    = false;
+  newMessage = '';
+  codeInput = '';
+  codeMsg = '';
+  codeError = false;
+  isLoading = true;
+  isSending = false;
   showNewConvo = false;
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.gameService.getMyCharacterSheet(this.gameId).subscribe({
-      next: (res) => { this.myPlayerId = res.data.player?.id ?? null; },
-    });
+    this.loadMyStatus();
 
     this.gameService.getPlayers(this.gameId).subscribe({
-      next: (res) => this.players = res.data,
+      next: (res) => (this.players = res.data),
     });
 
     this.loadConversations();
 
     this.socketService.joinLobby(this.gameId);
-    this.socketService.on('message:new',    () => this.onRealtimeUpdate());
-    this.socketService.on('code:unlocked',  () => this.onRealtimeUpdate());
+    this.socketService.on('message:new', () => this.onRealtimeUpdate());
+    this.socketService.on('code:unlocked', () => this.onRealtimeUpdate());
+    // Mort ou réanimation pendant que la page est ouverte : le champ de saisie apparaît / disparaît
+    this.socketService.on('player:status', () => {
+      this.loadMyStatus();
+      this.onRealtimeUpdate();
+    });
   }
 
   ngOnDestroy(): void {
     this.socketService.off('message:new');
     this.socketService.off('code:unlocked');
+    this.socketService.off('player:status');
+  }
+
+  private loadMyStatus(): void {
+    this.gameService.getMyCharacterSheet(this.gameId).subscribe({
+      next: (res) => {
+        this.myPlayerId = res.data.player?.id ?? null;
+        this.myStatus = res.data.player?.status ?? 'alive';
+        if (this.myStatus === 'ghost') this.showNewConvo = false;
+      },
+    });
   }
 
   private onRealtimeUpdate(): void {
@@ -66,8 +86,13 @@ export class Messaging implements OnInit, OnDestroy {
 
   loadConversations(): void {
     this.convService.getConversations(this.gameId).subscribe({
-      next:  (res) => { this.conversations = res.data; this.isLoading = false; },
-      error: () => { this.isLoading = false; },
+      next: (res) => {
+        this.conversations = res.data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      },
     });
   }
 
@@ -80,9 +105,10 @@ export class Messaging implements OnInit, OnDestroy {
   private loadMessages(id: number): void {
     this.convService.getMessages(this.gameId, id).subscribe({
       next: (res) => {
-        this.participants  = res.data.participants;
-        this.messages       = res.data.messages;
-        this.isParticipant  = res.data.isParticipant;
+        this.participants = res.data.participants;
+        this.messages = res.data.messages;
+        this.isParticipant = res.data.isParticipant;
+        this.canWrite = res.data.canWrite;
       },
     });
   }
@@ -97,36 +123,42 @@ export class Messaging implements OnInit, OnDestroy {
   }
 
   send(): void {
-    if (!this.newMessage.trim() || !this.selectedConversationId) return;
+    if (!this.newMessage.trim() || !this.selectedConversationId || !this.canWrite) return;
     this.isSending = true;
-    this.convService.sendMessage(this.gameId, this.selectedConversationId, this.newMessage.trim()).subscribe({
-      next: () => {
-        this.newMessage = '';
-        this.isSending  = false;
-        this.loadMessages(this.selectedConversationId!);
-      },
-      error: () => { this.isSending = false; },
-    });
+    this.convService
+      .sendMessage(this.gameId, this.selectedConversationId, this.newMessage.trim())
+      .subscribe({
+        next: () => {
+          this.newMessage = '';
+          this.isSending = false;
+          this.loadMessages(this.selectedConversationId!);
+        },
+        error: () => {
+          this.isSending = false;
+        },
+      });
   }
 
   redeemCode(): void {
     if (!this.codeInput.trim()) return;
     this.convService.redeemCode(this.gameId, this.codeInput.trim()).subscribe({
       next: (res) => {
-        this.codeMsg   = res.message ?? '';
+        this.codeMsg = res.message ?? '';
         this.codeError = false;
         this.codeInput = '';
         this.loadConversations();
       },
       error: (err) => {
-        this.codeMsg   = err.error?.message ?? 'Code invalide.';
+        this.codeMsg = err.error?.message ?? 'Code invalide.';
         this.codeError = true;
       },
     });
   }
 
   get contactsWithoutConversation(): PublicPlayer[] {
-    const existingIds = new Set(this.conversations.filter(c => c.isOwn).map(c => c.otherPlayerId));
-    return this.players.filter(p => p.id !== this.myPlayerId && !existingIds.has(p.id));
+    const existingIds = new Set(
+      this.conversations.filter((c) => c.isOwn).map((c) => c.otherPlayerId),
+    );
+    return this.players.filter((p) => p.id !== this.myPlayerId && !existingIds.has(p.id));
   }
 }

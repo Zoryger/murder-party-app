@@ -1,0 +1,91 @@
+// Tout est en position: fixed — le composant ne modifie jamais la mise en page des pages.
+
+.blackout-overlay {
+  position: fixed;
+  inset: 64px 0 0 0;          // laisse le header visible
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 8, 16, .97);
+}
+
+.blackout-card {
+  max-width: 420px;
+  text-align: center;
+
+  .emoji { font-size: 3rem; margin-bottom: .5rem; }
+  h2     { font-size: 1.4rem; margin-bottom: .75rem; }
+  p      { color: var(--color-text-muted); font-size: .9rem; line-height: 1.6; margin-bottom: .75rem; }
+  .note  { color: var(--color-accent); }
+
+  .clock {
+    margin: 1rem 0 1.5rem;
+    font-family: monospace;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+}
+
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 120;
+  width: min(560px, calc(100vw - 1.5rem));
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  pointer-events: none;        // le conteneur laisse passer les clics, seules les cartes les captent
+}
+
+.dock-card {
+  pointer-events: auto;
+  padding: .8rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  font-size: .875rem;
+  line-height: 1.5;
+
+  .sub { color: var(--color-text-muted); font-size: .8rem; margin-top: .2rem; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+
+  &.blackout  { border-color: rgba(245, 197, 24, .45); }
+  &.duel      { border-color: rgba(229, 62, 62, .45); }
+  &.inversion { border-color: rgba(123, 47, 190, .5); }
+  &.error     { border-color: rgba(229, 62, 62, .45); color: var(--color-danger); }
+
+  .btn { margin-top: .6rem; }
+}
+
+.duel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .4rem;
+  margin-bottom: .35rem;
+  em { font-style: normal; color: var(--color-text-muted); }
+}
+
+.clock-inline {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.vote-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+
+.link {
+  margin-top: .4rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: .8rem;
+  cursor: pointer;
+}

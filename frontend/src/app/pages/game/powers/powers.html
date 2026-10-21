@@ -361,6 +361,83 @@
             </div>
           }
 
+          @case ('duelliste') {
+            <div class="action-card card">
+              <p class="hint intro">
+                Choisissez deux joueurs vivants (vous exclu). Ils s'affrontent en joute verbale,
+                puis les autres joueurs vivants votent pour désigner celui qui meurt.
+              </p>
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Duelliste 1...</option>
+                  @for (p of livingOthers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Duelliste 2...</option>
+                  @for (p of livingOthers; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!target1 || !target2 || isActivating"
+                (click)="activateDuelliste()"
+              >
+                {{ isActivating ? 'Lancement...' : '⚔️ Lancer le duel' }}
+              </button>
+              <p class="hint">Égalité ou aucun vote : personne ne meurt.</p>
+            </div>
+          }
+
+          @case ('inversion-de-frequence') {
+            <div class="action-card card">
+              <p class="hint intro">
+                Pendant {{ power.durationSeconds }}s, le code de messagerie de chacun de ces deux
+                joueurs désigne l'autre. Personne n'est prévenu.
+              </p>
+              <div class="target-pickers">
+                <select [(ngModel)]="target1">
+                  <option [ngValue]="null">Joueur 1...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="target2">
+                  <option [ngValue]="null">Joueur 2...</option>
+                  @for (p of players; track p.id) {
+                    <option [ngValue]="p.id">{{ label(p) }}</option>
+                  }
+                </select>
+              </div>
+              <button
+                class="btn btn--primary"
+                [disabled]="!target1 || !target2 || isActivating"
+                (click)="activateInversion()"
+              >
+                {{ isActivating ? 'Inversion...' : '🔀 Inverser leurs fréquences' }}
+              </button>
+            </div>
+          }
+
+          @case ('brouilleur-iem') {
+            <div class="action-card card">
+              <p class="hint intro">
+                Déclenche une panne réseau de {{ power.durationSeconds }}s : messageries, codes,
+                pouvoirs et indices sont coupés pour tout le monde, vous compris.
+              </p>
+              <button
+                class="btn btn--danger"
+                [disabled]="isActivating"
+                (click)="activateBrouilleur()"
+              >
+                {{ isActivating ? 'Brouillage...' : '⚡ Déclencher la panne réseau' }}
+              </button>
+            </div>
+          }
+
           @default {
             <div class="action-card card">
               <p class="soon">

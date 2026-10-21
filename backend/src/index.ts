@@ -1,36 +1,38 @@
-import 'dotenv/config';
-import express from 'express';
-import cors    from 'cors';
-import { createServer } from 'http';
-import { syncDatabase } from './models/sequelize';
-import { initSockets }  from './sockets';
-import authRoutes         from './routes/auth.routes';
-import gameRoutes         from './routes/game.routes';
-import scenarioRoutes     from './routes/scenario.routes';
-import conversationRoutes from './routes/conversation.routes';
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import { createServer } from "http";
+import { syncDatabase } from "./models/sequelize";
+import { initSockets } from "./sockets";
+import { resumeOpenDuels } from "./utils/event.util";
+import authRoutes from "./routes/auth.routes";
+import gameRoutes from "./routes/game.routes";
+import scenarioRoutes from "./routes/scenario.routes";
+import conversationRoutes from "./routes/conversation.routes";
 
-const app        = express();
+const app = express();
 const httpServer = createServer(app);
-const PORT       = process.env['PORT'] ?? 3000;
+const PORT = process.env["PORT"] ?? 3000;
 
-app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
+app.use(cors({ origin: "http://localhost:4200", credentials: true }));
 app.use(express.json());
 
-app.use('/api/auth',      authRoutes);
-app.use('/api/games',     gameRoutes);
-app.use('/api/scenarios', scenarioRoutes);
-app.use('/api/games/:id/conversations', conversationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/games", gameRoutes);
+app.use("/api/scenarios", scenarioRoutes);
+app.use("/api/games/:id/conversations", conversationRoutes);
 
-app.get('/api/health', (_req, res) => {
-  res.json({ success: true, message: 'API Murder Party opérationnelle 🔍' });
+app.get("/api/health", (_req, res) => {
+  res.json({ success: true, message: "API Murder Party opérationnelle 🔍" });
 });
 
 app.use((_req, res) => {
-  res.status(404).json({ success: false, message: 'Route introuvable.' });
+  res.status(404).json({ success: false, message: "Route introuvable." });
 });
 
-syncDatabase().then(() => {
+syncDatabase().then(async () => {
   initSockets(httpServer);
+  await resumeOpenDuels(); // reprend les duels laissés en cours par un redémarrage
 
   httpServer.listen(PORT, () => {
     console.log(`🔍 Serveur démarré sur http://localhost:${PORT}`);

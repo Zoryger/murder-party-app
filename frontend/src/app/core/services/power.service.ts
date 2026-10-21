@@ -141,4 +141,33 @@ export class PowerService {
       targetPlayerId2,
     });
   }
+
+  useDuelliste(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+  ): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.API}/games/${gameId}/powers/duelliste`, {
+      targetPlayerId1,
+      targetPlayerId2,
+    });
+  }
+
+  useInversionFrequence(
+    gameId: number,
+    targetPlayerId1: number,
+    targetPlayerId2: number,
+  ): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.API}/games/${gameId}/powers/inversion-de-frequence`,
+      { targetPlayerId1, targetPlayerId2 },
+    );
+  }
+
+  useBrouilleur(gameId: number): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.API}/games/${gameId}/powers/brouilleur-iem`,
+      {},
+    );
+  }
 }
