@@ -1,6 +1,5 @@
-import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { timeout } from 'rxjs/operators';
 import { GameService, Game, PublicPlayer } from '../../../core/services/game.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SocketService } from '../../../core/services/socket.service';
@@ -16,7 +15,6 @@ export class GameLobby implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private gameService = inject(GameService);
-  private changeDetector = inject(ChangeDetectorRef);
   auth = inject(AuthService);
   private socketService = inject(SocketService);
 
@@ -43,70 +41,52 @@ export class GameLobby implements OnInit, OnDestroy {
     this.socketService.off('game:started');
   }
 
+  // Le MJ va sur sa console, les joueurs sur leur fiche personnage
+  private goToGame(): void {
+    this.router.navigate(['/game', this.gameId, this.isGm ? 'gm' : 'play']);
+  }
+
   private setupSocket(): void {
     this.socketService.joinLobby(this.gameId);
     this.socketService.on('lobby:update', () => this.loadPlayers());
     this.socketService.on('lobby:assigned', () => this.loadPlayers());
-    this.socketService.on('game:started', () =>
-      this.router.navigate(['/game', this.gameId, 'play']),
-    );
+    this.socketService.on('game:started', () => this.goToGame());
   }
 
   private load(): void {
-    this.gameService
-      .getGame(this.gameId)
-      .pipe(timeout(10000))
-      .subscribe({
-        next: (res) => {
-          this.game = res.data;
-          this.isGm = this.game.createdBy === this.auth.currentUser()?.id;
-          this.changeDetector.markForCheck();
+    this.gameService.getGame(this.gameId).subscribe({
+      next: (res) => {
+        this.game = res.data;
+        this.isGm = this.game.createdBy === this.auth.currentUser()?.id;
 
-          if (this.game.status === 'active') {
-            this.router.navigate(['/game', this.gameId, 'play']);
-            return;
-          }
+        if (this.game.status === 'active') {
+          this.goToGame();
+          return;
+        }
 
-          if (!this.isGm) {
-            this.gameService
-              .joinGame(this.gameId)
-              .pipe(timeout(10000))
-              .subscribe({
-                next: () => this.loadPlayers(),
-                error: (err) => {
-                  this.errorMsg = err.error?.message ?? 'Impossible de rejoindre cette partie.';
-                  this.isLoading = false;
-                  this.changeDetector.markForCheck();
-                },
-              });
-          } else {
-            this.loadPlayers();
-          }
-        },
-        error: () => {
-          this.errorMsg = 'Partie introuvable.';
-          this.isLoading = false;
-          this.changeDetector.markForCheck();
-        },
-      });
+        if (!this.isGm) {
+          this.gameService.joinGame(this.gameId).subscribe({ complete: () => this.loadPlayers() });
+        } else {
+          this.loadPlayers();
+        }
+      },
+      error: () => {
+        this.errorMsg = 'Partie introuvable.';
+        this.isLoading = false;
+      },
+    });
   }
 
   private loadPlayers(): void {
-    this.gameService
-      .getPlayers(this.gameId)
-      .pipe(timeout(10000))
-      .subscribe({
-        next: (res) => {
-          this.players = res.data;
-          this.isLoading = false;
-          this.changeDetector.markForCheck();
-        },
-        error: () => {
-          this.errorMsg = 'Impossible de charger les joueurs.';
-          this.isLoading = false;
-          this.changeDetector.markForCheck();
-        },
-      });
+    this.gameService.getPlayers(this.gameId).subscribe({
+      next: (res) => {
+        this.players = res.data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      },
+    });
   }
 
   assignCharacters(): void {
@@ -115,12 +95,10 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.assignCharacters(this.gameId).subscribe({
       next: () => {
         this.isAssigning = false;
-        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.actionMsg = err.error?.message ?? "Erreur lors de l'assignation.";
         this.isAssigning = false;
-        this.changeDetector.markForCheck();
       },
     });
   }
@@ -131,12 +109,10 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.startGame(this.gameId).subscribe({
       next: () => {
         /* la redirection est déclenchée par l'événement socket game:started */
-        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.actionMsg = err.error?.message ?? 'Erreur lors du démarrage.';
         this.isStarting = false;
-        this.changeDetector.markForCheck();
       },
     });
   }

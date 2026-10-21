@@ -1,0 +1,176 @@
+<div class="gm-page">
+  <div class="gm-header">
+    <h1>🎬 Console du Maître du Jeu</h1>
+    @if (overview; as o) {
+      <p class="sub">{{ o.game.name }} · {{ o.players.length }} joueur(s)</p>
+    }
+  </div>
+
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (overview; as o) {
+    <div class="tabs">
+      <button
+        type="button"
+        class="tab"
+        [class.active]="tab === 'players'"
+        (click)="tab = 'players'"
+      >
+        👥 Joueurs
+      </button>
+      <button
+        type="button"
+        class="tab"
+        [class.active]="tab === 'alchemist'"
+        (click)="tab = 'alchemist'"
+      >
+        ⚗️ Alchimiste
+        @if (pending.length > 0) {
+          <span class="count">{{ pending.length }}</span>
+        }
+      </button>
+      <button type="button" class="tab" [class.active]="tab === 'qr'" (click)="tab = 'qr'">
+        📱 QR codes
+      </button>
+    </div>
+
+    @if (actionError) {
+      <p class="action-error">⚠️ {{ actionError }}</p>
+    }
+
+    @switch (tab) {
+      @case ('players') {
+        <div class="table-wrap card">
+          <table>
+            <thead>
+              <tr>
+                <th>Joueur</th>
+                <th>Personnage</th>
+                <th>Pouvoir</th>
+                <th>État</th>
+                <th>Argent</th>
+                <th>Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of o.players; track p.id) {
+                <tr [class.ghost]="p.status === 'ghost'">
+                  <td>{{ p.username }}</td>
+                  <td>
+                    {{ p.characterName }}
+                    @if (p.isMurderer) {
+                      <span class="murderer" title="Meurtrier">🔪</span>
+                    }
+                  </td>
+                  <td>{{ p.powerName }}</td>
+                  <td>{{ p.status === 'alive' ? 'Vivant' : '👻 Fantôme' }}</td>
+                  <td>{{ p.money }} G</td>
+                  <td class="code">{{ p.messagingCode }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @case ('alchemist') {
+        <h2 class="section">Questions en attente</h2>
+        @if (pending.length === 0) {
+          <p class="empty">Aucune question en attente.</p>
+        }
+        @for (r of pending; track r.id) {
+          <div class="request card pending">
+            <div class="meta">
+              <strong>{{ r.playerName }}</strong>
+              @if (r.username) {
+                <span class="real-name">({{ r.username }})</span>
+              }
+              <span class="cost">{{ r.cost }} G payés</span>
+            </div>
+            <p class="question">« {{ r.question }} »</p>
+            <div class="answer-row">
+              <button
+                type="button"
+                class="btn btn--primary btn--sm"
+                [disabled]="busyId === r.id"
+                (click)="answer(r.id, 'yes')"
+              >
+                ✅ OUI
+              </button>
+              <button
+                type="button"
+                class="btn btn--danger btn--sm"
+                [disabled]="busyId === r.id"
+                (click)="answer(r.id, 'no')"
+              >
+                ❌ NON
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost btn--sm"
+                [disabled]="busyId === r.id"
+                (click)="answer(r.id, 'refuse')"
+              >
+                ↩️ Refuser (rembourse)
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (history.length > 0) {
+          <h2 class="section">Historique</h2>
+          @for (r of history; track r.id) {
+            <div class="request card">
+              <div class="meta">
+                <strong>{{ r.playerName }}</strong>
+                <span class="state">
+                  @if (r.status === 'answered') {
+                    <span [class.yes]="r.answer === 'yes'" [class.no]="r.answer === 'no'">{{
+                      r.answer === 'yes' ? 'OUI' : 'NON'
+                    }}</span>
+                  } @else {
+                    Refusée · remboursée
+                  }
+                </span>
+              </div>
+              <p class="question">« {{ r.question }} »</p>
+            </div>
+          }
+        }
+      }
+
+      @case ('qr') {
+        <div class="qr-toolbar">
+          <p class="hint">
+            Chaque QR code mène à une page secrète, visible uniquement par les joueurs de la partie.
+            Imprime-les et cache-les aux endroits prévus.
+          </p>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="print()">
+            🖨️ Imprimer
+          </button>
+        </div>
+
+        @if (o.qrClues.length === 0) {
+          <p class="empty">Cette partie n'a pas de QR code (aucun scénario prédéfini).</p>
+        }
+
+        <div class="qr-grid">
+          @for (q of o.qrClues; track q.slug) {
+            <div class="qr-card card">
+              @if (qrImages[q.slug]) {
+                <img [src]="qrImages[q.slug]" [alt]="'QR code : ' + q.title" />
+              }
+              <strong>{{ q.title }}</strong>
+              <a class="url" [routerLink]="['/qr', q.slug]">{{ qrUrl(q.slug) }}</a>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</div>

@@ -1,0 +1,135 @@
+<div class="wallet-page">
+  <div class="w-header">
+    <a [routerLink]="['/game', gameId, 'play']" class="back">← Fiche personnage</a>
+    <h1>💰 Portefeuille</h1>
+  </div>
+
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else if (loadError) {
+    <div class="empty-state">
+      <p>⚠️ {{ loadError }}</p>
+    </div>
+  } @else if (wallet; as w) {
+    <div class="balance card">
+      <span class="label">Votre argent</span>
+      <span class="amount">{{ w.money }} G</span>
+      @if (w.status === 'ghost') {
+        <span class="ghost-note">👻 Fantôme : vous ne pouvez ni donner ni recevoir d'argent.</span>
+      }
+    </div>
+
+    <div class="card block">
+      <h2>🎁 Donner de l'argent</h2>
+      <p class="hint">
+        Un joueur fortuné peut en donner à un autre (l'Alchimiste, par exemple) en échange
+        d'informations. Un don est définitif.
+      </p>
+
+      <div class="give-row">
+        <select [(ngModel)]="giveTo" [disabled]="w.status === 'ghost'">
+          <option [ngValue]="null">Choisir un joueur...</option>
+          @for (p of livingOthers; track p.id) {
+            <option [ngValue]="p.id">{{ p.characterName }}</option>
+          }
+        </select>
+        <input
+          type="number"
+          min="1"
+          [max]="w.money"
+          [(ngModel)]="giveAmount"
+          placeholder="Montant"
+          [disabled]="w.status === 'ghost'"
+          (keyup.enter)="give()"
+        />
+        <button
+          class="btn btn--primary"
+          [disabled]="!giveTo || !giveAmount || isGiving || w.status === 'ghost'"
+          (click)="give()"
+        >
+          {{ isGiving ? 'Envoi...' : 'Donner' }}
+        </button>
+      </div>
+
+      @if (giveError) {
+        <p class="feedback error">⚠️ {{ giveError }}</p>
+      }
+      @if (giveMsg) {
+        <p class="feedback ok">{{ giveMsg }}</p>
+      }
+    </div>
+
+    @if (w.alchemist.enabled) {
+      <div class="card block alchemist">
+        <h2>⚗️ Interroger le MJ</h2>
+        <p class="hint">
+          Posez une <strong>question fermée</strong> (réponse OUI ou NON). Chaque question coûte
+          <strong>{{ w.alchemist.cost }} G</strong>, débités tout de suite — et remboursés si le MJ
+          la refuse.
+        </p>
+
+        @if (w.money < w.alchemist.cost) {
+          <p class="short">
+            Il vous manque {{ w.alchemist.cost - w.money }} G : demandez à un autre joueur de vous
+            en donner.
+          </p>
+        }
+
+        <textarea
+          rows="3"
+          maxlength="300"
+          [(ngModel)]="question"
+          placeholder="Ex : Cette personne était-elle présente sur les lieux du crime ?"
+        ></textarea>
+
+        <button
+          class="btn btn--primary"
+          [disabled]="question.trim().length < 5 || w.money < w.alchemist.cost || isAsking"
+          (click)="ask()"
+        >
+          {{ isAsking ? 'Envoi...' : 'Poser la question (' + w.alchemist.cost + ' G)' }}
+        </button>
+
+        @if (askError) {
+          <p class="feedback error">⚠️ {{ askError }}</p>
+        }
+        @if (askMsg) {
+          <p class="feedback ok">{{ askMsg }}</p>
+        }
+      </div>
+    }
+
+    @if (requests.length > 0) {
+      <div class="card block">
+        <h2>📜 Mes questions au MJ</h2>
+        <div class="requests">
+          @for (r of requests; track r.id) {
+            <div class="request" [class.pending]="r.status === 'pending'">
+              <p class="q">« {{ r.question }} »</p>
+              @switch (r.status) {
+                @case ('pending') {
+                  <span class="state">⏳ En attente de la réponse du MJ…</span>
+                }
+                @case ('answered') {
+                  <span
+                    class="answer"
+                    [class.yes]="r.answer === 'yes'"
+                    [class.no]="r.answer === 'no'"
+                  >
+                    Réponse du MJ : {{ r.answer === 'yes' ? 'OUI' : 'NON' }}
+                  </span>
+                }
+                @default {
+                  <span class="state">
+                    ↩️ Question refusée par le MJ — {{ r.cost }} G remboursés. Reformulez-la en
+                    question fermée.
+                  </span>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

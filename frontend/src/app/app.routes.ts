@@ -46,4 +46,20 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/game/clue-board/clue-board').then((m) => m.ClueBoard),
   },
+  {
+    path: 'game/:id/wallet',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/game/wallet/wallet/wallet').then((m) => m.Wallet),
+  },
+  {
+    path: 'game/:id/gm',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/game/gm-console/gm-console/gm-console').then((m) => m.GmConsole),
+  },
+  {
+    path: 'qr/:slug',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/qr/qr-clue/qr-clue').then((m) => m.QrClue),
+  },
 ];

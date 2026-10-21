@@ -14,6 +14,7 @@ import {
   LoveBond,
 } from "../models/sequelize";
 import { getIO } from "../sockets";
+import { startingMoney } from "../config/game.rules";
 
 function generateMessagingCode(): string {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -58,7 +59,7 @@ async function applyAssignments(
         characterRole: character.title,
         isMurderer: character.isMurderer,
         murderKnowledge: character.murderKnowledge,
-        money: power?.slug === "moldue" ? 1000 : 100,
+        money: startingMoney(power?.slug),
         // Le code de messagerie = le code secret de l'énigme du personnage
         messagingCode: riddle ? riddle.secretCode : generateMessagingCode(),
       });
@@ -77,13 +78,11 @@ export async function joinGame(req: Request, res: Response): Promise<void> {
     return;
   }
   if (game.createdBy === userId) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message:
-          "Le créateur de la partie est le MJ, il ne peut pas rejoindre en tant que joueur.",
-      });
+    res.status(400).json({
+      success: false,
+      message:
+        "Le créateur de la partie est le MJ, il ne peut pas rejoindre en tant que joueur.",
+    });
     return;
   }
   if (game.status !== "waiting") {
@@ -168,12 +167,10 @@ export async function assignCharacters(
     return;
   }
   if (game.createdBy !== userId) {
-    res
-      .status(403)
-      .json({
-        success: false,
-        message: "Seul le MJ peut assigner les personnages.",
-      });
+    res.status(403).json({
+      success: false,
+      message: "Seul le MJ peut assigner les personnages.",
+    });
     return;
   }
   if (game.status !== "waiting") {
@@ -183,12 +180,10 @@ export async function assignCharacters(
     return;
   }
   if (!game.scenarioId) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Cette partie n'utilise pas de scénario prédéfini.",
-      });
+    res.status(400).json({
+      success: false,
+      message: "Cette partie n'utilise pas de scénario prédéfini.",
+    });
     return;
   }
 
@@ -206,21 +201,17 @@ export async function assignCharacters(
     return;
   }
   if (players.length < scenario.minPlayers) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: `Il faut au moins ${scenario.minPlayers} joueurs pour ce scénario (actuellement ${players.length}).`,
-      });
+    res.status(400).json({
+      success: false,
+      message: `Il faut au moins ${scenario.minPlayers} joueurs pour ce scénario (actuellement ${players.length}).`,
+    });
     return;
   }
   if (players.length > scenario.maxPlayers) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: `Ce scénario accepte au maximum ${scenario.maxPlayers} joueurs.`,
-      });
+    res.status(400).json({
+      success: false,
+      message: `Ce scénario accepte au maximum ${scenario.maxPlayers} joueurs.`,
+    });
     return;
   }
 
@@ -259,12 +250,10 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
     return;
   }
   if (game.createdBy !== userId) {
-    res
-      .status(403)
-      .json({
-        success: false,
-        message: "Seul le MJ peut assigner les personnages.",
-      });
+    res.status(403).json({
+      success: false,
+      message: "Seul le MJ peut assigner les personnages.",
+    });
     return;
   }
   if (game.status !== "waiting") {
@@ -274,23 +263,19 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
     return;
   }
   if (!game.scenarioId) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Cette partie n'utilise pas de scénario prédéfini.",
-      });
+    res.status(400).json({
+      success: false,
+      message: "Cette partie n'utilise pas de scénario prédéfini.",
+    });
     return;
   }
 
   const raw = req.body.assignments;
   if (!Array.isArray(raw) || raw.length === 0) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: 'Champ "assignments" requis (tableau non vide).',
-      });
+    res.status(400).json({
+      success: false,
+      message: 'Champ "assignments" requis (tableau non vide).',
+    });
     return;
   }
 
@@ -310,33 +295,27 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
       (c) => c.id === Number(a.scenarioCharacterId),
     );
     if (!player) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: `Joueur introuvable dans cette partie : ${a.gamePlayerId}`,
-        });
+      res.status(400).json({
+        success: false,
+        message: `Joueur introuvable dans cette partie : ${a.gamePlayerId}`,
+      });
       return;
     }
     if (!character) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: `Personnage introuvable dans ce scénario : ${a.scenarioCharacterId}`,
-        });
+      res.status(400).json({
+        success: false,
+        message: `Personnage introuvable dans ce scénario : ${a.scenarioCharacterId}`,
+      });
       return;
     }
     pairs.push({ player, character });
   }
 
   if (new Set(pairs.map((p) => p.player.id)).size !== pairs.length) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Un joueur apparaît plusieurs fois dans la liste.",
-      });
+    res.status(400).json({
+      success: false,
+      message: "Un joueur apparaît plusieurs fois dans la liste.",
+    });
     return;
   }
 
@@ -352,12 +331,10 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
     (id): id is number => id !== null,
   );
   if (new Set(finalCharacterIds).size !== finalCharacterIds.length) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Un même personnage ne peut pas être attribué à deux joueurs.",
-      });
+    res.status(400).json({
+      success: false,
+      message: "Un même personnage ne peut pas être attribué à deux joueurs.",
+    });
     return;
   }
 
@@ -399,13 +376,11 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     players.length === 0 ||
     players.some((p) => p.scenarioCharacterId === null)
   ) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message:
-          "Tous les joueurs doivent avoir un personnage assigné avant de démarrer.",
-      });
+    res.status(400).json({
+      success: false,
+      message:
+        "Tous les joueurs doivent avoir un personnage assigné avant de démarrer.",
+    });
     return;
   }
 
@@ -457,12 +432,10 @@ export async function getMyCharacterSheet(
 
   const player = await GamePlayer.findOne({ where: { gameId, userId } });
   if (!player) {
-    res
-      .status(404)
-      .json({
-        success: false,
-        message: "Tu n'as pas encore rejoint cette partie.",
-      });
+    res.status(404).json({
+      success: false,
+      message: "Tu n'as pas encore rejoint cette partie.",
+    });
     return;
   }
 

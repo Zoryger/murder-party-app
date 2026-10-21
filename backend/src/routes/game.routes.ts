@@ -37,6 +37,17 @@ import {
   useInversionFrequence,
   useBrouilleurIem,
 } from "../controllers/event.controller";
+import {
+  getWallet,
+  transferMoney,
+  useAlchimiste,
+  getMyAlchemistRequests,
+} from "../controllers/economy.controller";
+import {
+  getGmOverview,
+  getGmAlchemistRequests,
+  answerAlchemistRequest,
+} from "../controllers/gm.controller";
 import { getClueBoard } from "../controllers/clue.controller";
 import { validate } from "../middleware/validate.middleware";
 import { requireAuth } from "../middleware/auth.middleware";
@@ -90,6 +101,20 @@ router.get("/:id/clues", requireAuth, blackoutGuard, getClueBoard);
 router.get("/:id/events", requireAuth, getEvents);
 router.post("/:id/duels/:duelId/vote", requireAuth, voteDuel);
 router.post("/:id/events/cancel-blackout", requireAuth, cancelBlackout);
+
+// ── Argent ────────────────────────────────────────────────────────────────────
+router.get("/:id/wallet", requireAuth, getWallet);
+router.post("/:id/money/transfer", requireAuth, blackoutGuard, transferMoney);
+router.get("/:id/alchemist/requests", requireAuth, getMyAlchemistRequests);
+
+// ── Console du MJ ─────────────────────────────────────────────────────────────
+router.get("/:id/gm/overview", requireAuth, getGmOverview);
+router.get("/:id/gm/alchemist", requireAuth, getGmAlchemistRequests);
+router.post(
+  "/:id/gm/alchemist/:requestId/answer",
+  requireAuth,
+  answerAlchemistRequest,
+);
 
 // ── Pouvoirs ───────────────────────────────────────────────────────────────
 router.get("/:id/my-power", requireAuth, getMyPower);
@@ -150,6 +175,12 @@ router.post(
   requireAuth,
   blackoutGuard,
   useBrouilleurIem,
+);
+router.post(
+  "/:id/powers/alchimiste",
+  requireAuth,
+  blackoutGuard,
+  useAlchimiste,
 );
 
 export default router;

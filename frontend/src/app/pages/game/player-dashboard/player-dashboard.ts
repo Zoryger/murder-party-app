@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GameService, MyCharacterSheet } from '../../../core/services/game.service';
 import { SocketService } from '../../../core/services/socket.service';
 
@@ -12,6 +12,7 @@ import { SocketService } from '../../../core/services/socket.service';
 })
 export class PlayerDashboard implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private gameService = inject(GameService);
   private socketService = inject(SocketService);
 
@@ -34,16 +35,23 @@ export class PlayerDashboard implements OnInit, OnDestroy {
     this.socketService.joinLobby(this.gameId);
     this.socketService.on('player:status', () => this.load());
     this.socketService.on('love:bond', () => this.load());
+    this.socketService.on('money:update', () => this.load());
   }
 
   ngOnDestroy(): void {
     this.socketService.off('player:status');
     this.socketService.off('love:bond');
+    this.socketService.off('money:update');
   }
 
   private load(): void {
     this.gameService.getMyCharacterSheet(this.gameId).subscribe({
       next: (res) => {
+        // Le MJ n'a pas de fiche personnage : il a sa console
+        if (res.data.isGm) {
+          this.router.navigate(['/game', this.gameId, 'gm'], { replaceUrl: true });
+          return;
+        }
         this.sheet = res.data;
         this.isLoading = false;
       },

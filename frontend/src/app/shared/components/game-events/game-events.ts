@@ -5,9 +5,8 @@ import { EventService, GameEventsState, DuelState } from '../../../core/services
 import { SocketService } from '../../../core/services/socket.service';
 import { AuthService } from '../../../core/services/auth.service';
 
-const GAME_URL = /^\/game\/(\d+)\/(lobby|play|powers|messages|clues)/;
-const BLOCKED_PAGES = ['powers', 'messages', 'clues']; // pages recouvertes par l'écran de panne
-
+const GAME_URL = /^\/game\/(\d+)\/(lobby|play|powers|messages|clues|wallet|gm)/;
+const BLOCKED_PAGES = ['powers', 'messages', 'clues', 'wallet']; // pages recouvertes par l'écran de panne
 @Component({
   selector: 'app-game-events',
   standalone: true,

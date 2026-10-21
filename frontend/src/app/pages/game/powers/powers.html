@@ -437,7 +437,17 @@
               </button>
             </div>
           }
-
+          @case ('alchimiste') {
+            <div class="action-card card">
+              <p class="hint intro">
+                L'Alchimiste échange de l'argent contre un indice auprès du MJ. Tout se passe depuis
+                votre portefeuille.
+              </p>
+              <a [routerLink]="['/game', gameId, 'wallet']" class="btn btn--primary"
+                >💰 Ouvrir le portefeuille</a
+              >
+            </div>
+          }
           @default {
             <div class="action-card card">
               <p class="soon">

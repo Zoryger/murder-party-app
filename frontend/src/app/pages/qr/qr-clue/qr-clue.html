@@ -1,0 +1,25 @@
+<div class="qr-page">
+  @if (isLoading) {
+    <p class="loading">🔍 Déchiffrement du document...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (clue; as c) {
+    <p class="tag">📡 Document confidentiel</p>
+    <h1>{{ c.title }}</h1>
+
+    <section class="card">
+      <h2>📄 Contenu</h2>
+      <p>{{ c.content }}</p>
+    </section>
+
+    <section class="card reveal">
+      <h2>🔍 Ce que cela révèle</h2>
+      <p>{{ c.revelation }}</p>
+    </section>
+
+    <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+  }
+</div>
