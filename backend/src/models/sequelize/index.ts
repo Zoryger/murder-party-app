@@ -22,6 +22,8 @@ import Duel from "./Duel.model";
 import DuelVote from "./DuelVote.model";
 import AlchemistRequest from "./AlchemistRequest.model";
 import MoneyTransfer from "./MoneyTransfer.model";
+import FinalSubmission from "./FinalSubmission.model";
+import FinalAccusation from "./FinalAccusation.model";
 import { seedPowers } from "../../seed/powers.seed";
 import { seedHp2027 } from "../../seed/hp2027.seed";
 
@@ -192,8 +194,8 @@ GameClue.belongsTo(ScenarioCharacter, {
   as: "currentCharacter",
 });
 
-// GhostSubstitution, LoveBond, TimedEffect, Duel, DuelVote, AlchemistRequest et MoneyTransfer :
-// volontairement sans association (aucun include nécessaire)
+// GhostSubstitution, LoveBond, TimedEffect, Duel, DuelVote, AlchemistRequest, MoneyTransfer,
+// FinalSubmission et FinalAccusation : volontairement sans association (aucun include nécessaire)
 
 // ── Synchronisation ───────────────────────────────────────────────────────
 export async function syncDatabase(): Promise<void> {
@@ -237,4 +239,6 @@ export {
   DuelVote,
   AlchemistRequest,
   MoneyTransfer,
+  FinalSubmission,
+  FinalAccusation,
 };

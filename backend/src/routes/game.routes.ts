@@ -48,6 +48,16 @@ import {
   getGmAlchemistRequests,
   answerAlchemistRequest,
 } from "../controllers/gm.controller";
+import {
+  getPhase,
+  getFinalForm,
+  submitFinal,
+  getFinalStatus,
+  closeGame,
+  reopenGame,
+  revealGame,
+  getResults,
+} from "../controllers/finale.controller";
 import { getClueBoard } from "../controllers/clue.controller";
 import { validate } from "../middleware/validate.middleware";
 import { requireAuth } from "../middleware/auth.middleware";
@@ -107,6 +117,12 @@ router.get("/:id/wallet", requireAuth, getWallet);
 router.post("/:id/money/transfer", requireAuth, blackoutGuard, transferMoney);
 router.get("/:id/alchemist/requests", requireAuth, getMyAlchemistRequests);
 
+// ── Fin de partie : étape, formulaire final, résultats ───────────────────────
+router.get("/:id/phase", requireAuth, getPhase);
+router.get("/:id/final", requireAuth, getFinalForm);
+router.post("/:id/final", requireAuth, submitFinal);
+router.get("/:id/results", requireAuth, getResults);
+
 // ── Console du MJ ─────────────────────────────────────────────────────────────
 router.get("/:id/gm/overview", requireAuth, getGmOverview);
 router.get("/:id/gm/alchemist", requireAuth, getGmAlchemistRequests);
@@ -115,6 +131,10 @@ router.post(
   requireAuth,
   answerAlchemistRequest,
 );
+router.get("/:id/gm/final-status", requireAuth, getFinalStatus);
+router.post("/:id/gm/close", requireAuth, closeGame);
+router.post("/:id/gm/reopen", requireAuth, reopenGame);
+router.post("/:id/gm/reveal", requireAuth, revealGame);
 
 // ── Pouvoirs ───────────────────────────────────────────────────────────────
 router.get("/:id/my-power", requireAuth, getMyPower);

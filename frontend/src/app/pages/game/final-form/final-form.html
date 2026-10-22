@@ -1,0 +1,112 @@
+<div class="final-page">
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else if (loadError) {
+    <div class="empty-state">
+      <p>⚠️ {{ loadError }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (data; as d) {
+    <div class="f-header">
+      <h1>🗳️ Vote final</h1>
+      <p>Le temps de jeu est écoulé. Dis au MJ ce que tu as compris de l'affaire.</p>
+    </div>
+
+    @if (d.readOnly) {
+      <div class="notice">
+        La solution a été révélée : le formulaire est fermé.
+        <a [routerLink]="['/game', gameId, 'results']">Voir les résultats →</a>
+      </div>
+    }
+
+    <div class="card objective">
+      <h2>🎯 Rappel de ton objectif</h2>
+      <p>{{ d.objective }}</p>
+    </div>
+
+    <div class="card block">
+      <h2>🔪 Les meurtriers</h2>
+      <p class="hint">
+        Désigne {{ d.required }} personnes différentes, et explique le mobile de chacune.
+      </p>
+
+      @for (i of slots; track i) {
+        <div class="slot">
+          <label>Meurtrier n°{{ i + 1 }}</label>
+          <select [(ngModel)]="accused[i]" [disabled]="d.readOnly">
+            <option [ngValue]="null">Choisir une personne...</option>
+            @for (p of d.players; track p.id) {
+              <option [ngValue]="p.id" [disabled]="isTaken(p.id, i)">{{ label(p) }}</option>
+            }
+          </select>
+          <textarea
+            rows="2"
+            maxlength="1000"
+            [(ngModel)]="mobiles[i]"
+            [disabled]="d.readOnly"
+            placeholder="Son mobile : pourquoi a-t-il / elle voulu la mort de Chourave ?"
+          ></textarea>
+        </div>
+      }
+    </div>
+
+    <div class="card block">
+      <h2>🗡️ L'arme et le mode opératoire</h2>
+      <p class="hint">Comment le crime s'est-il déroulé ? Dans quel ordre, et qui a fait quoi ?</p>
+      <textarea
+        rows="4"
+        maxlength="2000"
+        [(ngModel)]="weapon"
+        [disabled]="d.readOnly"
+        placeholder="Décris l'arme, le déroulement et le rôle de chacun…"
+      ></textarea>
+    </div>
+
+    <div class="card block">
+      <h2>🕸️ Intrigues secondaires et lore</h2>
+      <p class="hint">
+        Tout ce que tu as reconstitué en dehors du meurtre : fausses pistes, secrets des suspects,
+        relations cachées… (facultatif, mais le MJ lit tout).
+      </p>
+      <textarea rows="5" maxlength="3000" [(ngModel)]="subplots" [disabled]="d.readOnly"></textarea>
+    </div>
+
+    <div class="card block">
+      <h2>📝 À propos de ton objectif personnel</h2>
+      <p class="hint">Facultatif : explique ici ce que tu as compris de ta propre situation.</p>
+      <textarea
+        rows="3"
+        maxlength="2000"
+        [(ngModel)]="objectiveNotes"
+        [disabled]="d.readOnly"
+      ></textarea>
+    </div>
+
+    @if (!d.readOnly) {
+      <div class="submit-bar">
+        <button class="btn btn--primary" [disabled]="!canSubmit || isSubmitting" (click)="submit()">
+          {{
+            isSubmitting ? 'Envoi...' : d.mine ? 'Mettre à jour ma réponse' : 'Envoyer ma réponse'
+          }}
+        </button>
+        @if (!canSubmit) {
+          <p class="hint">
+            Il faut {{ d.required }} personnes différentes, un mobile pour chacune et l'arme / le
+            mode opératoire.
+          </p>
+        }
+        @if (submitError) {
+          <p class="feedback error">⚠️ {{ submitError }}</p>
+        }
+        @if (submitMsg) {
+          <p class="feedback ok">✅ {{ submitMsg }}</p>
+        }
+        @if (d.mine && !submitMsg) {
+          <p class="hint">
+            Une réponse est déjà enregistrée : tu peux la modifier jusqu'à la révélation.
+          </p>
+        }
+      </div>
+    }
+  }
+</div>

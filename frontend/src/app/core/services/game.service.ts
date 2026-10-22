@@ -8,7 +8,7 @@ export interface Game {
   name: string;
   theme: string;
   synopsis: string;
-  status: 'waiting' | 'active' | 'finished';
+  status: 'waiting' | 'active' | 'voting' | 'finished';
   joinCode: string;
   createdBy: number;
   maxPlayers: number;

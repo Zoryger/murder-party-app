@@ -4,6 +4,9 @@
     @if (overview; as o) {
       <p class="sub">{{ o.game.name }} · {{ o.players.length }} joueur(s)</p>
     }
+    <a [routerLink]="['/game', gameId, 'gm', 'finale']" class="btn btn--ghost btn--sm"
+      >🏁 Fin de partie</a
+    >
   </div>
 
   @if (isLoading) {

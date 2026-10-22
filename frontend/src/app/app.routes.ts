@@ -38,10 +38,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/game/powers/powers').then((m) => m.Powers),
   },
   {
-    path: '**',
-    loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
-  },
-  {
     path: 'game/:id/clues',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/game/clue-board/clue-board').then((m) => m.ClueBoard),
@@ -58,8 +54,27 @@ export const routes: Routes = [
       import('./pages/game/gm-console/gm-console/gm-console').then((m) => m.GmConsole),
   },
   {
+    path: 'game/:id/gm/finale',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/game/gm-finale/gm-finale').then((m) => m.GmFinale),
+  },
+  {
+    path: 'game/:id/final',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/game/final-form/final-form').then((m) => m.FinalFormPage),
+  },
+  {
+    path: 'game/:id/results',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/game/results/results').then((m) => m.Results),
+  },
+  {
     path: 'qr/:slug',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/qr/qr-clue/qr-clue').then((m) => m.QrClue),
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
   },
 ];

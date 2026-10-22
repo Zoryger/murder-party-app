@@ -1,0 +1,56 @@
+.final-page { max-width: 680px; margin: 0 auto; padding-bottom: 5rem; }
+
+.loading { text-align: center; padding: 3rem 0; color: var(--color-text-muted); }
+
+.f-header {
+  margin-bottom: 1.5rem;
+  h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+  p  { color: var(--color-text-muted); font-size: .9rem; }
+}
+
+.notice {
+  margin-bottom: 1.25rem;
+  padding: .85rem 1rem;
+  font-size: .9rem;
+  background: rgba(245, 197, 24, .1);
+  border: 1px solid rgba(245, 197, 24, .3);
+  border-radius: var(--radius-md);
+  a { margin-left: .4rem; color: var(--color-primary); }
+}
+
+.objective {
+  margin-bottom: 1.25rem;
+  border-color: rgba(123, 47, 190, .35);
+  background: rgba(123, 47, 190, .05);
+  h2 { font-size: .95rem; margin-bottom: .4rem; }
+  p  { font-size: .9rem; color: var(--color-text-muted); line-height: 1.6; }
+}
+
+.block {
+  margin-bottom: 1.25rem;
+  h2    { font-size: 1.05rem; margin-bottom: .4rem; }
+  .hint { font-size: .85rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: .9rem; }
+  textarea { width: 100%; }
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: .9rem;
+  margin-bottom: .75rem;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  label { font-size: .8rem; font-weight: 600; color: var(--color-accent); }
+}
+
+.submit-bar {
+  .hint { font-size: .8rem; color: var(--color-text-muted); margin-top: .6rem; }
+}
+
+.feedback {
+  margin-top: .75rem;
+  font-size: .85rem;
+  &.ok    { color: var(--color-success); }
+  &.error { color: var(--color-danger); }
+}

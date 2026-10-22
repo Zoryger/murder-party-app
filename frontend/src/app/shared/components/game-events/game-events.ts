@@ -2,11 +2,14 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { EventService, GameEventsState, DuelState } from '../../../core/services/event.service';
+import { FinaleService } from '../../../core/services/finale.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { AuthService } from '../../../core/services/auth.service';
 
-const GAME_URL = /^\/game\/(\d+)\/(lobby|play|powers|messages|clues|wallet|gm)/;
-const BLOCKED_PAGES = ['powers', 'messages', 'clues', 'wallet']; // pages recouvertes par l'écran de panne
+const GAME_URL = /^\/game\/(\d+)\/(lobby|play|powers|messages|clues|wallet|gm|final|results)/;
+// Pages d'action : recouvertes par l'écran de panne, et quittées automatiquement à la clôture
+const ACTION_PAGES = ['powers', 'messages', 'clues', 'wallet'];
+
 @Component({
   selector: 'app-game-events',
   standalone: true,
@@ -17,6 +20,7 @@ const BLOCKED_PAGES = ['powers', 'messages', 'clues', 'wallet']; // pages recouv
 export class GameEvents implements OnInit, OnDestroy {
   private router = inject(Router);
   private eventService = inject(EventService);
+  private finale = inject(FinaleService);
   private socketService = inject(SocketService);
   private auth = inject(AuthService);
 
@@ -52,6 +56,7 @@ export class GameEvents implements OnInit, OnDestroy {
     if (this.tickTimer) clearInterval(this.tickTimer);
     this.clearRefreshTimer();
     this.socketService.off('event:update');
+    this.socketService.off('game:phase');
   }
 
   // ── Suivi de la page courante ───────────────────────────────────────────
@@ -70,12 +75,15 @@ export class GameEvents implements OnInit, OnDestroy {
       this.state = null;
       this.actionError = '';
       this.socketService.off('event:update');
+      this.socketService.off('game:phase');
       this.socketService.on('event:update', () => this.refresh());
+      this.socketService.on('game:phase', () => this.syncPhase(true));
     }
 
     // (Re)joint la room à chaque navigation : une page qui quitte la room ne doit pas nous en priver
     this.socketService.joinLobby(gameId);
     this.refresh();
+    this.syncPhase(false);
   }
 
   private reset(): void {
@@ -85,6 +93,37 @@ export class GameEvents implements OnInit, OnDestroy {
     this.actionError = '';
     this.clearRefreshTimer();
     this.socketService.off('event:update');
+    this.socketService.off('game:phase');
+  }
+
+  // ── Aiguillage selon l'étape de la partie : jeu → vote final → résultats ───
+  // `force` : déclenché par le MJ en direct (on redirige quelle que soit la page).
+  // Sinon, on ne redirige que depuis les pages d'action (messagerie, pouvoirs…).
+  private syncPhase(force: boolean): void {
+    const gameId = this.gameId;
+    if (!gameId) return;
+
+    this.finale.getPhase(gameId).subscribe({
+      next: (res) => {
+        if (gameId !== this.gameId) return;
+        const { status, isGm } = res.data;
+        if (isGm) return; // le MJ reste sur sa console
+
+        const page = this.page;
+        const onActionPage = page !== null && ACTION_PAGES.includes(page);
+
+        if (status === 'voting' && page !== 'final' && (force || onActionPage)) this.goTo('final');
+        if (status === 'finished' && page !== 'results' && (force || onActionPage))
+          this.goTo('results');
+        // La partie reprend (le MJ a annulé la clôture) : retour à la fiche
+        if (status === 'active' && (page === 'final' || page === 'results')) this.goTo('play');
+      },
+      error: () => {},
+    });
+  }
+
+  private goTo(target: 'play' | 'final' | 'results'): void {
+    if (this.gameId) this.router.navigate(['/game', this.gameId, target]);
   }
 
   // ── Récupération de l'état ───────────────────────────────────────────────
@@ -132,7 +171,7 @@ export class GameEvents implements OnInit, OnDestroy {
   // ── Affichage ─────────────────────────────────────────────────────────────
   get showOverlay(): boolean {
     return (
-      !!this.state?.blackout && !this.state.isGm && !!this.page && BLOCKED_PAGES.includes(this.page)
+      !!this.state?.blackout && !this.state.isGm && !!this.page && ACTION_PAGES.includes(this.page)
     );
   }
 

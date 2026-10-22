@@ -25,10 +25,12 @@ export class Home implements OnInit {
     waiting: 'En attente',
     active: 'En cours',
     finished: 'Terminée',
+    voting: 'Vote final',
   };
 
   ngOnInit(): void {
-    this.gameService.getGames()
+    this.gameService
+      .getGames()
       .pipe(
         timeout(10000),
         catchError(() => {

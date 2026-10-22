@@ -1,0 +1,175 @@
+<div class="results-page">
+  @if (isLoading) {
+    <p class="loading">🔍 Dépouillement des réponses...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    </div>
+  } @else if (data; as d) {
+    <div class="r-header">
+      <h1>🏁 Résultat de l'enquête</h1>
+      @if (d.status === 'voting') {
+        <p class="preview">👁️ Aperçu MJ — la solution n'est pas encore révélée aux joueurs.</p>
+      }
+      <p class="sub">{{ d.submittedCount }} / {{ d.totalPlayers }} réponse(s) rendue(s)</p>
+      @if (d.isGm) {
+        <a [routerLink]="['/game', gameId, 'gm', 'finale']" class="btn btn--ghost btn--sm"
+          >← Fin de partie</a
+        >
+      }
+    </div>
+
+    <!-- La solution -->
+    <section class="card solution">
+      <h2>🔪 La vérité</h2>
+      <p class="pitch">{{ d.solution.pitch }}</p>
+
+      <div class="murderers">
+        @for (m of d.solution.murderers; track m.playerId) {
+          <div class="murderer">
+            <strong>{{ m.characterName }}</strong>
+            @if (m.username) {
+              <span class="real-name">({{ m.username }})</span>
+            }
+            <span class="role">{{ m.title }}</span>
+            @if (m.knowledge) {
+              <span class="knowledge">{{ m.knowledge }}</span>
+            }
+            <p>{{ m.backstory }}</p>
+            <p class="link">{{ m.linkToVictim }}</p>
+          </div>
+        }
+      </div>
+
+      @if (d.solution.plotThreads.length > 0) {
+        <h3>🕸️ Les intrigues secondaires</h3>
+        <div class="threads">
+          @for (t of d.solution.plotThreads; track t.title) {
+            <div class="thread">
+              <strong>{{ t.title }}</strong>
+              <p>{{ t.description }}</p>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Le décompte des accusations -->
+    <section class="card">
+      <h2>🗳️ Qui a été accusé ?</h2>
+      <div class="tally">
+        @for (t of d.tally; track t.playerId) {
+          <div class="tally-row">
+            <span class="name">
+              {{ t.characterName }}
+              @if (t.isMurderer) {
+                <span class="badge-m" title="Meurtrier">🔪</span>
+              }
+            </span>
+            <div class="bar">
+              <div
+                class="fill"
+                [class.real]="t.isMurderer"
+                [style.width.%]="barWidth(t.accusedCount)"
+              ></div>
+            </div>
+            <span class="count">{{ t.accusedCount }}</span>
+            @if (t.unmasked) {
+              <span class="unmasked">démasqué</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Les verdicts -->
+    <section class="card">
+      <h2>🎯 Les objectifs</h2>
+      <div class="verdicts">
+        @for (v of d.verdicts; track v.playerId) {
+          <div
+            class="verdict"
+            [class.won]="v.verdict === 'won'"
+            [class.lost]="v.verdict === 'lost'"
+            [class.review]="v.verdict === 'review'"
+          >
+            <div class="who">
+              <strong>{{ v.characterName }}</strong>
+              @if (v.username) {
+                <span class="real-name">({{ v.username }})</span>
+              }
+              @if (v.status === 'ghost') {
+                <span>👻</span>
+              }
+            </div>
+            <p class="obj">{{ v.objectiveLabel }}</p>
+            <div class="result">
+              <span class="label">{{ verdictLabel[v.verdict] }}</span>
+              <span class="detail">{{ v.detail }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Ma réponse (joueur) -->
+    @if (d.myAnswer; as a) {
+      <section class="card">
+        <h2>📝 Ta réponse</h2>
+        <p class="score">{{ a.correctCount }} / 3 meurtriers identifiés</p>
+        @for (acc of a.accusations; track acc.accusedName) {
+          <p class="acc" [class.ok]="acc.isCorrect" [class.ko]="!acc.isCorrect">
+            {{ acc.isCorrect ? '✅' : '❌' }} {{ acc.accusedName }} — « {{ acc.mobile }} »
+          </p>
+        }
+        <h3>Arme et mode opératoire</h3>
+        <p class="text">{{ a.weapon }}</p>
+        @if (a.subplots) {
+          <h3>Intrigues secondaires</h3>
+          <p class="text">{{ a.subplots }}</p>
+        }
+        @if (a.objectiveNotes) {
+          <h3>Objectif personnel</h3>
+          <p class="text">{{ a.objectiveNotes }}</p>
+        }
+      </section>
+    }
+
+    <!-- Toutes les réponses (MJ) -->
+    @if (d.answers; as answers) {
+      <section class="card">
+        <h2>📚 Toutes les réponses (MJ)</h2>
+        @if (answers.length === 0) {
+          <p class="empty">Aucune réponse rendue.</p>
+        }
+        @for (a of answers; track a.playerId) {
+          <details class="answer">
+            <summary>
+              <strong>{{ a.characterName }}</strong>
+              @if (a.username) {
+                <span class="real-name">({{ a.username }})</span>
+              }
+              <span class="score">{{ a.correctCount }}/3</span>
+            </summary>
+            @for (acc of a.accusations; track acc.accusedName) {
+              <p class="acc" [class.ok]="acc.isCorrect" [class.ko]="!acc.isCorrect">
+                {{ acc.isCorrect ? '✅' : '❌' }} {{ acc.accusedName }} — « {{ acc.mobile }} »
+              </p>
+            }
+            <h3>Arme et mode opératoire</h3>
+            <p class="text">{{ a.weapon }}</p>
+            @if (a.subplots) {
+              <h3>Intrigues secondaires</h3>
+              <p class="text">{{ a.subplots }}</p>
+            }
+            @if (a.objectiveNotes) {
+              <h3>Objectif personnel</h3>
+              <p class="text">{{ a.objectiveNotes }}</p>
+            }
+          </details>
+        }
+      </section>
+    }
+  }
+</div>

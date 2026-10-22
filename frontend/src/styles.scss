@@ -72,6 +72,7 @@ a {
 
   &--waiting  { background: rgba(245,197,24,.12); color: var(--color-accent);  }
   &--active   { background: rgba(56,161,105,.12); color: var(--color-success); }
+  &--voting   { background: rgba(123,47,190,.12); color: var(--color-primary); }
   &--finished { background: rgba(144,144,168,.12); color: var(--color-text-muted); }
   &--alive    { background: rgba(56,161,105,.12); color: var(--color-success); }
   &--ghost    { background: rgba(144,144,168,.12); color: var(--color-text-muted); }

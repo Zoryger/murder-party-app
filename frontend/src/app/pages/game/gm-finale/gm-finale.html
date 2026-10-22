@@ -1,0 +1,91 @@
+<div class="finale-page">
+  <div class="g-header">
+    <a [routerLink]="['/game', gameId, 'gm']" class="back">← Console MJ</a>
+    <h1>🏁 Fin de partie</h1>
+  </div>
+
+  @if (isLoading) {
+    <p class="loading">Chargement...</p>
+  } @else if (errorMsg) {
+    <div class="empty-state">
+      <p>⚠️ {{ errorMsg }}</p>
+    </div>
+  } @else if (info; as i) {
+    @if (actionError) {
+      <p class="feedback error">⚠️ {{ actionError }}</p>
+    }
+    @if (actionMsg) {
+      <p class="feedback ok">{{ actionMsg }}</p>
+    }
+
+    @switch (i.status) {
+      @case ('active') {
+        <div class="card step">
+          <h2>⏱️ La partie est en cours</h2>
+          @if (elapsed) {
+            <p class="elapsed">
+              Lancée il y a <strong>{{ elapsed }}</strong> (durée prévue : 4 h).
+            </p>
+          }
+          <p class="hint">
+            Quand le temps est écoulé, clôture la partie : les pouvoirs, la messagerie et les dons
+            s'arrêtent, les duels en cours sont annulés, et chaque joueur est envoyé vers le
+            formulaire final.
+          </p>
+          <button class="btn btn--danger" [disabled]="isBusy" (click)="close()">
+            ⏹️ Clôturer et ouvrir le vote final
+          </button>
+        </div>
+      }
+
+      @case ('voting') {
+        <div class="card step">
+          <h2>🗳️ Vote final en cours</h2>
+
+          <div class="progress">
+            <div class="bar"><div class="fill" [style.width.%]="progress"></div></div>
+            <span>{{ i.submittedCount }} / {{ i.totalPlayers }} réponse(s)</span>
+          </div>
+
+          <div class="players">
+            @for (p of i.players; track p.id) {
+              <div class="player" [class.done]="p.submitted">
+                <span>{{ p.submitted ? '✅' : '⏳' }}</span>
+                <span class="name">{{ p.characterName }}</span>
+                @if (p.username) {
+                  <span class="real-name">({{ p.username }})</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="actions">
+            <button class="btn btn--primary" [disabled]="isBusy" (click)="reveal()">
+              🏆 Révéler la solution
+            </button>
+            <a [routerLink]="['/game', gameId, 'results']" class="btn btn--ghost"
+              >👁️ Aperçu des réponses</a
+            >
+            <button class="btn btn--ghost" [disabled]="isBusy" (click)="reopen()">
+              ↩️ Reprendre la partie
+            </button>
+          </div>
+        </div>
+      }
+
+      @case ('finished') {
+        <div class="card step">
+          <h2>🏆 Solution révélée</h2>
+          <p class="hint">La partie est terminée. Les joueurs consultent les résultats.</p>
+          <a [routerLink]="['/game', gameId, 'results']" class="btn btn--primary"
+            >Voir les résultats</a
+          >
+        </div>
+      }
+
+      @default {
+        <div class="card step"><p class="hint">La partie n'a pas encore commencé.</p></div>
+      }
+    }
+  }
+</div>
