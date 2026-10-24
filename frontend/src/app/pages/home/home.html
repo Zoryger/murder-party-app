@@ -31,6 +31,9 @@
   @if (isLoading) {
     <div class="loading-state">
       <p>🔍 Chargement des parties...</p>
+      @if (isSlow) {
+        <p>⏳ Le serveur se réveille, cela peut prendre jusqu'à une minute…</p>
+      }
     </div>
   } @else if (errorMsg) {
     <div class="empty-state">

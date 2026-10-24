@@ -203,7 +203,10 @@ export async function syncDatabase(): Promise<void> {
     await sequelize.authenticate();
     console.log("✅ Connexion MySQL établie");
 
-    await sequelize.sync({ alter: true });
+    // 'alter' en développement. En production ('safe'), on crée seulement les tables manquantes :
+    // `alter` peut multiplier les index MySQL à chaque démarrage et modifier des tables en place.
+    const alter = (process.env["DB_SYNC_MODE"] ?? "alter") === "alter";
+    await sequelize.sync(alter ? { alter: true } : undefined);
     console.log("✅ Tables synchronisées");
 
     await seedPowers();

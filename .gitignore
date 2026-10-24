@@ -22,3 +22,5 @@ Thumbs.db
 
 # VS Code (optionnel, retire si tu veux partager la config)
 .vscode/
+
+backend/dist/

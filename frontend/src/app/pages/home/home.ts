@@ -1,9 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError, finalize, timeout } from 'rxjs/operators';
+import { GameService, Game } from '../../core/services/game.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ApiResponse, Game, GameService } from '../../core/services/game.service';
 
 @Component({
   selector: 'app-home',
@@ -14,37 +12,34 @@ import { ApiResponse, Game, GameService } from '../../core/services/game.service
 })
 export class Home implements OnInit {
   private gameService = inject(GameService);
-  private changeDetector = inject(ChangeDetectorRef);
   auth = inject(AuthService);
 
   games: Game[] = [];
   isLoading = true;
+  isSlow = false; // l'hébergement gratuit met jusqu'à une minute à se réveiller
   errorMsg = '';
 
   statusLabel: Record<string, string> = {
     waiting: 'En attente',
     active: 'En cours',
-    finished: 'Terminée',
     voting: 'Vote final',
+    finished: 'Terminée',
   };
 
   ngOnInit(): void {
-    this.gameService
-      .getGames()
-      .pipe(
-        timeout(10000),
-        catchError(() => {
-          this.errorMsg = 'Impossible de charger les parties.';
-          return of({ success: false, data: [] } as ApiResponse<Game[]>);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.changeDetector.markForCheck();
-        }),
-      )
-      .subscribe((res) => {
-        this.games = Array.isArray(res.data) ? res.data : [];
-        this.errorMsg = '';
-      });
+    setTimeout(() => {
+      if (this.isLoading) this.isSlow = true;
+    }, 4000);
+
+    this.gameService.getGames().subscribe({
+      next: (res) => {
+        this.games = res.data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMsg = 'Impossible de charger les parties. Réessaie dans un instant.';
+        this.isLoading = false;
+      },
+    });
   }
 }
