@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GameService, Game } from '../../core/services/game.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,6 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class Home implements OnInit {
   private gameService = inject(GameService);
+  private changeDetector = inject(ChangeDetectorRef);
   auth = inject(AuthService);
 
   games: Game[] = [];
@@ -28,17 +29,22 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     setTimeout(() => {
-      if (this.isLoading) this.isSlow = true;
+      if (this.isLoading) {
+        this.isSlow = true;
+        this.changeDetector.markForCheck();
+      }
     }, 4000);
 
     this.gameService.getGames().subscribe({
       next: (res) => {
         this.games = res.data;
         this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.errorMsg = 'Impossible de charger les parties. Réessaie dans un instant.';
         this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
