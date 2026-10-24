@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -33,7 +33,7 @@ export class Powers implements OnInit, OnDestroy {
   players: PublicPlayer[] = [];
   clues: GameClue[] = [];
 
-  isLoading = true;
+  isLoading = signal(true);
   loadError = '';
   actionError = '';
   successMsg = '';
@@ -136,11 +136,11 @@ export class Powers implements OnInit, OnDestroy {
       next: (res) => {
         this.overview = res.data;
         if (!res.data.borrowed) this.activeTab = 'own';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         if (initial) this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

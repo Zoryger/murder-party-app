@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import * as QRCode from 'qrcode';
 import { GmService, GmOverview, GmAlchemistRequest } from '../../../../core/services/gm.service';
@@ -23,7 +23,7 @@ export class GmConsole implements OnInit, OnDestroy {
   requests: GmAlchemistRequest[] = [];
   qrImages: Record<string, string> = {}; // slug → image (data URL)
 
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
   actionError = '';
   busyId: number | null = null;
@@ -65,12 +65,12 @@ export class GmConsole implements OnInit, OnDestroy {
     this.gm.getOverview(this.gameId).subscribe({
       next: (res) => {
         this.overview = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
         void this.buildQrCodes(res.data.qrClues);
       },
       error: (err) => {
         if (!this.overview) this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { QrService, QrClueView } from '../../../core/services/qr.service';
 
@@ -14,7 +14,7 @@ export class QrClue implements OnInit {
   private qrService = inject(QrService);
 
   clue: QrClueView | null = null;
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
 
   ngOnInit(): void {
@@ -23,11 +23,11 @@ export class QrClue implements OnInit {
     this.qrService.getQr(slug).subscribe({
       next: (res) => {
         this.clue = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Impossible de charger cette page.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

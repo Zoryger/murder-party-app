@@ -41,7 +41,7 @@ describe('Home', () => {
     gamesSubject.next({ success: true, data: [] });
     await fixture.whenStable();
 
-    expect(component.isLoading).toBeFalsy();
+    expect(component.isLoading()).toBeFalsy();
     expect(fixture.nativeElement.textContent).toContain('Aucune partie disponible.');
   });
 
@@ -49,7 +49,7 @@ describe('Home', () => {
     gamesSubject.error(new Error('Request failed'));
     await fixture.whenStable();
 
-    expect(component.isLoading).toBeFalsy();
+    expect(component.isLoading()).toBeFalsy();
     expect(fixture.nativeElement.textContent).toContain('Impossible de charger les parties.');
   });
 });

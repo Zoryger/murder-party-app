@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GameService, MyCharacterSheet } from '../../../core/services/game.service';
 import { SocketService } from '../../../core/services/socket.service';
@@ -18,7 +18,7 @@ export class PlayerDashboard implements OnInit, OnDestroy {
 
   gameId!: number;
   sheet: MyCharacterSheet | null = null;
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
 
   murderKnowledgeLabel: Record<string, string> = {
@@ -53,11 +53,11 @@ export class PlayerDashboard implements OnInit, OnDestroy {
           return;
         }
         this.sheet = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

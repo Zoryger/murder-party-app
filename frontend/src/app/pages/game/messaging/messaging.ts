@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, PublicPlayer } from '../../../core/services/game.service';
@@ -38,7 +38,7 @@ export class Messaging implements OnInit, OnDestroy {
   codeInput = '';
   codeMsg = '';
   codeError = false;
-  isLoading = true;
+  isLoading = signal(true);
   isSending = false;
   showNewConvo = false;
 
@@ -88,10 +88,10 @@ export class Messaging implements OnInit, OnDestroy {
     this.convService.getConversations(this.gameId).subscribe({
       next: (res) => {
         this.conversations = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

@@ -1,5 +1,5 @@
 <div class="final-page">
-  @if (isLoading) {
+  @if (isLoading()) {
     <p class="loading">Chargement...</p>
   } @else if (loadError) {
     <div class="empty-state">

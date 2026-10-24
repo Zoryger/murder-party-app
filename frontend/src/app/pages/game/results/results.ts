@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FinaleService, ResultsData } from '../../../core/services/finale.service';
 
@@ -15,7 +15,7 @@ export class Results implements OnInit {
 
   gameId!: number;
   data: ResultsData | null = null;
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
 
   verdictLabel: Record<string, string> = {
@@ -30,11 +30,11 @@ export class Results implements OnInit {
     this.finale.getResults(this.gameId).subscribe({
       next: (res) => {
         this.data = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

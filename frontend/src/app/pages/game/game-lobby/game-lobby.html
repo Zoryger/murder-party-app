@@ -1,5 +1,5 @@
 <div class="lobby-page">
-  @if (isLoading) {
+  @if (isLoading()) {
     <p class="loading">🔍 Chargement de la partie...</p>
   } @else if (errorMsg) {
     <div class="empty-state">

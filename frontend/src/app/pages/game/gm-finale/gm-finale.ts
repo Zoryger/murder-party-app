@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FinaleService, FinalStatus } from '../../../core/services/finale.service';
 import { SocketService } from '../../../core/services/socket.service';
@@ -18,7 +18,7 @@ export class GmFinale implements OnInit, OnDestroy {
   gameId!: number;
   info: FinalStatus | null = null;
 
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
   actionError = '';
   actionMsg = '';
@@ -63,11 +63,11 @@ export class GmFinale implements OnInit, OnDestroy {
     this.finale.getFinalStatus(this.gameId).subscribe({
       next: (res) => {
         this.info = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         if (!this.info) this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

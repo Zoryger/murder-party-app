@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FinaleService, FinalFormData } from '../../../core/services/finale.service';
@@ -17,7 +17,7 @@ export class FinalFormPage implements OnInit {
   gameId!: number;
   data: FinalFormData | null = null;
 
-  isLoading = true;
+  isLoading = signal(true);
   loadError = '';
 
   isSubmitting = false;
@@ -40,11 +40,11 @@ export class FinalFormPage implements OnInit {
       next: (res) => {
         this.data = res.data;
         this.prefill(res.data);
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

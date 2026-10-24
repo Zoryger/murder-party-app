@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, PublicPlayer } from '../../../../core/services/game.service';
@@ -27,7 +27,7 @@ export class Wallet implements OnInit, OnDestroy {
   players: PublicPlayer[] = [];
   requests: AlchemistRequestView[] = [];
 
-  isLoading = true;
+  isLoading = signal(true);
   loadError = '';
 
   // Don
@@ -68,11 +68,11 @@ export class Wallet implements OnInit, OnDestroy {
     this.economy.getWallet(this.gameId).subscribe({
       next: (res) => {
         this.wallet = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         if (!this.wallet) this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
 

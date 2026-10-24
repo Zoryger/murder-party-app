@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GameService, Game, PublicPlayer } from '../../../core/services/game.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -22,7 +22,7 @@ export class GameLobby implements OnInit, OnDestroy {
   game: Game | null = null;
   players: PublicPlayer[] = [];
   isGm = false;
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
   actionMsg = '';
   isAssigning = false;
@@ -65,14 +65,20 @@ export class GameLobby implements OnInit, OnDestroy {
         }
 
         if (!this.isGm) {
-          this.gameService.joinGame(this.gameId).subscribe({ complete: () => this.loadPlayers() });
+          this.gameService.joinGame(this.gameId).subscribe({
+            complete: () => this.loadPlayers(),
+            error: (err) => {
+              this.errorMsg = err.error?.message ?? 'Impossible de rejoindre cette partie.';
+              this.isLoading.set(false);
+            },
+          });
         } else {
           this.loadPlayers();
         }
       },
       error: () => {
         this.errorMsg = 'Partie introuvable.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }
@@ -81,10 +87,10 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.getPlayers(this.gameId).subscribe({
       next: (res) => {
         this.players = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

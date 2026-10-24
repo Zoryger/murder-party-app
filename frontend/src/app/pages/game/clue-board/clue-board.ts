@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClueService, GameClue } from '../../../core/services/clue.service';
 
@@ -15,7 +15,7 @@ export class ClueBoard implements OnInit {
 
   gameId!: number;
   clues: GameClue[] = [];
-  isLoading = true;
+  isLoading = signal(true);
   errorMsg = '';
 
   ngOnInit(): void {
@@ -23,11 +23,11 @@ export class ClueBoard implements OnInit {
     this.clueService.getClueBoard(this.gameId).subscribe({
       next: (res) => {
         this.clues = res.data;
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur.';
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }
