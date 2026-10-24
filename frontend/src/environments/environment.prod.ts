@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://TON-API.onrender.com/api',
-  socketUrl: 'https://TON-API.onrender.com',
+  apiUrl: 'https://murder-party-api.onrender.com/api',
+  socketUrl: 'https://murder-party-api.onrender.com',
 };
