@@ -3,9 +3,8 @@
 Application web de **murder party en ligne**, jouable sur PC et mobile : rôles secrets, pouvoirs, indices physiques liés à des QR codes, messagerie piratable et fin de partie avec vote.
 Conçue pour jouer avec des amis (12 à 15 joueurs, ~4 h) autour d'un scénario complet : *l'assassinat de la professeure Chourave, dans un Poudlard où la magie rencontre la technologie*.
 
-[![CI](https://github.com/TON-COMPTE/murder-party-app/actions/workflows/ci.yml/badge.svg)](https://github.com/TON-COMPTE/murder-party-app/actions/workflows/ci.yml)
 
-**▶️ Démo : https://ton-projet.vercel.app** — *l'API gratuite se réveille en environ une minute au premier appel.*
+**▶️ Démo : https://murder-party-app-drab.vercel.app/** — *l'API gratuite se réveille en environ une minute au premier appel.*
 
 ## Fonctionnalités
 
