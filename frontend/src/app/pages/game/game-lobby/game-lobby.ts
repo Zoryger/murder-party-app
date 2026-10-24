@@ -21,12 +21,28 @@ export class GameLobby implements OnInit, OnDestroy {
   gameId!: number;
   game: Game | null = null;
   players: PublicPlayer[] = [];
-  isGm = false;
-  isLoading = signal(true);
+  private gm = signal(false);
+  private loading = signal(true);
   errorMsg = '';
   actionMsg = '';
-  isAssigning = false;
-  isStarting = false;
+  private assigning = signal(false);
+  private starting = signal(false);
+
+  get isGm(): boolean {
+    return this.gm();
+  }
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
+
+  get isAssigning(): boolean {
+    return this.assigning();
+  }
+
+  get isStarting(): boolean {
+    return this.starting();
+  }
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
@@ -43,7 +59,7 @@ export class GameLobby implements OnInit, OnDestroy {
 
   // Le MJ va sur sa console, les joueurs sur leur fiche personnage
   private goToGame(): void {
-    this.router.navigate(['/game', this.gameId, this.isGm ? 'gm' : 'play']);
+    this.router.navigate(['/game', this.gameId, this.gm() ? 'gm' : 'play']);
   }
 
   private setupSocket(): void {
@@ -57,19 +73,19 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.getGame(this.gameId).subscribe({
       next: (res) => {
         this.game = res.data;
-        this.isGm = this.game.createdBy === this.auth.currentUser()?.id;
+        this.gm.set(this.game.createdBy === this.auth.currentUser()?.id);
 
         if (this.game.status === 'active') {
           this.goToGame();
           return;
         }
 
-        if (!this.isGm) {
+        if (!this.gm()) {
           this.gameService.joinGame(this.gameId).subscribe({
             complete: () => this.loadPlayers(),
             error: (err) => {
               this.errorMsg = err.error?.message ?? 'Impossible de rejoindre cette partie.';
-              this.isLoading.set(false);
+              this.loading.set(false);
             },
           });
         } else {
@@ -78,7 +94,7 @@ export class GameLobby implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMsg = 'Partie introuvable.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
@@ -87,30 +103,30 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.getPlayers(this.gameId).subscribe({
       next: (res) => {
         this.players = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: () => {
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
 
   assignCharacters(): void {
-    this.isAssigning = true;
+    this.assigning.set(true);
     this.actionMsg = '';
     this.gameService.assignCharacters(this.gameId).subscribe({
       next: () => {
-        this.isAssigning = false;
+        this.assigning.set(false);
       },
       error: (err) => {
         this.actionMsg = err.error?.message ?? "Erreur lors de l'assignation.";
-        this.isAssigning = false;
+        this.assigning.set(false);
       },
     });
   }
 
   startGame(): void {
-    this.isStarting = true;
+    this.starting.set(true);
     this.actionMsg = '';
     this.gameService.startGame(this.gameId).subscribe({
       next: () => {
@@ -118,7 +134,7 @@ export class GameLobby implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.actionMsg = err.error?.message ?? 'Erreur lors du démarrage.';
-        this.isStarting = false;
+        this.starting.set(false);
       },
     });
   }

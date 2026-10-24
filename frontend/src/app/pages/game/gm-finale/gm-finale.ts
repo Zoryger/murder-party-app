@@ -18,11 +18,19 @@ export class GmFinale implements OnInit, OnDestroy {
   gameId!: number;
   info: FinalStatus | null = null;
 
-  isLoading = signal(true);
+  private loading = signal(true);
   errorMsg = '';
   actionError = '';
   actionMsg = '';
-  isBusy = false;
+  private busy = signal(false);
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
+
+  get isBusy(): boolean {
+    return this.busy();
+  }
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
@@ -63,11 +71,11 @@ export class GmFinale implements OnInit, OnDestroy {
     this.finale.getFinalStatus(this.gameId).subscribe({
       next: (res) => {
         this.info = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         if (!this.info) this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
@@ -103,19 +111,19 @@ export class GmFinale implements OnInit, OnDestroy {
   }
 
   private run(request: ReturnType<FinaleService['closeGame']>): void {
-    this.isBusy = true;
+    this.busy.set(true);
     this.actionError = '';
     this.actionMsg = '';
 
     request.subscribe({
       next: (res) => {
         this.actionMsg = res.message ?? '';
-        this.isBusy = false;
+        this.busy.set(false);
         this.load();
       },
       error: (err) => {
         this.actionError = err.error?.message ?? 'Erreur.';
-        this.isBusy = false;
+        this.busy.set(false);
       },
     });
   }

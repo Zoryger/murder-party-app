@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { GameService } from '../../../core/services/game.service';
@@ -17,9 +17,13 @@ export class CreateGame implements OnInit {
   private gameService     = inject(GameService);
   private scenarioService = inject(ScenarioService);
 
-  isSubmitting = false;
+  private submitting = signal(false);
   errorMsg     = '';
   scenarios: Scenario[] = [];
+
+  get isSubmitting(): boolean {
+    return this.submitting();
+  }
 
   form = this.fb.group({
     name:       ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
@@ -54,7 +58,7 @@ export class CreateGame implements OnInit {
 
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.isSubmitting = true;
+    this.submitting.set(true);
     this.errorMsg     = '';
 
     const { name, theme, synopsis, maxPlayers, scenarioId } = this.form.value;
@@ -66,7 +70,7 @@ export class CreateGame implements OnInit {
       next:  (res) => this.router.navigate(['/game', res.data.id, 'lobby']),
       error: (err) => {
         this.errorMsg     = err.error?.message ?? 'Erreur lors de la création.';
-        this.isSubmitting = false;
+        this.submitting.set(false);
       },
     });
   }

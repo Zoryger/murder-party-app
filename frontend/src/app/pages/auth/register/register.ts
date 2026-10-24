@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -15,8 +15,12 @@ export class Register {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  isSubmitting = false;
+  private submitting = signal(false);
   errorMsg     = '';
+
+  get isSubmitting(): boolean {
+    return this.submitting();
+  }
 
   form = this.fb.group({
     username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
@@ -29,7 +33,7 @@ export class Register {
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
-    this.isSubmitting = true;
+    this.submitting.set(true);
     this.errorMsg     = '';
 
     const { username, email, password } = this.form.value;
@@ -38,7 +42,7 @@ export class Register {
       next:  () => this.router.navigate(['/']),
       error: (err) => {
         this.errorMsg     = err.error?.message ?? 'Erreur lors de l\'inscription.';
-        this.isSubmitting = false;
+        this.submitting.set(false);
       },
     });
   }

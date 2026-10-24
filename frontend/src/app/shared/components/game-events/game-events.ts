@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { EventService, GameEventsState, DuelState } from '../../../core/services/event.service';
@@ -26,12 +26,20 @@ export class GameEvents implements OnInit, OnDestroy {
 
   gameId: number | null = null;
   page: string | null = null;
-  state: GameEventsState | null = null;
+  private currentState = signal<GameEventsState | null>(null);
 
-  now = Date.now();
-  isBusy = false;
+  now = signal(Date.now());
+  private busy = signal(false);
   actionError = '';
   dismissedDuelId: number | null = null;
+
+  get state(): GameEventsState | null {
+    return this.currentState();
+  }
+
+  get isBusy(): boolean {
+    return this.busy();
+  }
 
   private clockOffset = 0; // écart entre l'horloge du serveur et celle du navigateur
   private tickTimer: ReturnType<typeof setInterval> | null = null;
@@ -47,7 +55,7 @@ export class GameEvents implements OnInit, OnDestroy {
 
     // Fait vivre les comptes à rebours
     this.tickTimer = setInterval(() => {
-      this.now = Date.now() + this.clockOffset;
+      this.now.set(Date.now() + this.clockOffset);
     }, 1000);
   }
 
@@ -72,7 +80,7 @@ export class GameEvents implements OnInit, OnDestroy {
 
     if (gameId !== this.gameId) {
       this.gameId = gameId;
-      this.state = null;
+      this.currentState.set(null);
       this.actionError = '';
       this.socketService.off('event:update');
       this.socketService.off('game:phase');
@@ -89,7 +97,7 @@ export class GameEvents implements OnInit, OnDestroy {
   private reset(): void {
     this.gameId = null;
     this.page = null;
-    this.state = null;
+    this.currentState.set(null);
     this.actionError = '';
     this.clearRefreshTimer();
     this.socketService.off('event:update');
@@ -134,13 +142,13 @@ export class GameEvents implements OnInit, OnDestroy {
     this.eventService.getEvents(gameId).subscribe({
       next: (res) => {
         if (gameId !== this.gameId) return; // l'utilisateur a changé de partie entre-temps
-        this.state = res.data;
+        this.currentState.set(res.data);
         this.clockOffset = new Date(res.data.serverNow).getTime() - Date.now();
-        this.now = Date.now() + this.clockOffset;
+        this.now.set(Date.now() + this.clockOffset);
         this.scheduleNextRefresh(res.data);
       },
       error: () => {
-        if (gameId === this.gameId) this.state = null;
+        if (gameId === this.gameId) this.currentState.set(null);
       },
     });
   }
@@ -171,12 +179,15 @@ export class GameEvents implements OnInit, OnDestroy {
   // ── Affichage ─────────────────────────────────────────────────────────────
   get showOverlay(): boolean {
     return (
-      !!this.state?.blackout && !this.state.isGm && !!this.page && ACTION_PAGES.includes(this.page)
+      !!this.currentState()?.blackout &&
+      !this.currentState()?.isGm &&
+      !!this.page &&
+      ACTION_PAGES.includes(this.page)
     );
   }
 
   secondsLeft(iso: string): number {
-    return Math.max(0, Math.ceil((Date.parse(iso) - this.now) / 1000));
+    return Math.max(0, Math.ceil((Date.parse(iso) - this.now()) / 1000));
   }
 
   clock(iso: string): string {
@@ -194,37 +205,37 @@ export class GameEvents implements OnInit, OnDestroy {
 
   // ── Actions ───────────────────────────────────────────────────────────────
   vote(votedForId: number): void {
-    const duel = this.state?.duel;
-    if (!duel || !this.gameId || this.isBusy) return;
+    const duel = this.currentState()?.duel;
+    if (!duel || !this.gameId || this.busy()) return;
 
-    this.isBusy = true;
+    this.busy.set(true);
     this.actionError = '';
 
     this.eventService.voteDuel(this.gameId, duel.id, votedForId).subscribe({
       next: () => {
-        this.isBusy = false;
+        this.busy.set(false);
         this.refresh();
       },
       error: (err) => {
         this.actionError = err.error?.message ?? 'Erreur.';
-        this.isBusy = false;
+        this.busy.set(false);
         this.refresh();
       },
     });
   }
 
   cancelBlackout(): void {
-    if (!this.gameId || this.isBusy) return;
-    this.isBusy = true;
+    if (!this.gameId || this.busy()) return;
+    this.busy.set(true);
 
     this.eventService.cancelBlackout(this.gameId).subscribe({
       next: () => {
-        this.isBusy = false;
+        this.busy.set(false);
         this.refresh();
       },
       error: (err) => {
         this.actionError = err.error?.message ?? 'Erreur.';
-        this.isBusy = false;
+        this.busy.set(false);
       },
     });
   }

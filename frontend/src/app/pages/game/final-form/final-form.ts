@@ -17,12 +17,20 @@ export class FinalFormPage implements OnInit {
   gameId!: number;
   data: FinalFormData | null = null;
 
-  isLoading = signal(true);
+  private loading = signal(true);
   loadError = '';
 
-  isSubmitting = false;
+  private submitting = signal(false);
   submitError = '';
   submitMsg = '';
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
+
+  get isSubmitting(): boolean {
+    return this.submitting();
+  }
 
   // Trois personnes désignées, chacune avec son mobile
   slots = [0, 1, 2];
@@ -40,11 +48,11 @@ export class FinalFormPage implements OnInit {
       next: (res) => {
         this.data = res.data;
         this.prefill(res.data);
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
@@ -83,7 +91,7 @@ export class FinalFormPage implements OnInit {
   submit(): void {
     if (!this.canSubmit || !this.data || this.data.readOnly) return;
 
-    this.isSubmitting = true;
+    this.submitting.set(true);
     this.submitError = '';
     this.submitMsg = '';
 
@@ -100,11 +108,11 @@ export class FinalFormPage implements OnInit {
       .subscribe({
         next: (res) => {
           this.submitMsg = res.message ?? 'Réponse enregistrée.';
-          this.isSubmitting = false;
+          this.submitting.set(false);
         },
         error: (err) => {
           this.submitError = err.error?.message ?? 'Erreur.';
-          this.isSubmitting = false;
+          this.submitting.set(false);
         },
       });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, PublicPlayer } from '../../../../core/services/game.service';
@@ -21,13 +21,14 @@ export class Wallet implements OnInit, OnDestroy {
   private gameService = inject(GameService);
   private economy = inject(EconomyService);
   private socketService = inject(SocketService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   gameId!: number;
   wallet: WalletInfo | null = null;
   players: PublicPlayer[] = [];
   requests: AlchemistRequestView[] = [];
 
-  isLoading = signal(true);
+  isLoading = true;
   loadError = '';
 
   // Don
@@ -68,20 +69,30 @@ export class Wallet implements OnInit, OnDestroy {
     this.economy.getWallet(this.gameId).subscribe({
       next: (res) => {
         this.wallet = res.data;
-        this.isLoading.set(false);
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         if (!this.wallet) this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
     });
 
     this.gameService
       .getPlayers(this.gameId)
-      .subscribe({ next: (res) => (this.players = res.data) });
+      .subscribe({
+        next: (res) => {
+          this.players = res.data;
+          this.changeDetector.markForCheck();
+        },
+      });
 
     this.economy.getMyAlchemistRequests(this.gameId).subscribe({
-      next: (res) => (this.requests = res.data),
+      next: (res) => {
+        this.requests = res.data;
+        this.changeDetector.markForCheck();
+      },
       error: () => {},
     });
   }
@@ -99,10 +110,12 @@ export class Wallet implements OnInit, OnDestroy {
         this.giveAmount = null;
         this.isGiving = false;
         this.loadAll();
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.giveError = err.error?.message ?? 'Erreur.';
         this.isGiving = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
@@ -121,10 +134,12 @@ export class Wallet implements OnInit, OnDestroy {
         this.question = '';
         this.isAsking = false;
         this.loadAll();
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.askError = err.error?.message ?? 'Erreur.';
         this.isAsking = false;
+        this.changeDetector.markForCheck();
       },
     });
   }

@@ -15,8 +15,12 @@ export class Results implements OnInit {
 
   gameId!: number;
   data: ResultsData | null = null;
-  isLoading = signal(true);
+  private loading = signal(true);
   errorMsg = '';
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
 
   verdictLabel: Record<string, string> = {
     won: '✅ Objectif atteint',
@@ -30,11 +34,11 @@ export class Results implements OnInit {
     this.finale.getResults(this.gameId).subscribe({
       next: (res) => {
         this.data = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }

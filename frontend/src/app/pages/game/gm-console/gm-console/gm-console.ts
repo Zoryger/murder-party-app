@@ -23,10 +23,14 @@ export class GmConsole implements OnInit, OnDestroy {
   requests: GmAlchemistRequest[] = [];
   qrImages: Record<string, string> = {}; // slug → image (data URL)
 
-  isLoading = signal(true);
+  private loading = signal(true);
   errorMsg = '';
   actionError = '';
   busyId: number | null = null;
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
@@ -65,12 +69,12 @@ export class GmConsole implements OnInit, OnDestroy {
     this.gm.getOverview(this.gameId).subscribe({
       next: (res) => {
         this.overview = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
         void this.buildQrCodes(res.data.qrClues);
       },
       error: (err) => {
         if (!this.overview) this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }

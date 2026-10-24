@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,9 +16,13 @@ export class Login implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
-  isSubmitting = false;
+  private submitting = signal(false);
   errorMsg = '';
   infoMsg = '';
+
+  get isSubmitting(): boolean {
+    return this.submitting();
+  }
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -41,7 +45,7 @@ export class Login implements OnInit {
       return;
     }
 
-    this.isSubmitting = true;
+    this.submitting.set(true);
     this.errorMsg = '';
 
     const { email, password } = this.form.value;
@@ -50,7 +54,7 @@ export class Login implements OnInit {
       next: () => this.router.navigateByUrl(this.safeReturnUrl()),
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de connexion.';
-        this.isSubmitting = false;
+        this.submitting.set(false);
       },
     });
   }

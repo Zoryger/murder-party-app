@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { GameService, PublicPlayer } from '../../../core/services/game.service';
@@ -21,6 +21,7 @@ export class Messaging implements OnInit, OnDestroy {
   private gameService = inject(GameService);
   private convService = inject(ConversationService);
   private socketService = inject(SocketService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   gameId!: number;
   myPlayerId: number | null = null;
@@ -38,7 +39,7 @@ export class Messaging implements OnInit, OnDestroy {
   codeInput = '';
   codeMsg = '';
   codeError = false;
-  isLoading = signal(true);
+  isLoading = true;
   isSending = false;
   showNewConvo = false;
 
@@ -48,7 +49,10 @@ export class Messaging implements OnInit, OnDestroy {
     this.loadMyStatus();
 
     this.gameService.getPlayers(this.gameId).subscribe({
-      next: (res) => (this.players = res.data),
+      next: (res) => {
+        this.players = res.data;
+        this.changeDetector.markForCheck();
+      },
     });
 
     this.loadConversations();
@@ -75,6 +79,7 @@ export class Messaging implements OnInit, OnDestroy {
         this.myPlayerId = res.data.player?.id ?? null;
         this.myStatus = res.data.player?.status ?? 'alive';
         if (this.myStatus === 'ghost') this.showNewConvo = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
@@ -88,10 +93,12 @@ export class Messaging implements OnInit, OnDestroy {
     this.convService.getConversations(this.gameId).subscribe({
       next: (res) => {
         this.conversations = res.data;
-        this.isLoading.set(false);
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
       error: () => {
-        this.isLoading.set(false);
+        this.isLoading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
@@ -109,6 +116,7 @@ export class Messaging implements OnInit, OnDestroy {
         this.messages = res.data.messages;
         this.isParticipant = res.data.isParticipant;
         this.canWrite = res.data.canWrite;
+        this.changeDetector.markForCheck();
       },
     });
   }
@@ -132,9 +140,11 @@ export class Messaging implements OnInit, OnDestroy {
           this.newMessage = '';
           this.isSending = false;
           this.loadMessages(this.selectedConversationId!);
+          this.changeDetector.markForCheck();
         },
         error: () => {
           this.isSending = false;
+          this.changeDetector.markForCheck();
         },
       });
   }
@@ -147,10 +157,12 @@ export class Messaging implements OnInit, OnDestroy {
         this.codeError = false;
         this.codeInput = '';
         this.loadConversations();
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.codeMsg = err.error?.message ?? 'Code invalide.';
         this.codeError = true;
+        this.changeDetector.markForCheck();
       },
     });
   }

@@ -18,8 +18,12 @@ export class PlayerDashboard implements OnInit, OnDestroy {
 
   gameId!: number;
   sheet: MyCharacterSheet | null = null;
-  isLoading = signal(true);
+  private loading = signal(true);
   errorMsg = '';
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
 
   murderKnowledgeLabel: Record<string, string> = {
     full: "Vous savez tout de l'organisation du meurtre.",
@@ -53,11 +57,11 @@ export class PlayerDashboard implements OnInit, OnDestroy {
           return;
         }
         this.sheet = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }

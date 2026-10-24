@@ -33,11 +33,19 @@ export class Powers implements OnInit, OnDestroy {
   players: PublicPlayer[] = [];
   clues: GameClue[] = [];
 
-  isLoading = signal(true);
+  private loading = signal(true);
   loadError = '';
   actionError = '';
   successMsg = '';
-  isActivating = false;
+  private activating = signal(false);
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
+
+  get isActivating(): boolean {
+    return this.activating();
+  }
 
   // Champs de formulaire (partagés — remis à zéro au changement d'onglet)
   target1: number | null = null;
@@ -136,11 +144,11 @@ export class Powers implements OnInit, OnDestroy {
       next: (res) => {
         this.overview = res.data;
         if (!res.data.borrowed) this.activeTab = 'own';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         if (initial) this.loadError = err.error?.message ?? 'Erreur de chargement.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
@@ -164,20 +172,20 @@ export class Powers implements OnInit, OnDestroy {
     request: Observable<ApiResponse<T>>,
     onSuccess?: (res: ApiResponse<T>) => void,
   ): void {
-    this.isActivating = true;
+    this.activating.set(true);
     this.actionError = '';
     this.successMsg = '';
 
     request.subscribe({
       next: (res) => {
         onSuccess?.(res);
-        this.isActivating = false;
+        this.activating.set(false);
         this.loadPower(false);
         this.loadPlayers();
       },
       error: (err) => {
         this.actionError = err.error?.message ?? 'Erreur.';
-        this.isActivating = false;
+        this.activating.set(false);
       },
     });
   }

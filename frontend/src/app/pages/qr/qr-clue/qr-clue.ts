@@ -14,8 +14,12 @@ export class QrClue implements OnInit {
   private qrService = inject(QrService);
 
   clue: QrClueView | null = null;
-  isLoading = signal(true);
+  private loading = signal(true);
   errorMsg = '';
+
+  get isLoading(): boolean {
+    return this.loading();
+  }
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';
@@ -23,11 +27,11 @@ export class QrClue implements OnInit {
     this.qrService.getQr(slug).subscribe({
       next: (res) => {
         this.clue = res.data;
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Impossible de charger cette page.';
-        this.isLoading.set(false);
+        this.loading.set(false);
       },
     });
   }
