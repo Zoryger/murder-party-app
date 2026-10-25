@@ -110,3 +110,27 @@ table {
   strong { font-size: .85rem; }
   .url   { font-size: .7rem; color: var(--color-text-muted); word-break: break-all; }
 }
+
+@media (max-width: 768px) {
+  .gm-header h1 { font-size: 1.4rem; }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tab { justify-content: center; }
+
+  .table-wrap {
+    margin: 0 -1rem;
+    padding: .5rem;
+    border-radius: var(--radius-md);
+  }
+
+  table { min-width: 680px; }
+  table th, table td { padding: .65rem .55rem; }
+  .qr-toolbar { align-items: stretch; flex-direction: column; gap: .75rem; }
+  .qr-toolbar .btn { align-self: center; min-width: 170px; }
+  .qr-grid { grid-template-columns: 1fr; }
+  .qr-card img { width: min(200px, 70vw); height: auto; aspect-ratio: 1; }
+  .request .answer-row { display: grid; grid-template-columns: 1fr; }
+  .request .answer-row .btn { width: 100%; }
+}

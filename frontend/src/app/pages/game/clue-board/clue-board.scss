@@ -43,3 +43,8 @@
   color: var(--color-success);
   border-radius: var(--radius-sm);
 }
+
+@media (max-width: 768px) {
+  .clues-header h1 { font-size: 1.35rem; }
+  .clues-grid { grid-template-columns: 1fr; gap: .75rem; }
+}

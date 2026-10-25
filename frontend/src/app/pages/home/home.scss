@@ -92,3 +92,35 @@
   border-radius: var(--radius-lg);
   p { font-size: 1.1rem; color: var(--color-text-muted); margin-bottom: 1.5rem; }
 }
+
+@media (max-width: 768px) {
+  .hero {
+    gap: 1.25rem;
+    padding: 2rem 0 1.5rem;
+  }
+
+  .hero-content { width: 100%; }
+  .hero-title { font-size: clamp(1.9rem, 9vw, 2.5rem); }
+  .hero-subtitle { margin-bottom: 1.5rem; }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: min(100%, 360px);
+    margin: 0 auto;
+  }
+
+  .games-section { padding: 1.25rem 0; }
+
+  .games-header {
+    align-items: flex-start;
+    gap: .75rem;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+
+  .games-grid { grid-template-columns: 1fr; gap: .85rem; }
+  .game-card { padding: 1.1rem; }
+  .game-card__footer { align-items: flex-start; }
+  .empty-state { padding: 2rem 1rem; }
+}

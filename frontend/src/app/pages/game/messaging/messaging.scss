@@ -128,3 +128,19 @@
 .composer input { flex: 1; }
 
 .empty-hint { color: var(--color-text-muted); font-size: .85rem; text-align: center; padding: 2rem 0; }
+
+@media (max-width: 768px) {
+  .code-redeem { padding: 1rem; }
+  .code-row { flex-direction: column; }
+  .code-row .btn { width: 100%; }
+
+  .messaging-layout { gap: .75rem; min-height: 0; }
+  .contacts, .thread { padding: .85rem; }
+  .contact-list { max-height: 220px; overflow-y: auto; }
+  .thread { min-height: 320px; }
+  .messages-list { max-height: 42vh; min-height: 140px; }
+  .composer { align-items: stretch; }
+  .composer .btn { min-width: 88px; }
+  .thread-header { flex-wrap: wrap; }
+  .spy-badge { margin-left: 0; }
+}

@@ -72,3 +72,10 @@
     &.no  { color: var(--color-danger); }
   }
 }
+
+@media (max-width: 768px) {
+  .w-header h1 { font-size: 1.35rem; }
+  .balance .amount { font-size: 2.2rem; }
+  .block { margin-bottom: 1rem; }
+  .give-row { flex-direction: column; }
+}

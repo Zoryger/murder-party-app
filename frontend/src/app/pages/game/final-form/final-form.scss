@@ -54,3 +54,12 @@
   &.ok    { color: var(--color-success); }
   &.error { color: var(--color-danger); }
 }
+
+@media (max-width: 768px) {
+  .final-page { padding-bottom: 2rem; }
+  .f-header h1 { font-size: 1.4rem; }
+  .f-header { margin-bottom: 1.15rem; }
+  .block, .objective { padding: 1rem; }
+  .slot { padding: .75rem; }
+  .submit-bar > .btn { width: 100%; }
+}

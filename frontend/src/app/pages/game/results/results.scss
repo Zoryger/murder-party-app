@@ -115,3 +115,15 @@ section.card {
   summary { cursor: pointer; font-size: .9rem; }
   &[open] summary { margin-bottom: .6rem; }
 }
+
+@media (max-width: 768px) {
+  .r-header h1 { font-size: 1.45rem; }
+  section.card { padding: 1rem; }
+  .murderers, .verdicts { grid-template-columns: 1fr; }
+  .tally-row {
+    grid-template-columns: minmax(70px, 1fr) minmax(40px, 1.4fr) 24px;
+    gap: .45rem;
+  }
+  .tally-row .name { font-size: .78rem; }
+  .tally-row .unmasked { display: none; }
+}

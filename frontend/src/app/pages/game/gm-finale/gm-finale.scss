@@ -55,3 +55,10 @@
 }
 
 .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+@media (max-width: 768px) {
+  .g-header h1 { font-size: 1.35rem; }
+  .progress { gap: .5rem; font-size: .78rem; }
+  .players { grid-template-columns: 1fr; }
+  .actions { display: grid; grid-template-columns: 1fr; }
+}

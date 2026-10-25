@@ -73,3 +73,13 @@
   &:hover    { border-color: var(--color-primary); }
   &.selected { border-color: var(--color-primary); background: rgba(123,47,190,.08); }
 }
+
+@media (max-width: 768px) {
+  .page-header { margin-bottom: 1.25rem; }
+  .page-header h1 { font-size: 1.7rem; }
+  .form-card { padding: 1.15rem; }
+  .scenario-picker { padding: 1.1rem; }
+  .scenario-list { grid-template-columns: 1fr; }
+  .scenario-card { min-height: 74px; }
+  .form-actions { gap: .65rem; }
+}

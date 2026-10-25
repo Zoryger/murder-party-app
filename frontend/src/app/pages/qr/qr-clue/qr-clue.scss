@@ -27,3 +27,8 @@
 }
 
 .loading { text-align: center; padding: 4rem 0; color: var(--color-text-muted); }
+
+@media (max-width: 768px) {
+  .qr-page h1 { font-size: 1.4rem; margin-bottom: 1.1rem; }
+  .qr-page > .btn { display: flex; width: min(100%, 320px); margin: .5rem auto 0; }
+}

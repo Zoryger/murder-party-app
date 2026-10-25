@@ -22,3 +22,101 @@
   .replaced { margin-top: .75rem; font-size: .75rem; color: var(--color-text-muted); }
   .original { text-decoration: line-through; opacity: .7; }
 }
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dash-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .6rem;
+  margin-bottom: 1.5rem;
+}
+
+.char-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+
+  h1 { font-size: 2rem; font-weight: 800; }
+  .title { color: var(--color-text-muted); margin-top: .25rem; }
+}
+
+.murderer-badge {
+  display: inline-block;
+  margin-bottom: .5rem;
+  padding: .3rem .75rem;
+  border-radius: 20px;
+  background: rgba(229, 62, 62, .12);
+  color: var(--color-danger);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.grid,
+.relations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.grid .card h2,
+.relations-section h2 { font-size: 1.05rem; margin-bottom: .6rem; }
+.grid .card p,
+.relation-card p { line-height: 1.65; overflow-wrap: anywhere; }
+
+.power-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .8rem;
+  color: var(--color-text-muted);
+  font-size: .8rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child { border-bottom: 0; }
+}
+
+.relations-section { margin-top: 1.5rem; }
+.relation-card {
+  padding: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.relation-top { display: flex; align-items: center; gap: .6rem; margin-bottom: .65rem; }
+.relation-top .emoji { font-size: 1.3rem; }
+.real-name { display: block; color: var(--color-text-muted); font-size: .75rem; }
+.secret-badge { margin-left: auto; color: var(--color-accent); font-size: .75rem; }
+
+.gm-view {
+  padding: 3rem 1rem;
+  text-align: center;
+  h1 { margin-bottom: .5rem; }
+  p { margin-bottom: 1rem; color: var(--color-text-muted); }
+  .gm-emoji { font-size: 3rem; }
+}
+
+@media (max-width: 768px) {
+  .dash-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .dash-nav .btn { width: 100%; }
+  .char-header { margin-bottom: 1.15rem; }
+  .char-header h1 { font-size: 1.65rem; }
+  .grid, .relations-grid { grid-template-columns: 1fr; gap: .75rem; }
+  .relations-section { margin-top: 1.25rem; }
+  .secret-badge { font-size: .7rem; }
+}
