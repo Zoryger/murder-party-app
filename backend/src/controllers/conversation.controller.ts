@@ -22,8 +22,11 @@ function formatConversation(
   nameById: Map<number, string>,
   lastMessage: Message | null,
   visionActive: boolean,
+  category: "base" | "hacked" | "power",
 ) {
   const isOwn = conv.player1Id === meId || conv.player2Id === meId;
+  const isCreatedByMe = conv.createdBy === meId && !isOwn;
+  const canDetectManipulation = conv.isFake && (visionActive || isCreatedByMe);
   let otherPlayerId: number | null = null;
   let displayLabel: string;
 
@@ -37,7 +40,9 @@ function formatConversation(
   return {
     id: conv.id,
     isOwn,
+    isCreatedByMe,
     isFake: visionActive ? conv.isFake : false,
+    category: canDetectManipulation ? "power" : category,
     otherPlayerId,
     displayLabel,
     lastMessage: lastMessage
@@ -64,19 +69,22 @@ export async function getMyConversations(
     return;
   }
 
-  // Jamais les fausses conversations fabriquées sur mon compte — sinon je saurais tout de suite que c'est faux
+  // Les cibles voient une fausse conversation comme un fil normal ; seul son créateur et la Vision absolue la détectent.
   const ownConversations = await Conversation.findAll({
     where: {
       gameId,
-      isFake: false,
       [Op.or]: [{ player1Id: me.id }, { player2Id: me.id }],
     },
+  });
+  const createdConversations = await Conversation.findAll({
+    where: { gameId, createdBy: me.id },
   });
 
   const unlocks = await CodeUnlock.findAll({
     where: { gameId, unlockedByPlayerId: me.id },
   });
   const hackedIds = unlocks.map((u) => u.targetPlayerId);
+  const hackedPlayerIds = new Set(hackedIds);
 
   let codeHackedConversations: Conversation[] = [];
   if (hackedIds.length > 0) {
@@ -102,6 +110,7 @@ export async function getMyConversations(
   const powerHackedIds = powerHacks
     .map((h) => h.conversationId!)
     .filter((id) => id !== null);
+  const powerHackedIdSet = new Set(powerHackedIds);
   let powerHackedConversations: Conversation[] = [];
   if (powerHackedIds.length > 0) {
     powerHackedConversations = await Conversation.findAll({
@@ -111,6 +120,7 @@ export async function getMyConversations(
 
   const allConversations = [
     ...ownConversations,
+    ...createdConversations,
     ...codeHackedConversations,
     ...powerHackedConversations,
   ].filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i);
@@ -131,6 +141,13 @@ export async function getMyConversations(
         nameById,
         lastMessage,
         visionActive,
+        conv.player1Id === me.id || conv.player2Id === me.id
+          ? "base"
+          : powerHackedIdSet.has(conv.id) || conv.createdBy === me.id
+            ? "power"
+          : hackedPlayerIds.has(conv.player1Id) || hackedPlayerIds.has(conv.player2Id)
+            ? "hacked"
+            : "power",
       );
     }),
   );
@@ -218,6 +235,7 @@ export async function getOrCreateConversation(
       player2Id: withPlayerId,
       isFake: false,
     });
+    getIO().to(`game:${gameId}`).emit("conversation:update");
   }
 
   res.status(201).json({ success: true, data: { id: conversation.id } });
@@ -246,10 +264,8 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Une fausse conversation ne compte jamais comme "participant" pour ses cibles — seul le piratage y donne accès
   const isRealParticipant =
-    !conversation.isFake &&
-    (conversation.player1Id === me.id || conversation.player2Id === me.id);
+    conversation.player1Id === me.id || conversation.player2Id === me.id;
   let hasAccess = isRealParticipant;
 
   if (!hasAccess) {
@@ -301,6 +317,7 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
     success: true,
     data: {
       isParticipant: isRealParticipant,
+      isCreatedByMe: conversation.createdBy === me.id && !isRealParticipant,
       canWrite: isRealParticipant && me.status === "alive", // ← 5.6
       isFake: visionActive ? conversation.isFake : false,
       participants: [
@@ -376,10 +393,10 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Impossible d'écrire dans une conversation falsifiée — c'est une preuve figée
+  // Les cibles continuent une conversation falsifiée comme un fil normal ; seul son créateur ne peut y écrire.
   const isParticipant =
-    !conversation.isFake &&
-    (conversation.player1Id === me.id || conversation.player2Id === me.id);
+    (conversation.player1Id === me.id || conversation.player2Id === me.id) &&
+    conversation.createdBy !== me.id;
   if (!isParticipant) {
     res
       .status(403)

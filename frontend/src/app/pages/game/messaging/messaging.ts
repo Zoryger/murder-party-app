@@ -33,6 +33,8 @@ export class Messaging implements OnInit, OnDestroy {
   participants: { id: number; characterName: string }[] = [];
   messages: ConversationMessage[] = [];
   isParticipant = false;
+  isCreatedByMe = false;
+  isFake = false;
   canWrite = false;
 
   newMessage = '';
@@ -42,6 +44,35 @@ export class Messaging implements OnInit, OnDestroy {
   isLoading = true;
   isSending = false;
   showNewConvo = false;
+  pageError = '';
+  threadError = '';
+  private conversationsRequest = 0;
+  private messagesRequest = 0;
+
+  get conversationGroups(): {
+    category: ConversationSummary['category'];
+    label: string;
+    conversations: ConversationSummary[];
+  }[] {
+    const groups: {
+      category: ConversationSummary['category'];
+      label: string;
+      conversations: ConversationSummary[];
+    }[] = [
+      { category: 'base', label: 'Discussions de base', conversations: [] },
+      { category: 'hacked', label: 'Discussions piratées', conversations: [] },
+      { category: 'power', label: 'Pouvoirs et manipulations', conversations: [] },
+    ];
+
+    return groups
+      .map((group) => ({
+        ...group,
+        conversations: this.conversations.filter(
+          (conversation) => conversation.category === group.category,
+        ),
+      }))
+      .filter((group) => group.conversations.length > 0);
+  }
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
@@ -58,7 +89,8 @@ export class Messaging implements OnInit, OnDestroy {
     this.loadConversations();
 
     this.socketService.joinLobby(this.gameId);
-    this.socketService.on('message:new', () => this.onRealtimeUpdate());
+    this.socketService.on('message:new', (event) => this.onRealtimeUpdate(event));
+    this.socketService.on('conversation:update', (event) => this.onRealtimeUpdate(event));
     this.socketService.on('code:unlocked', () => this.onRealtimeUpdate());
     // Mort ou réanimation pendant que la page est ouverte : le champ de saisie apparaît / disparaît
     this.socketService.on('player:status', () => {
@@ -69,6 +101,7 @@ export class Messaging implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.socketService.off('message:new');
+    this.socketService.off('conversation:update');
     this.socketService.off('code:unlocked');
     this.socketService.off('player:status');
   }
@@ -84,20 +117,42 @@ export class Messaging implements OnInit, OnDestroy {
     });
   }
 
-  private onRealtimeUpdate(): void {
+  private onRealtimeUpdate(event?: { conversationId?: number }): void {
     this.loadConversations();
-    if (this.selectedConversationId) this.loadMessages(this.selectedConversationId);
+    if (
+      this.selectedConversationId &&
+      (!event?.conversationId || event.conversationId === this.selectedConversationId)
+    ) {
+      this.loadMessages(this.selectedConversationId);
+    }
   }
 
   loadConversations(): void {
+    const request = ++this.conversationsRequest;
     this.convService.getConversations(this.gameId).subscribe({
       next: (res) => {
+        if (request !== this.conversationsRequest) return;
         this.conversations = res.data;
         this.isLoading = false;
+        this.pageError = '';
+        if (
+          this.selectedConversationId &&
+          !this.conversations.some((conversation) => conversation.id === this.selectedConversationId)
+        ) {
+          this.selectedConversationId = null;
+          this.participants = [];
+          this.messages = [];
+          this.canWrite = false;
+          this.isParticipant = false;
+          this.isCreatedByMe = false;
+          this.isFake = false;
+        }
         this.changeDetector.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        if (request !== this.conversationsRequest) return;
         this.isLoading = false;
+        this.pageError = err.error?.message ?? 'Impossible de charger les conversations.';
         this.changeDetector.markForCheck();
       },
     });
@@ -106,16 +161,33 @@ export class Messaging implements OnInit, OnDestroy {
   openConversation(id: number): void {
     this.selectedConversationId = id;
     this.showNewConvo = false;
+    this.participants = [];
+    this.messages = [];
+    this.isParticipant = false;
+    this.isCreatedByMe = false;
+    this.isFake = false;
+    this.canWrite = false;
+    this.threadError = '';
     this.loadMessages(id);
   }
 
   private loadMessages(id: number): void {
+    const request = ++this.messagesRequest;
     this.convService.getMessages(this.gameId, id).subscribe({
       next: (res) => {
+        if (request !== this.messagesRequest || this.selectedConversationId !== id) return;
         this.participants = res.data.participants;
         this.messages = res.data.messages;
         this.isParticipant = res.data.isParticipant;
+        this.isCreatedByMe = res.data.isCreatedByMe;
+        this.isFake = res.data.isFake;
         this.canWrite = res.data.canWrite;
+        this.threadError = '';
+        this.changeDetector.markForCheck();
+      },
+      error: (err) => {
+        if (request !== this.messagesRequest || this.selectedConversationId !== id) return;
+        this.threadError = err.error?.message ?? 'Impossible de charger cette conversation.';
         this.changeDetector.markForCheck();
       },
     });
@@ -127,23 +199,29 @@ export class Messaging implements OnInit, OnDestroy {
         this.loadConversations();
         this.openConversation(res.data.id);
       },
+      error: (err) => {
+        this.pageError = err.error?.message ?? 'Impossible de créer la conversation.';
+        this.changeDetector.markForCheck();
+      },
     });
   }
 
   send(): void {
     if (!this.newMessage.trim() || !this.selectedConversationId || !this.canWrite) return;
     this.isSending = true;
+    const conversationId = this.selectedConversationId;
     this.convService
-      .sendMessage(this.gameId, this.selectedConversationId, this.newMessage.trim())
+      .sendMessage(this.gameId, conversationId, this.newMessage.trim())
       .subscribe({
         next: () => {
           this.newMessage = '';
           this.isSending = false;
-          this.loadMessages(this.selectedConversationId!);
+          this.loadMessages(conversationId);
           this.changeDetector.markForCheck();
         },
-        error: () => {
+        error: (err) => {
           this.isSending = false;
+          this.threadError = err.error?.message ?? "Impossible d'envoyer le message.";
           this.changeDetector.markForCheck();
         },
       });

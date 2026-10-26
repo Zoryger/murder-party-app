@@ -316,6 +316,10 @@ export async function useInformaticien(
     conversationId: conversation.id,
   });
 
+  getIO().to(`game:${gameId}`).emit("conversation:update", {
+    conversationId: conversation.id,
+  });
+
   res.json({
     success: true,
     message: `Accès permanent accordé à la conversation entre ${p1.characterName} et ${p2.characterName}.`,
@@ -460,6 +464,10 @@ export async function useUsurpateur(
     powerSlug: "usurpateur",
     targetPlayerId: t1,
     targetPlayerId2: t2,
+    conversationId: conversation.id,
+  });
+
+  getIO().to(`game:${gameId}`).emit("conversation:update", {
     conversationId: conversation.id,
   });
 

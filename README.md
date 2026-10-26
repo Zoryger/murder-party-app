@@ -58,6 +58,11 @@ npm start
 
 Le frontend tourne sur http://localhost:4200, l'API sur http://localhost:3000.
 
+Le backend crée les tables manquantes au démarrage, sans modifier les tables existantes.
+Évitez `DB_SYNC_MODE=alter` sur une base existante : Sequelize peut recréer des index
+à chaque démarrage et finir par dépasser la limite MySQL. Les changements de schéma
+doivent être appliqués explicitement à la base.
+
 ## Structure
 
 ```

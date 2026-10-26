@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import {
   Game, GamePlayer, Scenario, ScenarioCharacter,
-  ScenarioRelation, ScenarioRiddle, User, Power,
+  ScenarioRelation, ScenarioRiddle, User, Power, Conversation,
 } from '../models/sequelize';
 import { getIO } from '../sockets';
 
@@ -237,10 +238,66 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (game.scenarioId) {
+    // Les liens du scénario définissent les conversations disponibles dès le début de la partie.
+    const playerIdByCharacterId = new Map(
+      players.flatMap((player) =>
+        player.scenarioCharacterId === null
+          ? []
+          : [[player.scenarioCharacterId, player.id] as const],
+      ),
+    );
+    const characterIds = [...playerIdByCharacterId.keys()];
+
+    if (characterIds.length > 1) {
+      const relations = await ScenarioRelation.findAll({
+        where: {
+          scenarioId: game.scenarioId,
+          characterId: { [Op.in]: characterIds },
+          relatedCharacterId: { [Op.in]: characterIds },
+        },
+      });
+      const existingConversations = await Conversation.findAll({
+        where: { gameId, isFake: false },
+        attributes: ['player1Id', 'player2Id'],
+      });
+      const conversationPairs = new Set(
+        existingConversations.map((conversation) =>
+          [conversation.player1Id, conversation.player2Id].sort((a, b) => a - b).join(':'),
+        ),
+      );
+      const initialConversations = new Map<
+        string,
+        { gameId: number; player1Id: number; player2Id: number; isFake: false }
+      >();
+
+      for (const relation of relations) {
+        const player1Id = playerIdByCharacterId.get(relation.characterId);
+        const player2Id = playerIdByCharacterId.get(relation.relatedCharacterId);
+        if (player1Id === undefined || player2Id === undefined || player1Id === player2Id) continue;
+
+        const [firstPlayerId, secondPlayerId] = [player1Id, player2Id].sort((a, b) => a - b);
+        const key = `${firstPlayerId}:${secondPlayerId}`;
+        if (conversationPairs.has(key)) continue;
+        initialConversations.set(key, {
+          gameId,
+          player1Id: firstPlayerId,
+          player2Id: secondPlayerId,
+          isFake: false,
+        });
+      }
+
+      if (initialConversations.size > 0) {
+        await Conversation.bulkCreate([...initialConversations.values()]);
+      }
+    }
+  }
+
   game.status    = 'active';
   game.startedAt = new Date();
   await game.save();
 
+  getIO().to(`game:${gameId}`).emit('conversation:update');
   getIO().to(`game:${gameId}`).emit('game:started');
 
   res.json({ success: true, data: game });

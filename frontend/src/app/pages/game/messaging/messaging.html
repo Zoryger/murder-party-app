@@ -26,6 +26,10 @@
     }
   </div>
 
+  @if (pageError) {
+    <p class="code-feedback error" role="alert">{{ pageError }}</p>
+  }
+
   @if (isLoading) {
     <p class="loading">Chargement...</p>
   } @else {
@@ -33,25 +37,41 @@
       <aside class="contacts">
         <h2>Conversations</h2>
         @if (conversations.length > 0) {
-          <div class="contact-list">
-            @for (c of conversations; track c.id) {
-              <button
-                class="contact"
-                [class.selected]="c.id === selectedConversationId"
-                [class.hacked]="!c.isOwn"
-                (click)="openConversation(c.id)"
-              >
-                <span class="name">{{ !c.isOwn ? '🔓 ' : '' }}{{ c.displayLabel }}</span>
-                @if (c.lastMessage) {
-                  <span class="preview"
-                    >{{ c.lastMessage.senderName }} : {{ c.lastMessage.content }}</span
+          @for (group of conversationGroups; track group.category) {
+            <section
+              class="conversation-group"
+              [class.base]="group.category === 'base'"
+              [class.hacked]="group.category === 'hacked'"
+              [class.power]="group.category === 'power'"
+            >
+              <h3>{{ group.label }}</h3>
+              <div class="contact-list">
+                @for (c of group.conversations; track c.id) {
+                  <button
+                    class="contact"
+                    [class.selected]="c.id === selectedConversationId"
+                    [class.base]="c.category === 'base'"
+                    [class.hacked]="c.category === 'hacked'"
+                    [class.power]="c.category === 'power'"
+                    (click)="openConversation(c.id)"
                   >
-                } @else {
-                  <span class="preview empty">Aucun message</span>
+                    <span class="name">
+                      {{ c.isFake ? '🪄 ' : c.isCreatedByMe ? '🪄 ' : c.category === 'hacked' ? '🔓 ' : '' }}{{ c.displayLabel }}
+                    </span>
+                    @if (c.lastMessage) {
+                      <span class="preview"
+                        >{{ c.lastMessage.senderName }} : {{ c.lastMessage.content }}</span
+                      >
+                    } @else {
+                      <span class="preview empty">Aucun message</span>
+                    }
+                  </button>
                 }
-              </button>
-            }
-          </div>
+              </div>
+            </section>
+          }
+        } @else {
+          <p class="empty-hint">Aucune conversation pour le moment.</p>
         }
 
         @if (myStatus === 'alive') {
@@ -79,10 +99,20 @@
             @for (p of participants; track p.id) {
               <span class="participant">{{ p.characterName }}</span>
             }
-            @if (!isParticipant) {
-              <span class="spy-badge">🕵️ Lecture seule — compte piraté</span>
+            @if (isFake || isCreatedByMe) {
+              <span class="spy-badge power">
+                {{ isCreatedByMe ? '🪄 Discussion créée par vous — lecture seule' : '🪄 Discussion manipulée' }}
+              </span>
+            } @else if (!isParticipant) {
+              <span class="spy-badge">
+                🕵️ Lecture seule — compte piraté
+              </span>
             }
           </div>
+
+          @if (threadError) {
+            <p class="code-feedback error" role="alert">{{ threadError }}</p>
+          }
 
           <div class="messages-list">
             @for (m of messages; track m.id) {

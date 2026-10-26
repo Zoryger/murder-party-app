@@ -6,7 +6,9 @@ import { environment } from '../../../environments/environment';
 export interface ConversationSummary {
   id: number;
   isOwn: boolean;
+  isCreatedByMe: boolean;
   isFake: boolean;
+  category: 'base' | 'hacked' | 'power';
   otherPlayerId: number | null;
   displayLabel: string;
   lastMessage: { content: string; sentAt: string; senderName: string } | null;
@@ -22,6 +24,8 @@ export interface ConversationMessage {
 
 export interface ConversationDetail {
   isParticipant: boolean;
+  isCreatedByMe: boolean;
+  isFake: boolean;
   canWrite: boolean;
   participants: { id: number; characterName: string }[];
   messages: ConversationMessage[];

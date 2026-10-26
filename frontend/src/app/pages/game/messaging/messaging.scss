@@ -43,6 +43,17 @@
 
 .contact-list { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1rem; }
 
+.conversation-group {
+  margin-bottom: 1rem;
+
+  h3 {
+    margin-bottom: .5rem;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+}
+
 .contact {
   text-align: left;
   padding: .6rem .7rem;
@@ -60,7 +71,9 @@
 
   &:hover    { border-color: var(--color-border); }
   &.selected { border-color: var(--color-primary); background: rgba(123,47,190,.08); }
-  &.hacked   { border-left: 3px solid var(--color-accent); }
+  &.base { border-left: 3px solid var(--color-primary); }
+  &.hacked { border-left: 3px solid var(--color-accent); }
+  &.power { border-left: 3px solid #e879f9; }
 }
 
 .new-convo-toggle {
@@ -112,6 +125,11 @@
   background: rgba(245,197,24,.12);
   padding: .2rem .6rem;
   border-radius: 20px;
+
+  &.power {
+    color: #e879f9;
+    background: rgba(232,121,249,.12);
+  }
 }
 
 .messages-list { flex: 1; display: flex; flex-direction: column; gap: .6rem; overflow-y: auto; max-height: 360px; margin-bottom: .75rem; }
