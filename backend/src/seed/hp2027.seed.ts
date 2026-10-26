@@ -9,6 +9,23 @@ import {
 } from "../models/sequelize";
 import Power from "../models/sequelize/Power.model";
 
+export const HP2027_CLUE_PASSWORDS = {
+  physical: {
+    "Le Pass Numérique Ensanglanté d'Argus Rusard": "PASS-RUSARD-27",
+    "La Boîte d'Ingrédients Rares de Sophia Prince": "BOITE-SOPHIA-27",
+    "Les Débris du Drone de Seamus Finnigan": "DRONE-SEAMUS-27",
+    "Le Scanner Réseau Moldu de Cynthia Stark": "SCANNER-STARK-27",
+  },
+  qr: {
+    "chicaneur-chloe": "CHICANEUR-CHLOE",
+    "note-vector": "NOTE-VECTOR-27",
+    "galleonpay-rusard": "GALLEON-RUSARD",
+    "bug-moontracker": "MOONTRACKER-DYLAN",
+    "contrat-ministeriel": "CONTRAT-MINISTERE",
+    "autopsie-veterinaire": "AUTOPSIE-ROLF",
+  },
+} as const;
+
 export async function seedHp2027(): Promise<void> {
   const already = await Scenario.findOne({ where: { slug: "hp2027" } });
   if (already) return; // déjà seedé — pour reseeder, supprime les tables scenario_* via phpMyAdmin

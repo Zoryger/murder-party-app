@@ -9,7 +9,6 @@ export interface GameClue {
   support: string;
   location: string;
   effect: string;
-  attributedTo: string | null;
   isFalsified?: boolean;
   trueAttribution?: string | null;
 }
@@ -27,5 +26,15 @@ export class ClueService {
 
   getClueBoard(gameId: number): Observable<ApiResponse<GameClue[]>> {
     return this.http.get<ApiResponse<GameClue[]>>(`${this.API}/games/${gameId}/clues`);
+  }
+
+  unlockClue(
+    gameId: number,
+    password: string,
+  ): Observable<ApiResponse<{ type: 'physical' | 'qr'; slug?: string }>> {
+    return this.http.post<ApiResponse<{ type: 'physical' | 'qr'; slug?: string }>>(
+      `${this.API}/games/${gameId}/clues/unlock`,
+      { password },
+    );
   }
 }

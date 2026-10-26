@@ -58,7 +58,7 @@ import {
   revealGame,
   getResults,
 } from "../controllers/finale.controller";
-import { getClueBoard } from "../controllers/clue.controller";
+import { getClueBoard, unlockClue } from "../controllers/clue.controller";
 import { validate } from "../middleware/validate.middleware";
 import { requireAuth } from "../middleware/auth.middleware";
 import { blackoutGuard } from "../middleware/blackout.middleware";
@@ -106,6 +106,7 @@ router.get("/:id/me", requireAuth, getMyCharacterSheet);
 // ── Soumis à la panne réseau (le MJ n'est jamais bloqué) ──────────────────────
 router.post("/:id/redeem-code", requireAuth, blackoutGuard, redeemCode);
 router.get("/:id/clues", requireAuth, blackoutGuard, getClueBoard);
+router.post("/:id/clues/unlock", requireAuth, blackoutGuard, unlockClue);
 
 // ── Événements : état, vote de duel, annulation de panne (MJ) ────────────────
 router.get("/:id/events", requireAuth, getEvents);

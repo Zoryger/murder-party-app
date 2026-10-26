@@ -4,7 +4,10 @@ import {
   GamePlayer,
   GameClue,
   ScenarioPhysicalClue,
+  ScenarioQrClue,
+  ScenarioCluePassword,
   ScenarioCharacter,
+  ClueUnlock,
 } from "../models/sequelize";
 import { hasActiveVisionAbsolue } from "../utils/vision.util";
 
@@ -29,7 +32,28 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
   }
   const { player } = result;
 
-  const clues = await GameClue.findAll({ where: { gameId } });
+  const unlockedClues = await ClueUnlock.findAll({
+    where: { gameId, gamePlayerId: player.id },
+    attributes: ["cluePasswordId"],
+  });
+  const cluePasswords = unlockedClues.length
+    ? await ScenarioCluePassword.findAll({
+        where: {
+          id: unlockedClues
+            .map((unlock) => unlock.cluePasswordId)
+            .filter((id): id is number => id !== null),
+        },
+        attributes: ["physicalClueId"],
+      })
+    : [];
+  const unlockedPhysicalIds = cluePasswords
+    .map((entry) => entry.physicalClueId)
+    .filter((id): id is number => id !== null);
+  const clues = unlockedPhysicalIds.length
+    ? await GameClue.findAll({
+        where: { gameId, physicalClueId: unlockedPhysicalIds },
+      })
+    : [];
   const templateIds = clues.map((c) => c.physicalClueId);
   const templates = await ScenarioPhysicalClue.findAll({
     where: { id: templateIds },
@@ -57,9 +81,6 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
         support: t.support,
         location: t.location,
         effect: t.effect,
-        attributedTo: c.currentCharacterId
-          ? (nameById.get(c.currentCharacterId) ?? "???")
-          : null,
       };
       if (!visionActive) return base;
       return {
@@ -70,5 +91,90 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
           : null,
       };
     }),
+  });
+}
+
+export async function unlockClue(req: Request, res: Response): Promise<void> {
+  const gameId = Number(req.params["id"]);
+  const result = await getMyActivePlayer(gameId, req.user!.userId);
+  if ("error" in result) {
+    res.status(400).json({ success: false, message: result.error });
+    return;
+  }
+  const { player } = result;
+
+  const password = String(req.body.password ?? "").trim().toUpperCase();
+  if (!password) {
+    res.status(400).json({ success: false, message: "Mot de passe requis." });
+    return;
+  }
+
+  const passwordEntry = await ScenarioCluePassword.findOne({
+    where: { password },
+  });
+  if (!passwordEntry) {
+    res.status(404).json({ success: false, message: "Mot de passe invalide." });
+    return;
+  }
+
+  const physicalClue = passwordEntry.physicalClueId
+    ? await GameClue.findOne({
+        where: { gameId, physicalClueId: passwordEntry.physicalClueId },
+      })
+    : null;
+
+  if (passwordEntry.physicalClueId && !physicalClue) {
+    res.status(404).json({ success: false, message: "Mot de passe invalide." });
+    return;
+  }
+
+  if (passwordEntry.qrClueId && result.game.scenarioId) {
+    const qrClue = await ScenarioQrClue.findOne({
+      where: { id: passwordEntry.qrClueId, scenarioId: result.game.scenarioId },
+    });
+    if (qrClue) {
+      await ClueUnlock.findOrCreate({
+        where: {
+          gameId,
+          gamePlayerId: player.id,
+          cluePasswordId: passwordEntry.id,
+        },
+        defaults: {
+          gameId,
+          gamePlayerId: player.id,
+          cluePasswordId: passwordEntry.id,
+        },
+      });
+      res.json({
+        success: true,
+        message: "Document débloqué pour votre dossier.",
+        data: { type: "qr", slug: qrClue.slug },
+      });
+      return;
+    }
+  }
+
+  if (!physicalClue || !passwordEntry.physicalClueId) {
+    res.status(404).json({ success: false, message: "Mot de passe invalide." });
+    return;
+  }
+
+  await ClueUnlock.findOrCreate({
+    where: {
+      gameId,
+      gamePlayerId: player.id,
+      cluePasswordId: passwordEntry.id,
+    },
+    defaults: {
+      gameId,
+      gamePlayerId: player.id,
+      cluePasswordId: passwordEntry.id,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: "Indice débloqué pour votre dossier.",
+    data: { type: "physical" },
   });
 }

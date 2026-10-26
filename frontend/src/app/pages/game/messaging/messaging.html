@@ -56,7 +56,15 @@
                     (click)="openConversation(c.id)"
                   >
                     <span class="name">
-                      {{ c.isFake ? '🪄 ' : c.isCreatedByMe ? '🪄 ' : c.category === 'hacked' ? '🔓 ' : '' }}{{ c.displayLabel }}
+                      {{
+                        c.isFake
+                          ? '🪄 '
+                          : c.isCreatedByMe
+                            ? '🪄 '
+                            : c.category === 'hacked'
+                              ? '🔓 '
+                              : ''
+                      }}{{ c.displayLabel }}
                     </span>
                     @if (c.lastMessage) {
                       <span class="preview"
@@ -101,12 +109,14 @@
             }
             @if (isFake || isCreatedByMe) {
               <span class="spy-badge power">
-                {{ isCreatedByMe ? '🪄 Discussion créée par vous — lecture seule' : '🪄 Discussion manipulée' }}
+                {{
+                  isCreatedByMe
+                    ? '🪄 Discussion créée par vous — lecture seule'
+                    : '🪄 Discussion manipulée'
+                }}
               </span>
             } @else if (!isParticipant) {
-              <span class="spy-badge">
-                🕵️ Lecture seule — compte piraté
-              </span>
+              <span class="spy-badge"> 🕵️ Lecture seule — compte piraté </span>
             }
           </div>
 

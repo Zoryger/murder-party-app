@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import {
   Scenario,
   ScenarioCharacter,
@@ -7,6 +8,8 @@ import {
   ScenarioPhysicalClue,
   ScenarioQrClue,
   ScenarioPlotThread,
+  ScenarioCluePassword,
+  ClueUnlock,
   Power,
   Game,
   GamePlayer,
@@ -97,9 +100,13 @@ export async function getQrClue(req: Request, res: Response): Promise<void> {
   const gameIds = activeGames.map((g) => g.id);
 
   const isGm = activeGames.some((g) => g.createdBy === userId);
-  const isPlayer =
-    gameIds.length > 0 &&
-    (await GamePlayer.count({ where: { userId, gameId: gameIds } })) > 0;
+  const players = gameIds.length
+    ? await GamePlayer.findAll({
+        where: { userId, gameId: gameIds },
+        attributes: ["id", "gameId"],
+      })
+    : [];
+  const isPlayer = players.length > 0;
 
   if (!isGm && !isPlayer) {
     res
@@ -109,6 +116,34 @@ export async function getQrClue(req: Request, res: Response): Promise<void> {
         message: "Cette page est réservée aux joueurs d'une partie en cours.",
       });
     return;
+  }
+
+  if (!isGm) {
+    const cluePassword = await ScenarioCluePassword.findOne({
+      where: { qrClueId: qr.id },
+      attributes: ["id"],
+    });
+    const hasUnlocked = cluePassword
+      ? await ClueUnlock.count({
+          where: {
+            cluePasswordId: cluePassword.id,
+            [Op.or]: players.map((player) => ({
+              gameId: player.gameId,
+              gamePlayerId: player.id,
+            })),
+          },
+        })
+      : 0;
+
+    if (hasUnlocked === 0) {
+      res.status(403).json({
+        success: false,
+        message:
+          "Débloquez ce document avec son mot de passe dans le tableau des indices.",
+        data: { gameId: players[0]?.gameId },
+      });
+      return;
+    }
   }
 
   res.json({

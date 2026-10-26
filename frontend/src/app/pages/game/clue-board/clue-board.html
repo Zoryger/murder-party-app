@@ -11,6 +11,27 @@
       <p>⚠️ {{ errorMsg }}</p>
     </div>
   } @else {
+    <form class="clue-unlock card" (ngSubmit)="unlockClue()">
+      <label for="clue-password">Mot de passe d’un indice</label>
+      <div class="clue-unlock-row">
+        <input
+          id="clue-password"
+          name="cluePassword"
+          type="text"
+          autocomplete="off"
+          [(ngModel)]="password"
+          placeholder="Saisir le mot de passe trouvé"
+          [disabled]="isUnlocking"
+        />
+        <button class="btn btn--primary" type="submit" [disabled]="isUnlocking || !password.trim()">
+          {{ isUnlocking ? 'Vérification...' : 'Débloquer' }}
+        </button>
+      </div>
+      @if (feedback) {
+        <p class="unlock-feedback" [class.error]="feedbackError" role="status">{{ feedback }}</p>
+      }
+    </form>
+
     <div class="clues-grid">
       @for (c of clues; track c.id) {
         <div class="clue-card card">
@@ -18,11 +39,6 @@
           <p class="meta"><strong>Support :</strong> {{ c.support }}</p>
           <p class="meta"><strong>Lieu :</strong> {{ c.location }}</p>
           <p class="effect">{{ c.effect }}</p>
-          @if (c.attributedTo) {
-            <div class="attribution">
-              Pointe vers : <strong>{{ c.attributedTo }}</strong>
-            </div>
-          }
           @if (c.isFalsified !== undefined) {
             @if (c.isFalsified) {
               <div class="vision-alert">
@@ -33,6 +49,8 @@
             }
           }
         </div>
+      } @empty {
+        <p class="empty-clues">Aucun indice débloqué pour le moment. Trouvez un mot de passe pour révéler un indice dans votre dossier.</p>
       }
     </div>
   }

@@ -19,6 +19,7 @@ export interface GmOverview {
   game: { id: number; name: string; status: string };
   players: GmPlayer[];
   qrClues: { slug: string; title: string }[];
+  cluePasswords: { name: string; password: string }[];
   pendingAlchemistCount: number;
 }
 

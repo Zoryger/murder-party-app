@@ -14,6 +14,7 @@ export class QrClue implements OnInit {
   private qrService = inject(QrService);
 
   clue: QrClueView | null = null;
+  cluesGameId: number | null = null;
   private loading = signal(true);
   errorMsg = '';
 
@@ -31,6 +32,7 @@ export class QrClue implements OnInit {
       },
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Impossible de charger cette page.';
+        this.cluesGameId = err.error?.data?.gameId ?? null;
         this.loading.set(false);
       },
     });

@@ -11,6 +11,21 @@
 
 .clues-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
 
+.clue-unlock {
+  margin-bottom: 1.25rem;
+  label { display: block; margin-bottom: .5rem; }
+}
+
+.clue-unlock-row { display: flex; gap: .6rem; }
+.clue-unlock-row input { flex: 1; }
+.unlock-feedback {
+  margin-top: .6rem;
+  color: var(--color-success);
+  font-size: .85rem;
+  &.error { color: var(--color-danger); }
+}
+.empty-clues { grid-column: 1 / -1; padding: 2rem 1rem; color: var(--color-text-muted); text-align: center; }
+
 .clue-card {
   h2      { font-size: 1rem; margin-bottom: .6rem; }
   .meta   { font-size: .8rem; color: var(--color-text-muted); margin-bottom: .3rem; strong { color: var(--color-text); } }
@@ -47,4 +62,6 @@
 @media (max-width: 768px) {
   .clues-header h1 { font-size: 1.35rem; }
   .clues-grid { grid-template-columns: 1fr; gap: .75rem; }
+  .clue-unlock-row { flex-direction: column; }
+  .clue-unlock-row .btn { width: 100%; }
 }

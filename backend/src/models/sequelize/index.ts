@@ -25,7 +25,13 @@ import MoneyTransfer from "./MoneyTransfer.model";
 import FinalSubmission from "./FinalSubmission.model";
 import FinalAccusation from "./FinalAccusation.model";
 import { seedPowers } from "../../seed/powers.seed";
-import { seedHp2027 } from "../../seed/hp2027.seed";
+import {
+  HP2027_CLUE_PASSWORDS,
+  seedHp2027,
+} from "../../seed/hp2027.seed";
+import { DataTypes, QueryTypes } from "sequelize";
+import ScenarioCluePassword from "./ScenarioCluePassword.model";
+import ClueUnlock from "./ClueUnlock.model";
 
 // ── Associations existantes ──────────────────────────────────────────────
 User.hasMany(Game, { foreignKey: "createdBy", as: "createdGames" });
@@ -207,13 +213,159 @@ export async function syncDatabase(): Promise<void> {
     // `alter` peut multiplier les index MySQL à chaque démarrage et modifier des tables en place.
     const alter = process.env["DB_SYNC_MODE"] === "alter";
     await sequelize.sync(alter ? { alter: true } : undefined);
-    console.log("✅ Tables synchronisées");
-
+    await ensureCluePasswordSchema();
     await seedPowers();
     await seedHp2027();
+    await ensureScenarioCluePasswords();
+    await ensureClueUnlockSchema();
+    console.log("✅ Tables synchronisées");
   } catch (error) {
     console.error("❌ Erreur de connexion MySQL :", error);
     process.exit(1);
+  }
+}
+
+async function ensureCluePasswordSchema(): Promise<void> {
+  const queryInterface = sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("scenario_clue_passwords");
+
+  if (!("qrClueId" in table)) {
+    await queryInterface.addColumn("scenario_clue_passwords", "qrClueId", {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    });
+  }
+  if (table.physicalClueId?.allowNull === false) {
+    await queryInterface.changeColumn(
+      "scenario_clue_passwords",
+      "physicalClueId",
+      {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+    );
+  }
+
+  const indexes = await sequelize.query<{ INDEX_NAME: string }>(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'scenario_clue_passwords'
+       AND COLUMN_NAME = 'qrClueId'
+       AND NON_UNIQUE = 0`,
+    { type: QueryTypes.SELECT },
+  );
+  if (indexes.length === 0) {
+    await queryInterface.addIndex("scenario_clue_passwords", ["qrClueId"], {
+      name: "scenario_clue_passwords_qr_clue_unique",
+      unique: true,
+    });
+  }
+}
+
+async function ensureClueUnlockSchema(): Promise<void> {
+  const queryInterface = sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("clue_unlocks");
+
+  if (!("cluePasswordId" in table)) {
+    await queryInterface.addColumn("clue_unlocks", "cluePasswordId", {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    });
+  }
+
+  if ("gameClueId" in table) {
+    await sequelize.query(
+      `UPDATE clue_unlocks AS unlocks
+       INNER JOIN game_clues AS clues
+         ON clues.id = unlocks.gameClueId AND clues.gameId = unlocks.gameId
+       INNER JOIN scenario_clue_passwords AS passwords
+         ON passwords.physicalClueId = clues.physicalClueId
+       SET unlocks.cluePasswordId = passwords.id
+       WHERE unlocks.cluePasswordId IS NULL`,
+    );
+    await queryInterface.changeColumn("clue_unlocks", "gameClueId", {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    });
+  }
+
+  const indexes = await sequelize.query<{ INDEX_NAME: string }>(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'clue_unlocks'
+       AND COLUMN_NAME = 'cluePasswordId'
+       AND NON_UNIQUE = 0`,
+    { type: QueryTypes.SELECT },
+  );
+  if (indexes.length === 0) {
+    await queryInterface.addIndex(
+      "clue_unlocks",
+      ["gamePlayerId", "cluePasswordId"],
+      { name: "uniq_clue_password_unlock", unique: true },
+    );
+  }
+}
+
+async function ensureScenarioCluePasswords(): Promise<void> {
+  const [physicalClues, qrClues] = await Promise.all([
+    ScenarioPhysicalClue.findAll({ attributes: ["id", "name"] }),
+    ScenarioQrClue.findAll({ attributes: ["id", "slug"] }),
+  ]);
+  const existingPasswords = await ScenarioCluePassword.findAll({
+    attributes: ["id", "physicalClueId", "qrClueId", "password"],
+  });
+  const passwordByPhysicalId = new Map(
+    existingPasswords
+      .filter((entry) => entry.physicalClueId !== null)
+      .map((entry) => [entry.physicalClueId!, entry]),
+  );
+  const passwordByQrId = new Map(
+    existingPasswords
+      .filter((entry) => entry.qrClueId !== null)
+      .map((entry) => [entry.qrClueId!, entry]),
+  );
+
+  for (const clue of physicalClues) {
+    const password = HP2027_CLUE_PASSWORDS.physical[
+      clue.name as keyof typeof HP2027_CLUE_PASSWORDS.physical
+    ];
+    if (!password) {
+      throw new Error(`Aucun code prédéfini pour l'indice physique « ${clue.name} ».`);
+    }
+    const existing = passwordByPhysicalId.get(clue.id);
+    if (existing) {
+      if (existing.password !== password) {
+        await existing.update({ password });
+      }
+    } else {
+      await ScenarioCluePassword.create({
+        physicalClueId: clue.id,
+        qrClueId: null,
+        password,
+      });
+    }
+  }
+  for (const clue of qrClues) {
+    const password = HP2027_CLUE_PASSWORDS.qr[
+      clue.slug as keyof typeof HP2027_CLUE_PASSWORDS.qr
+    ];
+    if (!password) {
+      throw new Error(`Aucun code prédéfini pour l'indice QR « ${clue.slug} ».`);
+    }
+    const existing = passwordByQrId.get(clue.id);
+    if (existing) {
+      if (existing.password !== password) {
+        await existing.update({ password });
+      }
+    } else {
+      await ScenarioCluePassword.create({
+        physicalClueId: null,
+        qrClueId: clue.id,
+        password,
+      });
+    }
   }
 }
 
@@ -228,6 +380,7 @@ export {
   ScenarioRelation,
   ScenarioRiddle,
   ScenarioPhysicalClue,
+  ScenarioCluePassword,
   ScenarioQrClue,
   ScenarioPlotThread,
   Conversation,
@@ -235,6 +388,7 @@ export {
   CodeUnlock,
   PowerUse,
   GameClue,
+  ClueUnlock,
   GhostSubstitution,
   LoveBond,
   TimedEffect,

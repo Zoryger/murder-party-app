@@ -111,6 +111,26 @@ table {
   .url   { font-size: .7rem; color: var(--color-text-muted); word-break: break-all; }
 }
 
+.clue-password-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.clue-password {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  code {
+    color: var(--color-accent);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+  }
+}
+
 @media (max-width: 768px) {
   .gm-header h1 { font-size: 1.4rem; }
   .tabs {
@@ -130,6 +150,7 @@ table {
   .qr-toolbar { align-items: stretch; flex-direction: column; gap: .75rem; }
   .qr-toolbar .btn { align-self: center; min-width: 170px; }
   .qr-grid { grid-template-columns: 1fr; }
+  .clue-password-grid { grid-template-columns: 1fr; }
   .qr-card img { width: min(200px, 70vw); height: auto; aspect-ratio: 1; }
   .request .answer-row { display: grid; grid-template-columns: 1fr; }
   .request .answer-row .btn { width: 100%; }

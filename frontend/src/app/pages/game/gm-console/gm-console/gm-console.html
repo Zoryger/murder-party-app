@@ -158,6 +158,18 @@
           </button>
         </div>
 
+        @if (o.cluePasswords.length > 0) {
+          <h2 class="section">Mots de passe des indices</h2>
+          <div class="clue-password-grid">
+            @for (clue of o.cluePasswords; track clue.name) {
+              <div class="clue-password card">
+                <strong>{{ clue.name }}</strong>
+                <code>{{ clue.password }}</code>
+              </div>
+            }
+          </div>
+        }
+
         @if (o.qrClues.length === 0) {
           <p class="empty">Cette partie n'a pas de QR code (aucun scénario prédéfini).</p>
         }

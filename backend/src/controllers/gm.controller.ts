@@ -6,6 +6,8 @@ import {
   User,
   Power,
   ScenarioCharacter,
+  ScenarioPhysicalClue,
+  ScenarioCluePassword,
   ScenarioQrClue,
   AlchemistRequest,
 } from "../models/sequelize";
@@ -60,6 +62,28 @@ export async function getGmOverview(
   const qrClues = game.scenarioId
     ? await ScenarioQrClue.findAll({ where: { scenarioId: game.scenarioId } })
     : [];
+  const physicalClues = game.scenarioId
+    ? await ScenarioPhysicalClue.findAll({
+        where: { scenarioId: game.scenarioId },
+        attributes: ["id", "name"],
+      })
+    : [];
+  const cluePasswords = physicalClues.length
+    ? await ScenarioCluePassword.findAll({
+        where: { physicalClueId: physicalClues.map((clue) => clue.id) },
+      })
+    : [];
+  const passwordByClueId = new Map(
+    cluePasswords.map((entry) => [entry.physicalClueId, entry.password]),
+  );
+  const qrCluePasswords = qrClues.length
+    ? await ScenarioCluePassword.findAll({
+        where: { qrClueId: qrClues.map((clue) => clue.id) },
+      })
+    : [];
+  const passwordByQrClueId = new Map(
+    qrCluePasswords.map((entry) => [entry.qrClueId, entry.password]),
+  );
 
   const pendingAlchemistCount = await AlchemistRequest.count({
     where: { gameId: game.id, status: "pending" },
@@ -84,6 +108,22 @@ export async function getGmOverview(
         messagingCode: p.messagingCode,
       })),
       qrClues: qrClues.map((q) => ({ slug: q.slug, title: q.title })),
+      cluePasswords: [
+        ...physicalClues.map((clue) => {
+          const password = passwordByClueId.get(clue.id);
+          if (!password) {
+            throw new Error(`Mot de passe manquant pour l'indice ${clue.id}.`);
+          }
+          return { name: clue.name, password };
+        }),
+        ...qrClues.map((clue) => {
+          const password = passwordByQrClueId.get(clue.id);
+          if (!password) {
+            throw new Error(`Mot de passe manquant pour l'indice QR ${clue.id}.`);
+          }
+          return { name: clue.title, password };
+        }),
+      ],
       pendingAlchemistCount,
     },
   });

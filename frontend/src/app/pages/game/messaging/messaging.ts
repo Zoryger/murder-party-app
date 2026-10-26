@@ -137,7 +137,9 @@ export class Messaging implements OnInit, OnDestroy {
         this.pageError = '';
         if (
           this.selectedConversationId &&
-          !this.conversations.some((conversation) => conversation.id === this.selectedConversationId)
+          !this.conversations.some(
+            (conversation) => conversation.id === this.selectedConversationId,
+          )
         ) {
           this.selectedConversationId = null;
           this.participants = [];
@@ -210,21 +212,19 @@ export class Messaging implements OnInit, OnDestroy {
     if (!this.newMessage.trim() || !this.selectedConversationId || !this.canWrite) return;
     this.isSending = true;
     const conversationId = this.selectedConversationId;
-    this.convService
-      .sendMessage(this.gameId, conversationId, this.newMessage.trim())
-      .subscribe({
-        next: () => {
-          this.newMessage = '';
-          this.isSending = false;
-          this.loadMessages(conversationId);
-          this.changeDetector.markForCheck();
-        },
-        error: (err) => {
-          this.isSending = false;
-          this.threadError = err.error?.message ?? "Impossible d'envoyer le message.";
-          this.changeDetector.markForCheck();
-        },
-      });
+    this.convService.sendMessage(this.gameId, conversationId, this.newMessage.trim()).subscribe({
+      next: () => {
+        this.newMessage = '';
+        this.isSending = false;
+        this.loadMessages(conversationId);
+        this.changeDetector.markForCheck();
+      },
+      error: (err) => {
+        this.isSending = false;
+        this.threadError = err.error?.message ?? "Impossible d'envoyer le message.";
+        this.changeDetector.markForCheck();
+      },
+    });
   }
 
   redeemCode(): void {

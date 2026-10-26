@@ -4,6 +4,11 @@
   } @else if (errorMsg) {
     <div class="empty-state">
       <p>⚠️ {{ errorMsg }}</p>
+      @if (cluesGameId) {
+        <a [routerLink]="['/game', cluesGameId, 'clues']" class="btn btn--primary">
+          Ouvrir le tableau des indices
+        </a>
+      }
       <a routerLink="/" class="btn btn--ghost">← Accueil</a>
     </div>
   } @else if (clue; as c) {
