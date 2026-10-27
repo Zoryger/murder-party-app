@@ -34,10 +34,18 @@ export interface PublicPlayer {
   id: number;
   userId: number;
   username: string;
+  scenarioCharacterId: number | null;
   characterName: string;
   characterRole: string;
   isAssigned: boolean;
   status: 'alive' | 'ghost';
+}
+
+export interface AssignableCharacter {
+  id: number;
+  name: string;
+  title: string;
+  isMurderer: boolean;
 }
 
 export interface MyCharacterSheet {
@@ -120,6 +128,22 @@ export class GameService {
     return this.http.post<ApiResponse<unknown>>(
       `${this.API}/games/${gameId}/assign-characters`,
       {},
+    );
+  }
+
+  getAssignableCharacters(gameId: number): Observable<ApiResponse<AssignableCharacter[]>> {
+    return this.http.get<ApiResponse<AssignableCharacter[]>>(
+      `${this.API}/games/${gameId}/assignable-characters`,
+    );
+  }
+
+  assignCharactersManually(
+    gameId: number,
+    assignments: { gamePlayerId: number; scenarioCharacterId: number | null }[],
+  ): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.API}/games/${gameId}/assign-manual`,
+      { assignments },
     );
   }
 

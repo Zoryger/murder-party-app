@@ -111,7 +111,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Très bon ami, mais sa mort le propulse immédiatement en position de gagner l'élection.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "londubat",
@@ -127,7 +127,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Successeur désigné, il hérite de la gestion exclusive de ses brevets botaniques très lucratifs.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "pince",
@@ -142,7 +142,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave venait de couper le budget papier pour acheter des tablettes tactiles.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "vector",
@@ -158,7 +158,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave avait opposé son veto au financement de son serveur quantique.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "lestrange",
@@ -174,7 +174,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave avait tracé son adresse IP magique juste avant de mourir.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "sophia",
@@ -190,7 +190,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave l'avait attrapée et refusait de lui signer sa recommandation.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "chloe",
@@ -206,7 +206,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Elle la harcelait de questions sur la sécurité de la serre la veille du meurtre.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "stark",
@@ -222,7 +222,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave l'a surprise avec un scanner moldu dans sa serre la veille.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "delacour",
@@ -238,7 +238,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave allait demander un audit officiel sur les trous dans le budget de la botanique.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "pendelton",
@@ -254,7 +254,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Il voulait lui acheter ses brevets pour un accord commercial avec les Moldus. Elle refusait.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "dragonneau",
@@ -270,7 +270,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Chourave a été griffée par l'un de ses Grims la veille lors d'un test.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
     {
       key: "seamus",
@@ -286,7 +286,7 @@ export async function seedHp2027(): Promise<void> {
       linkToVictim:
         "Son drone défectueux a détruit une récolte rare de Chourave juste avant le meurtre.",
       objective:
-        "Découvrir l'identité des 3 meurtriers, la chaîne des événements et leurs mobiles.",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
   ];
 

@@ -34,6 +34,29 @@ interface Pairing {
   character: ScenarioCharacter;
 }
 
+interface ManualAssignment {
+  gamePlayerId: number | string;
+  scenarioCharacterId: number | string | null;
+}
+
+function isManualAssignment(value: unknown): value is ManualAssignment {
+  if (typeof value !== "object" || value === null) return false;
+  if (!("gamePlayerId" in value) || !("scenarioCharacterId" in value)) {
+    return false;
+  }
+
+  const assignment = value as Record<string, unknown>;
+  return (
+    (typeof assignment.gamePlayerId === "number" ||
+      typeof assignment.gamePlayerId === "string") &&
+    Number.isInteger(Number(assignment.gamePlayerId)) &&
+    (assignment.scenarioCharacterId === null ||
+      ((typeof assignment.scenarioCharacterId === "number" ||
+        typeof assignment.scenarioCharacterId === "string") &&
+        Number.isInteger(Number(assignment.scenarioCharacterId))))
+  );
+}
+
 // Applique les couples joueur ↔ personnage.
 // Étape 1 : codes temporaires uniques, pour éviter qu'un code d'énigme soit brièvement porté par deux joueurs
 // pendant un réassignement (la contrainte d'unicité (partie, code) le refuserait).
@@ -144,6 +167,7 @@ export async function getPlayers(req: Request, res: Response): Promise<void> {
     id: p.id,
     userId: p.userId,
     username: p.userId ? (usernameById.get(p.userId) ?? null) : null,
+    scenarioCharacterId: p.scenarioCharacterId,
     characterName: p.characterName,
     characterRole: p.characterRole,
     isAssigned: p.scenarioCharacterId !== null,
@@ -151,6 +175,54 @@ export async function getPlayers(req: Request, res: Response): Promise<void> {
   }));
 
   res.json({ success: true, data: publicPlayers });
+}
+
+export async function getAssignableCharacters(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const game = await Game.findByPk(Number(req.params["id"]));
+  if (!game) {
+    res.status(404).json({ success: false, message: "Partie introuvable." });
+    return;
+  }
+  if (game.createdBy !== req.user!.userId) {
+    res.status(403).json({
+      success: false,
+      message: "Seul le MJ peut consulter les personnages à assigner.",
+    });
+    return;
+  }
+  if (game.status !== "waiting") {
+    res.status(400).json({
+      success: false,
+      message: "Les personnages ne peuvent plus être assignés.",
+    });
+    return;
+  }
+  if (!game.scenarioId) {
+    res.status(400).json({
+      success: false,
+      message: "Cette partie n'utilise pas de scénario prédéfini.",
+    });
+    return;
+  }
+
+  const characters = await ScenarioCharacter.findAll({
+    where: { scenarioId: game.scenarioId },
+    attributes: ["id", "name", "title", "isMurderer", "displayOrder"],
+    order: [["displayOrder", "ASC"]],
+  });
+
+  res.json({
+    success: true,
+    data: characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      title: character.title,
+      isMurderer: character.isMurderer,
+    })),
+  });
 }
 
 // ── POST /api/games/:id/assign-characters (MJ — tirage aléatoire) ────────
@@ -270,14 +342,19 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const raw = req.body.assignments;
-  if (!Array.isArray(raw) || raw.length === 0) {
+  const rawAssignments: unknown = req.body.assignments;
+  if (
+    !Array.isArray(rawAssignments) ||
+    rawAssignments.length === 0 ||
+    !rawAssignments.every(isManualAssignment)
+  ) {
     res.status(400).json({
       success: false,
-      message: 'Champ "assignments" requis (tableau non vide).',
+      message: 'Champ "assignments" invalide.',
     });
     return;
   }
+  const raw = rawAssignments;
 
   const players = await GamePlayer.findAll({ where: { gameId } });
   const characters = await ScenarioCharacter.findAll({
@@ -289,29 +366,37 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
   const powers = await Power.findAll();
 
   const pairs: Pairing[] = [];
-  for (const a of raw) {
-    const player = players.find((p) => p.id === Number(a.gamePlayerId));
-    const character = characters.find(
-      (c) => c.id === Number(a.scenarioCharacterId),
-    );
+  const unassignedPlayers: GamePlayer[] = [];
+  for (const assignment of raw) {
+    const gamePlayerId = Number(assignment.gamePlayerId);
+    const scenarioCharacterId =
+      assignment.scenarioCharacterId === null
+        ? null
+        : Number(assignment.scenarioCharacterId);
+    const player = players.find((p) => p.id === gamePlayerId);
+    const character =
+      scenarioCharacterId === null
+        ? null
+        : characters.find((c) => c.id === scenarioCharacterId);
     if (!player) {
       res.status(400).json({
         success: false,
-        message: `Joueur introuvable dans cette partie : ${a.gamePlayerId}`,
+        message: `Joueur introuvable dans cette partie : ${assignment.gamePlayerId}`,
       });
       return;
     }
-    if (!character) {
+    if (scenarioCharacterId !== null && !character) {
       res.status(400).json({
         success: false,
-        message: `Personnage introuvable dans ce scénario : ${a.scenarioCharacterId}`,
+        message: `Personnage introuvable dans ce scénario : ${assignment.scenarioCharacterId}`,
       });
       return;
     }
-    pairs.push({ player, character });
+    if (character) pairs.push({ player, character });
+    else unassignedPlayers.push(player);
   }
 
-  if (new Set(pairs.map((p) => p.player.id)).size !== pairs.length) {
+  if (new Set(raw.map((assignment) => Number(assignment.gamePlayerId))).size !== raw.length) {
     res.status(400).json({
       success: false,
       message: "Un joueur apparaît plusieurs fois dans la liste.",
@@ -327,6 +412,7 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
   );
   for (const { player, character } of pairs)
     finalByPlayer.set(player.id, character.id);
+  for (const player of unassignedPlayers) finalByPlayer.set(player.id, null);
   const finalCharacterIds = [...finalByPlayer.values()].filter(
     (id): id is number => id !== null,
   );
@@ -339,6 +425,20 @@ export async function assignManual(req: Request, res: Response): Promise<void> {
   }
 
   await applyAssignments(pairs, powers, riddles);
+  await Promise.all(
+    unassignedPlayers.map(async (player) => {
+      const user = player.userId ? await User.findByPk(player.userId) : null;
+      return player.update({
+        scenarioCharacterId: null,
+        characterName: user?.username ?? "Joueur",
+        characterRole: "En attente d'assignation",
+        isMurderer: false,
+        murderKnowledge: "not_applicable",
+        money: 0,
+        messagingCode: generateMessagingCode(),
+      });
+    }),
+  );
 
   getIO().to(`game:${gameId}`).emit("lobby:assigned");
 

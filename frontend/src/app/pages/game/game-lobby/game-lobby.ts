@@ -1,13 +1,22 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { GameService, Game, PublicPlayer } from '../../../core/services/game.service';
+import {
+  AssignableCharacter,
+  GameService,
+  Game,
+  PublicPlayer,
+} from '../../../core/services/game.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SocketService } from '../../../core/services/socket.service';
+import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TimeoutError, timeout } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-game-lobby',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, FormsModule],
   templateUrl: './game-lobby.html',
   styleUrl: './game-lobby.scss',
 })
@@ -21,8 +30,12 @@ export class GameLobby implements OnInit, OnDestroy {
   gameId!: number;
   game: Game | null = null;
   players: PublicPlayer[] = [];
+  assignableCharacters: AssignableCharacter[] = [];
+  selectedCharacterByPlayer: Record<number, number | null> = {};
+  manualAssignmentOpen = false;
   private gm = signal(false);
   private loading = signal(true);
+  private savingManual = signal(false);
   errorMsg = '';
   actionMsg = '';
   private assigning = signal(false);
@@ -34,6 +47,10 @@ export class GameLobby implements OnInit, OnDestroy {
 
   get isLoading(): boolean {
     return this.loading();
+  }
+
+  get isSavingManual(): boolean {
+    return this.savingManual();
   }
 
   get isAssigning(): boolean {
@@ -89,6 +106,7 @@ export class GameLobby implements OnInit, OnDestroy {
             },
           });
         } else {
+          if (this.game.scenarioId) this.loadAssignableCharacters();
           this.loadPlayers();
         }
       },
@@ -103,6 +121,9 @@ export class GameLobby implements OnInit, OnDestroy {
     this.gameService.getPlayers(this.gameId).subscribe({
       next: (res) => {
         this.players = res.data;
+        this.selectedCharacterByPlayer = Object.fromEntries(
+          this.players.map((player) => [player.id, player.scenarioCharacterId]),
+        );
         this.loading.set(false);
       },
       error: () => {
@@ -123,6 +144,65 @@ export class GameLobby implements OnInit, OnDestroy {
         this.assigning.set(false);
       },
     });
+  }
+
+  private loadAssignableCharacters(): void {
+    this.gameService.getAssignableCharacters(this.gameId).subscribe({
+      next: (res) => {
+        this.assignableCharacters = res.data;
+      },
+      error: (err) => {
+        this.actionMsg =
+          err.error?.message ?? 'Impossible de charger les personnages du scénario.';
+      },
+    });
+  }
+
+  setSelectedCharacter(playerId: number, characterId: string): void {
+    this.selectedCharacterByPlayer[playerId] =
+      characterId === '' ? null : Number(characterId);
+  }
+
+  saveManualAssignments(): void {
+    if (this.savingManual() || this.players.length === 0) return;
+    const assignments = this.players.map((player) => ({
+      gamePlayerId: player.id,
+      scenarioCharacterId: this.selectedCharacterByPlayer[player.id] ?? null,
+    }));
+    const selectedIds = assignments
+      .map((assignment) => assignment.scenarioCharacterId)
+      .filter((id): id is number => id !== null);
+    if (new Set(selectedIds).size !== selectedIds.length) {
+      this.actionMsg = 'Un même personnage ne peut pas être attribué à deux joueurs.';
+      return;
+    }
+
+    this.savingManual.set(true);
+    this.actionMsg = '';
+    this.gameService
+      .assignCharactersManually(this.gameId, assignments)
+      .pipe(
+        timeout({ first: 30_000 }),
+        finalize(() => {
+          this.savingManual.set(false);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.savingManual.set(false);
+          this.actionMsg = res.message ?? 'Attributions enregistrées.';
+          this.loadPlayers();
+        },
+        error: (err: unknown) => {
+          this.actionMsg =
+            err instanceof TimeoutError
+              ? 'Le serveur ne répond pas. Vérifie ta connexion puis réessaie.'
+              : err instanceof HttpErrorResponse
+                ? err.error?.message ??
+                  "Erreur lors de l'assignation manuelle."
+                : "Erreur lors de l'assignation manuelle.";
+        },
+      });
   }
 
   startGame(): void {

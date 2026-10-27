@@ -10,6 +10,7 @@ import {
 import {
   joinGame,
   getPlayers,
+  getAssignableCharacters,
   assignCharacters,
   assignManual,
   startGame,
@@ -98,6 +99,7 @@ router.patch(
 
 router.post("/:id/join", requireAuth, joinGame);
 router.get("/:id/players", requireAuth, getPlayers);
+router.get("/:id/assignable-characters", requireAuth, getAssignableCharacters);
 router.post("/:id/assign-characters", requireAuth, assignCharacters);
 router.post("/:id/assign-manual", requireAuth, assignManual);
 router.post("/:id/start", requireAuth, startGame);

@@ -26,6 +26,7 @@
 
         <div class="gm-actions">
           <button
+            type="button"
             class="btn btn--ghost"
             [disabled]="isAssigning || players.length === 0"
             (click)="assignCharacters()"
@@ -39,7 +40,55 @@
           >
             {{ isStarting ? 'Démarrage...' : '▶️ Démarrer la partie' }}
           </button>
+          @if (game.scenarioId) {
+            <button
+              type="button"
+              class="btn btn--ghost"
+              [disabled]="assignableCharacters.length === 0 || players.length === 0"
+              (click)="manualAssignmentOpen = !manualAssignmentOpen"
+            >
+              {{ manualAssignmentOpen ? 'Masquer les rôles' : '✍️ Assigner manuellement' }}
+            </button>
+          }
         </div>
+        @if (manualAssignmentOpen && game.scenarioId) {
+          <div class="manual-assignment">
+            <h2>Choisir le rôle de chaque joueur</h2>
+            <p class="hint">
+              Sélectionne un personnage par joueur. Chaque rôle ne peut être attribué qu’une fois.
+              Laisse « Sans personnage » pour retirer une attribution.
+            </p>
+            @for (p of players; track p.id) {
+              <label class="manual-assignment-row">
+                <span>
+                  <strong>{{ p.username }}</strong>
+                  <small>{{ p.isAssigned ? p.characterName : 'En attente d’assignation' }}</small>
+                </span>
+                <select
+                  [name]="'character-' + p.id"
+                  [ngModel]="selectedCharacterByPlayer[p.id] ?? ''"
+                  (ngModelChange)="setSelectedCharacter(p.id, $event)"
+                  [disabled]="isSavingManual"
+                >
+                  <option value="">Sans personnage</option>
+                  @for (character of assignableCharacters; track character.id) {
+                    <option [value]="character.id">
+                      {{ character.name }} — {{ character.title }}{{ character.isMurderer ? ' 🔪' : '' }}
+                    </option>
+                  }
+                </select>
+              </label>
+            }
+            <button
+              type="button"
+              class="btn btn--primary"
+              [disabled]="isSavingManual || assignableCharacters.length === 0"
+              (click)="saveManualAssignments()"
+            >
+              {{ isSavingManual ? 'Enregistrement...' : 'Enregistrer les attributions' }}
+            </button>
+          </div>
+        }
         @if (!allAssigned && players.length > 0) {
           <p class="hint">Assigne les personnages avant de démarrer.</p>
         }
