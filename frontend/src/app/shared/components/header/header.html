@@ -16,6 +16,11 @@
       <a routerLink="/game/create" routerLinkActive="active" (click)="closeMenu()"
         >Créer une partie</a
       >
+      @if (auth.isLoggedIn()) {
+        <button class="mobile-logout" type="button" (click)="logout()">
+          Déconnexion
+        </button>
+      }
     </nav>
 
     <!-- Connecté -->

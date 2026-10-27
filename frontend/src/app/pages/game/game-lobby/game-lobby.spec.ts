@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { vi } from 'vitest';
 import {
   ApiResponse,
   Game,
@@ -19,16 +20,20 @@ describe('GameLobby', () => {
   let playersSubject: Subject<{ success: boolean; data: PublicPlayer[] }>;
   let assignmentSubject: Subject<ApiResponse<unknown>>;
   let manualAssignmentSubject: Subject<ApiResponse<unknown>>;
+  let deleteGameSubject: Subject<ApiResponse<unknown>>;
   let lastManualAssignments:
     | { gamePlayerId: number; scenarioCharacterId: number | null }[]
     | null;
+  let deletedGameId: number | null;
 
   beforeEach(async () => {
     gameSubject = new Subject();
     playersSubject = new Subject();
     assignmentSubject = new Subject();
     manualAssignmentSubject = new Subject();
+    deleteGameSubject = new Subject();
     lastManualAssignments = null;
+    deletedGameId = null;
 
     await TestBed.configureTestingModule({
       imports: [GameLobby],
@@ -50,6 +55,10 @@ describe('GameLobby', () => {
             ) => {
               lastManualAssignments = assignments;
               return manualAssignmentSubject.asObservable();
+            },
+            deleteGame: (gameId: number) => {
+              deletedGameId = gameId;
+              return deleteGameSubject.asObservable();
             },
           },
         },
@@ -242,5 +251,33 @@ describe('GameLobby', () => {
 
     expect(component.isSavingManual).toBe(false);
     expect(component.actionMsg).toBe('Échec serveur.');
+  });
+
+  it('should require confirmation before deleting the game', () => {
+    component.gameId = 12;
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    component.deleteGame();
+
+    expect(deletedGameId).toBeNull();
+    expect(component.isDeleting).toBe(false);
+  });
+
+  it('should delete the game and return home after confirmation', async () => {
+    component.gameId = 12;
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    component.deleteGame();
+    expect(deletedGameId).toBe(12);
+    expect(component.isDeleting).toBe(true);
+
+    deleteGameSubject.next({ success: true, data: null });
+    deleteGameSubject.complete();
+    await fixture.whenStable();
+
+    expect(component.isDeleting).toBe(false);
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 });

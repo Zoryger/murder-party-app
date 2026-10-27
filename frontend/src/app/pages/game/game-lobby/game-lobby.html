@@ -50,6 +50,14 @@
               {{ manualAssignmentOpen ? 'Masquer les rôles' : '✍️ Assigner manuellement' }}
             </button>
           }
+          <button
+            type="button"
+            class="btn btn--danger"
+            [disabled]="isDeleting"
+            (click)="deleteGame()"
+          >
+            {{ isDeleting ? 'Suppression...' : '🗑️ Supprimer la partie' }}
+          </button>
         </div>
         @if (manualAssignmentOpen && game.scenarioId) {
           <div class="manual-assignment">

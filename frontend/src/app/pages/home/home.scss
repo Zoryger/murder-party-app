@@ -84,6 +84,15 @@
 .players { font-size: .85rem; color: var(--color-text-muted); }
 .ended   { font-size: .8rem;  color: var(--color-text-muted); }
 
+.action-error {
+  margin-bottom: 1rem;
+  padding: .75rem 1rem;
+  color: var(--color-danger);
+  background: rgba(229, 62, 62, .1);
+  border: 1px solid rgba(229, 62, 62, .3);
+  border-radius: var(--radius-md);
+}
+
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;

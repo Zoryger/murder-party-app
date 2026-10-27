@@ -3,6 +3,9 @@ import { Op } from 'sequelize';
 import {
   Game, GamePlayer, Scenario, ScenarioCharacter,
   ScenarioRelation, ScenarioRiddle, User, Power, Conversation,
+  AlchemistRequest, ClueUnlock, CodeUnlock, Duel, DuelVote,
+  FinalAccusation, FinalSubmission, GameClue, GhostSubstitution,
+  LoveBond, Message, MoneyTransfer, PowerUse, TimedEffect, sequelize,
 } from '../models/sequelize';
 import { getIO } from '../sockets';
 
@@ -44,6 +47,84 @@ export async function createGame(req: Request, res: Response): Promise<void> {
     message: 'Partie créée avec succès.',
     data:    game,
   });
+}
+
+export async function deleteGame(req: Request, res: Response): Promise<void> {
+  const gameId = Number(req.params['id']);
+  const result = await sequelize.transaction(async (transaction) => {
+    const game = await Game.findByPk(gameId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!game) return 'not-found' as const;
+    if (game.createdBy !== req.user!.userId) return 'forbidden' as const;
+
+    const playerIds = (await GamePlayer.findAll({
+      attributes: ['id'],
+      where: { gameId },
+      transaction,
+    })).map((player) => player.id);
+    const conversationIds = (await Conversation.findAll({
+      attributes: ['id'],
+      where: { gameId },
+      transaction,
+    })).map((conversation) => conversation.id);
+    const duelIds = (await Duel.findAll({
+      attributes: ['id'],
+      where: { gameId },
+      transaction,
+    })).map((duel) => duel.id);
+    const submissions = await FinalSubmission.findAll({
+      attributes: ['id'],
+      where: { gameId },
+      transaction,
+    });
+    const submissionIds = submissions.map((submission) => submission.id);
+
+    await FinalAccusation.destroy({
+      where: { submissionId: { [Op.in]: submissionIds } },
+      transaction,
+    });
+    await DuelVote.destroy({
+      where: { duelId: { [Op.in]: duelIds } },
+      transaction,
+    });
+    await Message.destroy({
+      where: {
+        [Op.or]: [
+          { conversationId: { [Op.in]: conversationIds } },
+          { senderId: { [Op.in]: playerIds } },
+        ],
+      },
+      transaction,
+    });
+
+    await AlchemistRequest.destroy({ where: { gameId }, transaction });
+    await ClueUnlock.destroy({ where: { gameId }, transaction });
+    await CodeUnlock.destroy({ where: { gameId }, transaction });
+    await GameClue.destroy({ where: { gameId }, transaction });
+    await GhostSubstitution.destroy({ where: { gameId }, transaction });
+    await LoveBond.destroy({ where: { gameId }, transaction });
+    await MoneyTransfer.destroy({ where: { gameId }, transaction });
+    await PowerUse.destroy({ where: { gameId }, transaction });
+    await TimedEffect.destroy({ where: { gameId }, transaction });
+    await Conversation.destroy({ where: { gameId }, transaction });
+    await Duel.destroy({ where: { gameId }, transaction });
+    await FinalSubmission.destroy({ where: { gameId }, transaction });
+    await GamePlayer.destroy({ where: { gameId }, transaction });
+    await game.destroy({ transaction });
+    return 'deleted' as const;
+  });
+
+  if (result === 'not-found') {
+    res.status(404).json({ success: false, message: 'Partie introuvable.' });
+    return;
+  }
+  if (result === 'forbidden') {
+    res.status(403).json({ success: false, message: 'Seul le MJ créateur peut supprimer cette partie.' });
+    return;
+  }
+  res.json({ success: true, message: 'Partie et données associées supprimées.' });
 }
 
 export async function getGameByCode(req: Request, res: Response): Promise<void> {

@@ -1,8 +1,12 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import * as QRCode from 'qrcode';
 import { GmService, GmOverview, GmAlchemistRequest } from '../../../../core/services/gm.service';
+import { GameService } from '../../../../core/services/game.service';
 import { SocketService } from '../../../../core/services/socket.service';
+import { TimeoutError, timeout } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-gm-console',
@@ -13,7 +17,9 @@ import { SocketService } from '../../../../core/services/socket.service';
 })
 export class GmConsole implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private gm = inject(GmService);
+  private gameService = inject(GameService);
   private socketService = inject(SocketService);
 
   gameId!: number;
@@ -27,9 +33,14 @@ export class GmConsole implements OnInit, OnDestroy {
   errorMsg = '';
   actionError = '';
   busyId: number | null = null;
+  private deleting = signal(false);
 
   get isLoading(): boolean {
     return this.loading();
+  }
+
+  get isDeleting(): boolean {
+    return this.deleting();
   }
 
   ngOnInit(): void {
@@ -113,5 +124,38 @@ export class GmConsole implements OnInit, OnDestroy {
 
   print(): void {
     window.print();
+  }
+
+  deleteGame(): void {
+    if (
+      this.deleting() ||
+      !window.confirm(
+        'Supprimer définitivement cette partie en cours ? Tous les joueurs et toutes les données liées seront effacés. Cette action est irréversible.',
+      )
+    ) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.actionError = '';
+    this.gameService
+      .deleteGame(this.gameId)
+      .pipe(
+        timeout({ first: 30_000 }),
+        finalize(() => this.deleting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/']);
+        },
+        error: (err: unknown) => {
+          this.actionError =
+            err instanceof TimeoutError
+              ? 'Le serveur ne répond pas. La partie n’a pas pu être supprimée.'
+              : err instanceof HttpErrorResponse
+                ? err.error?.message ?? 'Impossible de supprimer cette partie.'
+                : 'Impossible de supprimer cette partie.';
+        },
+      });
   }
 }

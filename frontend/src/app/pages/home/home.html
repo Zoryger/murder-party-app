@@ -40,6 +40,9 @@
       <p>⚠️ {{ errorMsg }}</p>
     </div>
   } @else if (games.length > 0) {
+    @if (actionError) {
+      <div class="action-error" role="alert">⚠️ {{ actionError }}</div>
+    }
     <div class="games-grid">
       @for (game of games; track game.id) {
         <article class="game-card">
@@ -62,6 +65,16 @@
               >
             } @else {
               <span class="ended">Terminée</span>
+            }
+            @if (canDelete(game)) {
+              <button
+                type="button"
+                class="btn btn--danger btn--sm"
+                [disabled]="isDeleting(game.id)"
+                (click)="deleteGame(game)"
+              >
+                {{ isDeleting(game.id) ? 'Suppression...' : '🗑️ Supprimer' }}
+              </button>
             }
           </div>
         </article>

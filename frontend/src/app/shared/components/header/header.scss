@@ -135,3 +135,27 @@
   color: var(--color-text-muted);
   padding: .4rem .5rem;
 }
+
+.mobile-logout {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-logout {
+    display: block;
+    width: 100%;
+    padding: .8rem 1rem;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-danger);
+    font: inherit;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-2);
+    }
+  }
+}

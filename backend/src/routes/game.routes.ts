@@ -4,6 +4,7 @@ import {
   getGames,
   getGameById,
   createGame,
+  deleteGame,
   getGameByCode,
   updateGameStatus,
 } from "../controllers/game.controller";
@@ -89,6 +90,7 @@ router.get("/", getGames);
 router.get("/join/:code", getGameByCode);
 router.get("/:id", getGameById);
 router.post("/", requireAuth, createRules, validate, createGame);
+router.delete("/:id", requireAuth, [param("id").isInt({ min: 1 })], validate, deleteGame);
 router.patch(
   "/:id/status",
   requireAuth,

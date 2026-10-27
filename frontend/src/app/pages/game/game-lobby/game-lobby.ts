@@ -40,6 +40,7 @@ export class GameLobby implements OnInit, OnDestroy {
   actionMsg = '';
   private assigning = signal(false);
   private starting = signal(false);
+  private deleting = signal(false);
 
   get isGm(): boolean {
     return this.gm();
@@ -59,6 +60,10 @@ export class GameLobby implements OnInit, OnDestroy {
 
   get isStarting(): boolean {
     return this.starting();
+  }
+
+  get isDeleting(): boolean {
+    return this.deleting();
   }
 
   ngOnInit(): void {
@@ -217,6 +222,39 @@ export class GameLobby implements OnInit, OnDestroy {
         this.starting.set(false);
       },
     });
+  }
+
+  deleteGame(): void {
+    if (
+      this.deleting() ||
+      !window.confirm(
+        'Supprimer définitivement cette partie ? Tous les joueurs et toutes les données liées à cette partie seront effacés. Cette action est irréversible.',
+      )
+    ) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.actionMsg = '';
+    this.gameService
+      .deleteGame(this.gameId)
+      .pipe(
+        timeout({ first: 30_000 }),
+        finalize(() => this.deleting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/']);
+        },
+        error: (err: unknown) => {
+          this.actionMsg =
+            err instanceof TimeoutError
+              ? 'Le serveur ne répond pas. La partie n’a pas pu être supprimée.'
+              : err instanceof HttpErrorResponse
+                ? err.error?.message ?? 'Impossible de supprimer cette partie.'
+                : 'Impossible de supprimer cette partie.';
+        },
+      });
   }
 
   get allAssigned(): boolean {

@@ -112,6 +112,10 @@ export class GameService {
     return this.http.post<ApiResponse<Game>>(`${this.API}/games`, dto);
   }
 
+  deleteGame(gameId: number): Observable<ApiResponse<unknown>> {
+    return this.http.delete<ApiResponse<unknown>>(`${this.API}/games/${gameId}`);
+  }
+
   updateStatus(id: number, status: string): Observable<ApiResponse<Game>> {
     return this.http.patch<ApiResponse<Game>>(`${this.API}/games/${id}/status`, { status });
   }
