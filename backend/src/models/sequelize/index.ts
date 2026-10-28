@@ -309,6 +309,10 @@ async function ensureClueUnlockSchema(): Promise<void> {
 }
 
 async function ensureScenarioCluePasswords(): Promise<void> {
+  const legacyPhysicalClueNames: Record<string, string> = {
+    "Le Pass Numérique Ensanglanté d'Argus Rusard":
+      "Le Pass Numérique Ensanglanté de Argus Rusard",
+  };
   const [physicalClues, qrClues] = await Promise.all([
     ScenarioPhysicalClue.findAll({ attributes: ["id", "name"] }),
     ScenarioQrClue.findAll({ attributes: ["id", "slug"] }),
@@ -328,11 +332,16 @@ async function ensureScenarioCluePasswords(): Promise<void> {
   );
 
   for (const clue of physicalClues) {
+    const clueName = legacyPhysicalClueNames[clue.name] ?? clue.name;
+    if (clueName !== clue.name) {
+      await clue.update({ name: clueName });
+    }
+
     const password = HP2027_CLUE_PASSWORDS.physical[
-      clue.name as keyof typeof HP2027_CLUE_PASSWORDS.physical
+      clueName as keyof typeof HP2027_CLUE_PASSWORDS.physical
     ];
     if (!password) {
-      throw new Error(`Aucun code prédéfini pour l'indice physique « ${clue.name} ».`);
+      throw new Error(`Aucun code prédéfini pour l'indice physique « ${clueName} ».`);
     }
     const existing = passwordByPhysicalId.get(clue.id);
     if (existing) {
