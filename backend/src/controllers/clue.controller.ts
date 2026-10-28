@@ -11,6 +11,23 @@ import {
 } from "../models/sequelize";
 import { hasActiveVisionAbsolue } from "../utils/vision.util";
 
+function replaceCharacterAttribution(
+  text: string,
+  originalName: string,
+  falsifiedName: string,
+): string {
+  const originalParts = originalName.trim().split(/\s+/);
+  const falsifiedParts = falsifiedName.trim().split(/\s+/);
+  const originalSurname = originalParts[originalParts.length - 1];
+  const falsifiedSurname = falsifiedParts[falsifiedParts.length - 1];
+  const replacedName = text.split(originalName).join(falsifiedName);
+
+  if (!originalSurname || !falsifiedSurname || originalSurname === originalName) {
+    return replacedName;
+  }
+  return replacedName.split(originalSurname).join(falsifiedSurname);
+}
+
 async function getMyActivePlayer(gameId: number, userId: number) {
   const game = await Game.findByPk(gameId);
   if (!game || game.status !== "active")
@@ -75,19 +92,34 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
     success: true,
     data: clues.map((c) => {
       const t = templateById.get(c.physicalClueId)!;
+      const originalName = t.relatedCharacterId
+        ? nameById.get(t.relatedCharacterId)
+        : undefined;
+      const falsifiedName = c.currentCharacterId
+        ? nameById.get(c.currentCharacterId)
+        : undefined;
+      const canRewriteAttribution =
+        c.isFalsified &&
+        originalName !== undefined &&
+        falsifiedName !== undefined &&
+        originalName !== falsifiedName;
+      const displayText = (text: string): string =>
+        canRewriteAttribution
+          ? replaceCharacterAttribution(text, originalName, falsifiedName)
+          : text;
       const base = {
         id: c.id,
-        name: t.name,
-        support: t.support,
-        location: t.location,
-        effect: t.effect,
+        name: displayText(t.name),
+        support: displayText(t.support),
+        location: displayText(t.location),
+        effect: displayText(t.effect),
       };
       if (!visionActive) return base;
       return {
         ...base,
         isFalsified: c.isFalsified,
-        trueAttribution: t.relatedCharacterId
-          ? (nameById.get(t.relatedCharacterId) ?? "???")
+        trueAttribution: c.isFalsified && t.relatedCharacterId
+          ? (originalName ?? "???")
           : null,
       };
     }),

@@ -11,7 +11,7 @@ import Power from "../models/sequelize/Power.model";
 
 export const HP2027_CLUE_PASSWORDS = {
   physical: {
-    "Le Pass Numérique Ensanglanté d'Argus Rusard": "PASS-RUSARD-27",
+    "Le Pass Numérique Ensanglanté de Argus Rusard": "PASS-RUSARD-27",
     "La Boîte d'Ingrédients Rares de Sophia Prince": "BOITE-SOPHIA-27",
     "Les Débris du Drone de Seamus Finnigan": "DRONE-SEAMUS-27",
     "Le Scanner Réseau Moldu de Cynthia Stark": "SCANNER-STARK-27",
@@ -935,7 +935,7 @@ export async function seedHp2027(): Promise<void> {
     {
       scenarioId: scenario.id,
       relatedCharacterId: characters.rusard!.id,
-      name: "Le Pass Numérique Ensanglanté d'Argus Rusard",
+      name: "Le Pass Numérique Ensanglanté de Argus Rusard",
       support:
         "Carte magnétique ou badge à cordon avec fausse boue et faux sang.",
       location: "Recoin du jardin ou sous un tapis près de la zone « Serre ».",
