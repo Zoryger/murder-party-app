@@ -27,11 +27,8 @@ export const HP2027_CLUE_PASSWORDS = {
 } as const;
 
 export async function seedHp2027(): Promise<void> {
-  const already = await Scenario.findOne({ where: { slug: "hp2027" } });
-  if (already) return; // déjà seedé — pour reseeder, supprime les tables scenario_* via phpMyAdmin
-
   // 1. Le scénario
-  const scenario = await Scenario.create({
+  const scenarioData = {
     slug: "hp2027",
     name: "Harry Potter 2027 — Poudlard",
     pitch:
@@ -39,7 +36,13 @@ export async function seedHp2027(): Promise<void> {
     minPlayers: 2,
     maxPlayers: 20,
     durationMinutes: 240,
+  };
+  const existingScenario = await Scenario.findOne({
+    where: { slug: scenarioData.slug },
   });
+  const scenario = existingScenario
+    ? await existingScenario.update(scenarioData)
+    : await Scenario.create(scenarioData);
 
   // 2. Récupère les pouvoirs déjà seedés
   const powers = await Power.findAll();
@@ -292,7 +295,7 @@ export async function seedHp2027(): Promise<void> {
 
   const characters: Record<string, ScenarioCharacter> = {};
   for (const c of charactersData) {
-    characters[c.key] = await ScenarioCharacter.create({
+    const characterData = {
       scenarioId: scenario.id,
       name: c.name,
       title: c.title,
@@ -304,7 +307,13 @@ export async function seedHp2027(): Promise<void> {
       isMurderer: c.isMurderer,
       murderKnowledge: c.murderKnowledge,
       displayOrder: c.displayOrder,
+    };
+    const existingCharacter = await ScenarioCharacter.findOne({
+      where: { scenarioId: scenario.id, name: c.name },
     });
+    characters[c.key] = existingCharacter
+      ? await existingCharacter.update(characterData)
+      : await ScenarioCharacter.create(characterData);
   }
 
   // 4. Les relations (orientées — chaque perso décrit sa vision de l'autre)
@@ -813,8 +822,8 @@ export async function seedHp2027(): Promise<void> {
     ],
   ];
 
-  await ScenarioRelation.bulkCreate(
-    relationsData.map(([from, to, type, desc, secret, emoji]) => ({
+  for (const [from, to, type, desc, secret, emoji] of relationsData) {
+    const relationData = {
       scenarioId: scenario.id,
       characterId: characters[from]!.id,
       relatedCharacterId: characters[to]!.id,
@@ -822,8 +831,20 @@ export async function seedHp2027(): Promise<void> {
       description: desc,
       isSecret: secret,
       emoji,
-    })),
-  );
+    };
+    const existingRelation = await ScenarioRelation.findOne({
+      where: {
+        scenarioId: scenario.id,
+        characterId: relationData.characterId,
+        relatedCharacterId: relationData.relatedCharacterId,
+      },
+    });
+    if (existingRelation) {
+      await existingRelation.update(relationData);
+    } else {
+      await ScenarioRelation.create(relationData);
+    }
+  }
 
   // 5. Les 15 énigmes
   const riddlesData: [string, string, string, string][] = [
@@ -919,19 +940,27 @@ export async function seedHp2027(): Promise<void> {
     ],
   ];
 
-  await ScenarioRiddle.bulkCreate(
-    riddlesData.map(([key, title, description, secretCode], i) => ({
+  for (const [i, [key, title, description, secretCode]] of riddlesData.entries()) {
+    const riddleData = {
       scenarioId: scenario.id,
       characterId: characters[key]!.id,
       title,
       description,
       secretCode,
       displayOrder: i + 1,
-    })),
-  );
+    };
+    const existingRiddle = await ScenarioRiddle.findOne({
+      where: { scenarioId: scenario.id, characterId: riddleData.characterId },
+    });
+    if (existingRiddle) {
+      await existingRiddle.update(riddleData);
+    } else {
+      await ScenarioRiddle.create(riddleData);
+    }
+  }
 
   // 6. Les 4 indices physiques
-  await ScenarioPhysicalClue.bulkCreate([
+  const physicalClues = [
     {
       scenarioId: scenario.id,
       relatedCharacterId: characters.rusard!.id,
@@ -969,10 +998,20 @@ export async function seedHp2027(): Promise<void> {
       effect:
         "Prouve qu'une technologie moldue capturait les données de la serre à l'insu de tous.",
     },
-  ]);
+  ];
+  for (const clueData of physicalClues) {
+    const existingClue = await ScenarioPhysicalClue.findOne({
+      where: { scenarioId: scenario.id, name: clueData.name },
+    });
+    if (existingClue) {
+      await existingClue.update(clueData);
+    } else {
+      await ScenarioPhysicalClue.create(clueData);
+    }
+  }
 
   // 7. Les 6 QR codes
-  await ScenarioQrClue.bulkCreate([
+  const qrClues = [
     {
       scenarioId: scenario.id,
       slug: "chicaneur-chloe",
@@ -1023,10 +1062,20 @@ export async function seedHp2027(): Promise<void> {
       revelation:
         "Distingue les griffures du Grim (la veille) des morsures mortelles d'une autre entité (la nuit du crime).",
     },
-  ]);
+  ];
+  for (const clueData of qrClues) {
+    const existingClue = await ScenarioQrClue.findOne({
+      where: { scenarioId: scenario.id, slug: clueData.slug },
+    });
+    if (existingClue) {
+      await existingClue.update(clueData);
+    } else {
+      await ScenarioQrClue.create(clueData);
+    }
+  }
 
   // 8. Les 4 intrigues secondaires
-  await ScenarioPlotThread.bulkCreate([
+  const plotThreads = [
     {
       scenarioId: scenario.id,
       title: "L'Intrigue Électorale",
@@ -1051,9 +1100,19 @@ export async function seedHp2027(): Promise<void> {
       description:
         "Rolf Dragonneau a laissé s'échapper un Grim de garde près des serres le soir du crime. Chourave avait été griffée par cette créature la veille.",
     },
-  ]);
+  ];
+  for (const plotThreadData of plotThreads) {
+    const existingPlotThread = await ScenarioPlotThread.findOne({
+      where: { scenarioId: scenario.id, title: plotThreadData.title },
+    });
+    if (existingPlotThread) {
+      await existingPlotThread.update(plotThreadData);
+    } else {
+      await ScenarioPlotThread.create(plotThreadData);
+    }
+  }
 
   console.log(
-    "✅ Scénario HP2027 seedé — 15 personnages, 65 relations, 15 énigmes, 4 indices, 6 QR codes, 4 intrigues",
+    "✅ Scénario HP2027 synchronisé — 15 personnages, 65 relations, 15 énigmes, 4 indices, 6 QR codes, 4 intrigues",
   );
 }
