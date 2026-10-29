@@ -76,9 +76,9 @@ export async function seedHp2027(): Promise<void> {
       murderKnowledge: "full" as const,
       displayOrder: 2,
       backstory:
-        "Dépassé par les drones des élèves, il veut s'acheter un système de sécurité algorithmique.",
+        "Dépassé par les drones et autres outils informatiques des élèves, il veut s'acheter un système de sécurité algorithmique. Mais Chourave le lui refusait.",
       linkToVictim:
-        "Elle refusait qu'il installe ses capteurs thermiques dans ses serres.",
+        "Elle refusait qu'il installe ses capteurs thermiques dans ses serres. Tu as donc participé à son meurtre.",
       objective: "Camoufler son crime et se faire passer pour innocent.",
     },
     {
@@ -91,9 +91,9 @@ export async function seedHp2027(): Promise<void> {
       murderKnowledge: "none" as const,
       displayOrder: 3,
       backstory:
-        "Utilise une application moldue pour surveiller ses crises. L'application a bugué le soir du crime.",
+        "Utilise une application moldue pour surveiller ses crises de loup-garou. L'application a bugué le soir du crime. Il est particulièrement à l'aise avec la techologie.",
       linkToVictim:
-        "Il pense qu'elle l'avait attiré dans la serre après avoir découvert son secret.",
+        "Il pense qu'elle l'avait attiré dans la serre après avoir découvert son secret. Que s'est-il réellemnet passé ce soir la ?",
       objective:
         "Comprendre comment il s'est retrouvé dans la serre et pourquoi son application santé n'a pas fonctionné.",
     },
@@ -107,7 +107,7 @@ export async function seedHp2027(): Promise<void> {
       murderKnowledge: "not_applicable" as const,
       displayOrder: 4,
       backstory:
-        "Créateur des « Sorts Connectés », désormais grand favori pour le second tour de l'élection.",
+        "Créateur des « Sorts Connectés », désormais grand favori pour le second tour de l'élection car les vote pour Chourave vont certainement voter pour lui.",
       linkToVictim:
         "Très bon ami, mais sa mort le propulse immédiatement en position de gagner l'élection.",
       objective:
@@ -140,7 +140,7 @@ export async function seedHp2027(): Promise<void> {
       displayOrder: 6,
       backstory: "Mène une guerre sainte contre la numérisation des livres.",
       linkToVictim:
-        "Chourave venait de couper le budget papier pour acheter des tablettes tactiles.",
+        "Chourave venait de réduire le budget papier pour acheter des tablettes tactiles.",
       objective:
         "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
@@ -204,7 +204,7 @@ export async function seedHp2027(): Promise<void> {
       backstory:
         "Rédactrice du Chicaneur 2.0, à la recherche du scoop de l'année.",
       linkToVictim:
-        "Elle la harcelait de questions sur la sécurité de la serre la veille du meurtre.",
+        "Chloé harcelait Chourave  de questions sur la sécurité de la serre la veille du meurtre.",
       objective:
         "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     },
@@ -321,7 +321,7 @@ export async function seedHp2027(): Promise<void> {
       "lockhart",
       "rusard",
       "positive",
-      "Son homme de main secret. Il l'a payé pour éliminer Chourave et pense que Rusard a agi seul.",
+      "Son homme de main secret. Il l'a payé pour éliminer Chourave, il connait donc ton secret et toi le sien.",
       true,
       "🤝",
     ],
@@ -329,7 +329,7 @@ export async function seedHp2027(): Promise<void> {
       "lockhart",
       "flitwick",
       "negative",
-      "Son rival électoral qu'il compte écraser au second tour.",
+      "Son rival électoral qu'il compte écraser au second tour. Les votes de Chourave risquent d'aller vers Flitwick au second tour.",
       false,
       "⚔️",
     ],
@@ -411,7 +411,7 @@ export async function seedHp2027(): Promise<void> {
       "dylan",
       "rusard",
       "negative",
-      "Son maître chanteur qui le terrorise.",
+      "Son maître chanteur qui le terrorise car il connait son secret animal.",
       true,
       "⛓️",
     ],
@@ -477,7 +477,7 @@ export async function seedHp2027(): Promise<void> {
       "londubat",
       "dragonneau",
       "positive",
-      "Son ami qu'il aide à traquer son Grim en fuite pour éviter qu'on ne l'abatte.",
+      "Son ami qu'il aide à traquer son Grim en fuite pour éviter qu'on ne l'abatte. Ils l'ont retrouvé le lendemain du meurtre.",
       false,
       "🌱",
     ],
@@ -937,10 +937,9 @@ export async function seedHp2027(): Promise<void> {
       relatedCharacterId: characters.rusard!.id,
       name: "Le Pass Numérique Ensanglanté de Argus Rusard",
       support:
-        "Carte magnétique ou badge à cordon avec fausse boue et faux sang.",
-      location: "Recoin du jardin ou sous un tapis près de la zone « Serre ».",
-      effect:
-        "Prouve que le badge de Rusard a servi à verrouiller la serre lors du crime.",
+        "Carte magnétique remplie de boue et de sang qui permet l'ouverture de la serre.",
+      location: "Trouvé à coté de la serre.",
+      effect: "Ce badge a pu servir à verrouiller ou déverrouiller la serre.",
     },
     {
       scenarioId: scenario.id,
@@ -948,8 +947,8 @@ export async function seedHp2027(): Promise<void> {
       name: "La Boîte d'Ingrédients Rares de Sophia Prince",
       support:
         'Petite boîte en bois avec flacons étiquetés ("Pousse du Diable", "Silice brute").',
-      location: "Fond d'un placard ou derrière des livres.",
-      effect: "Accuse Sophia de vol dans les réserves secrètes de Chourave.",
+      location: "Fond d'un placard.",
+      effect: "",
     },
     {
       scenarioId: scenario.id,
@@ -957,9 +956,8 @@ export async function seedHp2027(): Promise<void> {
       name: "Les Débris du Drone de Seamus Finnigan",
       support:
         "Morceaux de plastique noir, hélices cassées et câbles magiques brûlés.",
-      location: "Poubelle extérieure ou zone garage.",
-      effect:
-        "Confirme le crash du drone de Seamus dans la serre juste avant le meurtre.",
+      location: "Poubelle extérieure",
+      effect: "Confirme le crash du drone de Seamus dans la serre.",
     },
     {
       scenarioId: scenario.id,
@@ -967,8 +965,7 @@ export async function seedHp2027(): Promise<void> {
       name: "Le Scanner Réseau Moldu de Cynthia Stark",
       support:
         "Petit boîtier électronique avec antenne bricolée et étiquette « Stark Industries ».",
-      location:
-        "Glissé sous un fauteuil du salon ou caché près d'une prise électrique.",
+      location: "Caché près d'une prise électrique proche de la serre.",
       effect:
         "Prouve qu'une technologie moldue capturait les données de la serre à l'insu de tous.",
     },
@@ -981,7 +978,7 @@ export async function seedHp2027(): Promise<void> {
       slug: "chicaneur-chloe",
       title: "Extrait Audio du « Chicaneur 2.0 »",
       content:
-        "Enregistrement (ou texte) d'une dispute tendue entre Chourave et Chloé Lovegood la veille du meurtre.",
+        "Enregistrement d'une dispute tendue entre Chourave et Chloé Lovegood la veille du meurtre.",
       revelation: "Chourave menaçait de poursuivre Chloé pour diffamation.",
     },
     {
@@ -997,9 +994,8 @@ export async function seedHp2027(): Promise<void> {
       slug: "galleonpay-rusard",
       title: "Relevé de Compte « GalleonPay » de Rusard",
       content:
-        "Relevé bancaire magique indiquant la réception de 10 000 Gallions deux jours avant le crime.",
-      revelation:
-        "Preuve que Rusard a été payé par un commanditaire anonyme (Lockhart).",
+        "Relevé bancaire magique indiquant la réception de 10 000 Gallions.",
+      revelation: "Preuve que Rusard a été richement payé par un tierce.",
     },
     {
       scenarioId: scenario.id,
@@ -1025,7 +1021,7 @@ export async function seedHp2027(): Promise<void> {
       content:
         "Analyse comparée des blessures sur la victime, réalisée par Rolf Dragonneau.",
       revelation:
-        "Distingue les griffures du Grim (la veille) des morsures mortelles de loup-garou (la nuit du crime).",
+        "Distingue les griffures du Grim (la veille) des morsures mortelles d'une autre entité (la nuit du crime).",
     },
   ]);
 

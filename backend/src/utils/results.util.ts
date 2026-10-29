@@ -135,7 +135,7 @@ export async function buildResults(game: Game) {
     const investigate = {
       objectiveKind: "investigate" as const,
       objectiveLabel:
-        "Découvrir les 3 meurtriers, la chaîne des événements et leurs mobiles",
+        "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
     };
     const submission = submissionByPlayer.get(p.id);
     if (!submission)

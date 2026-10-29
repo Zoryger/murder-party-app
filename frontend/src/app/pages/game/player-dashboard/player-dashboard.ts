@@ -26,9 +26,10 @@ export class PlayerDashboard implements OnInit, OnDestroy {
   }
 
   murderKnowledgeLabel: Record<string, string> = {
-    full: "Vous savez tout de l'organisation du meurtre.",
-    partial: "Vous savez que vous n'avez pas agi seul.",
-    none: 'Vous pensez avoir agi seul.',
+    full: "Vous êtes le seul à connaître l'entièreté de l'organisation du meurtre. Lockart vous à payé pour l'élimination mais vous avez utilisé Vance sous sa forme de loup-garou pour le faire à votre place.",
+    partial:
+      "Vous savez que vous n'avez pas agi seul. Vous avez demandé à Argus Rusard d'éliminer Chourave contre de l'argent.",
+    none: "Vous ne savait pas ce qu'il s'est passé le soir du meurtre dans la serre. Il est possible que vous soyez l'auteur de se crime contre votre volonté.",
   };
 
   ngOnInit(): void {
