@@ -187,17 +187,6 @@ export async function getOrCreateConversation(
     return;
   }
 
-  // ← 5.6 : un fantôme ne peut plus écrire, donc ne démarre plus de conversation
-  if (me.status !== "alive") {
-    res
-      .status(403)
-      .json({
-        success: false,
-        message: "Les fantômes ne peuvent plus écrire de messages.",
-      });
-    return;
-  }
-
   const withPlayerId = Number(req.body.withPlayerId);
   if (withPlayerId === me.id) {
     res
@@ -214,6 +203,16 @@ export async function getOrCreateConversation(
   });
   if (!other) {
     res.status(404).json({ success: false, message: "Joueur introuvable." });
+    return;
+  }
+  if (other.status !== me.status) {
+    res.status(403).json({
+      success: false,
+      message:
+        me.status === "ghost"
+          ? "Les fantômes peuvent uniquement discuter entre eux."
+          : "Les joueurs vivants peuvent uniquement discuter entre eux.",
+    });
     return;
   }
 
@@ -312,13 +311,19 @@ export async function getMessages(req: Request, res: Response): Promise<void> {
   });
   const players = await GamePlayer.findAll({ where: { gameId } });
   const nameById = new Map(players.map((p) => [p.id, p.characterName]));
+  const otherPlayerId =
+    conversation.player1Id === me.id
+      ? conversation.player2Id
+      : conversation.player1Id;
+  const otherPlayer = players.find((player) => player.id === otherPlayerId);
 
   res.json({
     success: true,
     data: {
       isParticipant: isRealParticipant,
       isCreatedByMe: conversation.createdBy === me.id && !isRealParticipant,
-      canWrite: isRealParticipant && me.status === "alive", // ← 5.6
+      canWrite:
+        isRealParticipant && !!otherPlayer && me.status === otherPlayer.status,
       isFake: visionActive ? conversation.isFake : false,
       participants: [
         {
@@ -366,17 +371,6 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // ← 5.6 : les fantômes peuvent lire mais plus écrire
-  if (me.status !== "alive") {
-    res
-      .status(403)
-      .json({
-        success: false,
-        message: "Les fantômes ne peuvent plus écrire de messages.",
-      });
-    return;
-  }
-
   const content = String(req.body.content ?? "").trim();
   if (!content) {
     res.status(400).json({ success: false, message: "Message vide." });
@@ -404,6 +398,23 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
         success: false,
         message: "Vous ne pouvez pas écrire dans cette conversation.",
       });
+    return;
+  }
+  const otherPlayerId =
+    conversation.player1Id === me.id
+      ? conversation.player2Id
+      : conversation.player1Id;
+  const other = await GamePlayer.findOne({
+    where: { id: otherPlayerId, gameId },
+  });
+  if (!other || other.status !== me.status) {
+    res.status(403).json({
+      success: false,
+      message:
+        me.status === "ghost"
+          ? "Les fantômes peuvent uniquement discuter avec des fantômes."
+          : "Les joueurs vivants peuvent uniquement discuter avec des joueurs vivants.",
+    });
     return;
   }
 

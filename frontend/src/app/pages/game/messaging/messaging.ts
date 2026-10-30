@@ -48,6 +48,11 @@ export class Messaging implements OnInit, OnDestroy {
   threadError = '';
   private conversationsRequest = 0;
   private messagesRequest = 0;
+  private statusHandler = (): void => {
+    this.loadPlayers();
+    this.loadMyStatus();
+    this.onRealtimeUpdate();
+  };
 
   get conversationGroups(): {
     category: ConversationSummary['category'];
@@ -79,12 +84,7 @@ export class Messaging implements OnInit, OnDestroy {
 
     this.loadMyStatus();
 
-    this.gameService.getPlayers(this.gameId).subscribe({
-      next: (res) => {
-        this.players = res.data;
-        this.changeDetector.markForCheck();
-      },
-    });
+    this.loadPlayers();
 
     this.loadConversations();
 
@@ -93,17 +93,14 @@ export class Messaging implements OnInit, OnDestroy {
     this.socketService.on('conversation:update', (event) => this.onRealtimeUpdate(event));
     this.socketService.on('code:unlocked', () => this.onRealtimeUpdate());
     // Mort ou réanimation pendant que la page est ouverte : le champ de saisie apparaît / disparaît
-    this.socketService.on('player:status', () => {
-      this.loadMyStatus();
-      this.onRealtimeUpdate();
-    });
+    this.socketService.on('player:status', this.statusHandler);
   }
 
   ngOnDestroy(): void {
     this.socketService.off('message:new');
     this.socketService.off('conversation:update');
     this.socketService.off('code:unlocked');
-    this.socketService.off('player:status');
+    this.socketService.off('player:status', this.statusHandler);
   }
 
   private loadMyStatus(): void {
@@ -112,6 +109,19 @@ export class Messaging implements OnInit, OnDestroy {
         this.myPlayerId = res.data.player?.id ?? null;
         this.myStatus = res.data.player?.status ?? 'alive';
         if (this.myStatus === 'ghost') this.showNewConvo = false;
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  private loadPlayers(): void {
+    this.gameService.getPlayers(this.gameId).subscribe({
+      next: (res) => {
+        this.players = res.data;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.pageError = 'Impossible d’actualiser les statuts des joueurs.';
         this.changeDetector.markForCheck();
       },
     });
@@ -196,6 +206,12 @@ export class Messaging implements OnInit, OnDestroy {
   }
 
   startConversation(withPlayerId: number): void {
+    const contact = this.players.find((player) => player.id === withPlayerId);
+    if (!contact || contact.status !== this.myStatus) {
+      this.pageError =
+        'Vous pouvez démarrer une conversation uniquement avec un joueur de votre état.';
+      return;
+    }
     this.convService.startConversation(this.gameId, withPlayerId).subscribe({
       next: (res) => {
         this.loadConversations();
@@ -249,6 +265,8 @@ export class Messaging implements OnInit, OnDestroy {
     const existingIds = new Set(
       this.conversations.filter((c) => c.isOwn).map((c) => c.otherPlayerId),
     );
-    return this.players.filter((p) => p.id !== this.myPlayerId && !existingIds.has(p.id));
+    return this.players.filter(
+      (p) => p.id !== this.myPlayerId && p.status === this.myStatus && !existingIds.has(p.id),
+    );
   }
 }

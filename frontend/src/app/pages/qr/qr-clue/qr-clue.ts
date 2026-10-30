@@ -15,6 +15,7 @@ export class QrClue implements OnInit {
 
   clue: QrClueView | null = null;
   cluesGameId: number | null = null;
+  returnGameId: number | null = null;
   private loading = signal(true);
   errorMsg = '';
 
@@ -24,6 +25,8 @@ export class QrClue implements OnInit {
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    const gameId = Number(this.route.snapshot.queryParamMap.get('gameId'));
+    this.returnGameId = Number.isInteger(gameId) && gameId > 0 ? gameId : null;
 
     this.qrService.getQr(slug).subscribe({
       next: (res) => {

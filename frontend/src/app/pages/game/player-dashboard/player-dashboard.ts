@@ -1,6 +1,10 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { GameService, MyCharacterSheet } from '../../../core/services/game.service';
+import {
+  GameService,
+  MyCharacterSheet,
+  PublicPlayer,
+} from '../../../core/services/game.service';
 import { SocketService } from '../../../core/services/socket.service';
 
 @Component({
@@ -15,14 +19,24 @@ export class PlayerDashboard implements OnInit, OnDestroy {
   private router = inject(Router);
   private gameService = inject(GameService);
   private socketService = inject(SocketService);
+  private statusHandler = (): void => {
+    this.load();
+    this.loadPlayers();
+  };
 
   gameId!: number;
   sheet: MyCharacterSheet | null = null;
+  players: PublicPlayer[] = [];
   private loading = signal(true);
   errorMsg = '';
+  playersError = '';
 
   get isLoading(): boolean {
     return this.loading();
+  }
+
+  get ghostCount(): number {
+    return this.players.filter((player) => player.status === 'ghost').length;
   }
 
   murderKnowledgeLabel: Record<string, string> = {
@@ -35,16 +49,17 @@ export class PlayerDashboard implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
     this.load();
+    this.loadPlayers();
 
     // Mort, réanimation, lien de Cupidon : la fiche se met à jour sans recharger
     this.socketService.joinLobby(this.gameId);
-    this.socketService.on('player:status', () => this.load());
+    this.socketService.on('player:status', this.statusHandler);
     this.socketService.on('love:bond', () => this.load());
     this.socketService.on('money:update', () => this.load());
   }
 
   ngOnDestroy(): void {
-    this.socketService.off('player:status');
+    this.socketService.off('player:status', this.statusHandler);
     this.socketService.off('love:bond');
     this.socketService.off('money:update');
   }
@@ -63,6 +78,18 @@ export class PlayerDashboard implements OnInit, OnDestroy {
       error: (err) => {
         this.errorMsg = err.error?.message ?? 'Erreur de chargement.';
         this.loading.set(false);
+      },
+    });
+  }
+
+  private loadPlayers(): void {
+    this.gameService.getPlayers(this.gameId).subscribe({
+      next: (res) => {
+        this.players = res.data;
+        this.playersError = '';
+      },
+      error: () => {
+        this.playersError = 'Impossible de charger la liste des joueurs.';
       },
     });
   }

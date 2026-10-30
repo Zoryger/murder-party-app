@@ -5,6 +5,10 @@
   padding: 1.5rem;
 }
 
+.main-content:has(.player-status-bar) {
+  padding-bottom: 6rem;
+}
+
 @media (max-width: 768px) {
   .main-content {
     min-height: calc(100vh - 64px);

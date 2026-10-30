@@ -4,11 +4,10 @@
     <h1>💬 Messagerie</h1>
   </div>
 
-  @if (myStatus === 'ghost') {
-    <p class="empty-hint">
-      👻 Vous êtes un fantôme : vous pouvez lire vos conversations, mais plus en écrire.
-    </p>
-  }
+  <p class="empty-hint status-reminder">
+    💬 Rappel : les joueurs vivants parlent entre eux ; les fantômes parlent entre eux.
+    Les statuts 👻 sont visibles dans les choix de joueurs.
+  </p>
 
   <div class="code-redeem card">
     <label>🔓 Débloquer un compte piraté</label>
@@ -82,22 +81,20 @@
           <p class="empty-hint">Aucune conversation pour le moment.</p>
         }
 
-        @if (myStatus === 'alive') {
-          <button class="new-convo-toggle" (click)="showNewConvo = !showNewConvo">
-            + Nouvelle conversation
-          </button>
-          @if (showNewConvo) {
-            <div class="new-convo-list">
-              @for (p of contactsWithoutConversation; track p.id) {
-                <button class="contact-option" (click)="startConversation(p.id)">
-                  {{ p.characterName }}
-                </button>
-              }
-              @if (contactsWithoutConversation.length === 0) {
-                <p class="empty-hint">Vous avez déjà une conversation avec tout le monde.</p>
-              }
-            </div>
-          }
+        <button class="new-convo-toggle" (click)="showNewConvo = !showNewConvo">
+          + Nouvelle conversation
+        </button>
+        @if (showNewConvo) {
+          <div class="new-convo-list">
+            @for (p of contactsWithoutConversation; track p.id) {
+              <button class="contact-option" (click)="startConversation(p.id)">
+                {{ p.status === 'ghost' ? '👻 Fantôme' : '🟢 Vivant' }} · {{ p.characterName }}
+              </button>
+            }
+            @if (contactsWithoutConversation.length === 0) {
+              <p class="empty-hint">Aucun joueur de votre état à contacter pour le moment.</p>
+            }
+          </div>
         }
       </aside>
 
@@ -119,6 +116,10 @@
               <span class="spy-badge"> 🕵️ Lecture seule — compte piraté </span>
             }
           </div>
+          <p class="status-reminder thread-reminder">
+            💬 Vivants ↔ vivants · Fantômes ↔ fantômes. Consultez la barre des statuts pour vérifier
+            vos interlocuteurs.
+          </p>
 
           @if (threadError) {
             <p class="code-feedback error" role="alert">{{ threadError }}</p>

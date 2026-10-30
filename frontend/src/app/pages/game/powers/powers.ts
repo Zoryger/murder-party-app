@@ -65,6 +65,10 @@ export class Powers implements OnInit, OnDestroy {
   visionExpiresAt: Date | null = null;
   visionSecondsLeft = 0;
   private visionTimer: ReturnType<typeof setInterval> | null = null;
+  private statusHandler = (): void => {
+    this.loadPlayers();
+    this.loadPower(false);
+  };
 
   relationLabel: Record<string, string> = {
     positive: '💚 Positive',
@@ -88,14 +92,11 @@ export class Powers implements OnInit, OnDestroy {
 
     // Si quelqu'un me tue / me réanimé pendant que je suis sur cette page, tout se met à jour
     this.socketService.joinLobby(this.gameId);
-    this.socketService.on('player:status', () => {
-      this.loadPlayers();
-      this.loadPower(false);
-    });
+    this.socketService.on('player:status', this.statusHandler);
   }
 
   ngOnDestroy(): void {
-    this.socketService.off('player:status');
+    this.socketService.off('player:status', this.statusHandler);
     if (this.visionTimer) clearInterval(this.visionTimer);
   }
 
@@ -117,14 +118,15 @@ export class Powers implements OnInit, OnDestroy {
 
   label(p: PublicPlayer): string {
     return (
+      (p.status === 'ghost' ? '👻 Fantôme · ' : '🟢 Vivant · ') +
       p.characterName +
-      (p.status === 'ghost' ? ' 👻' : '') +
       (p.id === this.myPlayerId ? ' (vous)' : '')
     );
   }
 
   nameOf(playerId: number | null): string {
-    return this.players.find((p) => p.id === playerId)?.characterName ?? '???';
+    const player = this.players.find((p) => p.id === playerId);
+    return player ? this.label(player) : '???';
   }
 
   private loadPlayers(): void {

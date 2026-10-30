@@ -45,7 +45,7 @@ export class SocketService {
     this.connect().on(event, callback);
   }
 
-  off(event: string): void {
-    this.socket?.off(event);
+  off(event: string, callback?: (...args: any[]) => void): void {
+    this.socket?.off(event, callback);
   }
 }

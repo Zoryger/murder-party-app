@@ -25,6 +25,12 @@
       <p>{{ c.revelation }}</p>
     </section>
 
-    <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    @if (returnGameId) {
+      <a [routerLink]="['/game', returnGameId, 'clues']" class="btn btn--ghost">
+        ← Retour aux indices
+      </a>
+    } @else {
+      <a routerLink="/" class="btn btn--ghost">← Accueil</a>
+    }
   }
 </div>

@@ -27,6 +27,25 @@
   margin: 0 auto;
 }
 
+.player-status-panel {
+  margin-bottom: 1.5rem; border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); background: var(--color-surface);
+  summary { display: flex; justify-content: space-between; gap: .75rem; padding: .9rem 1rem; cursor: pointer; font-weight: 700; }
+}
+.player-status-count, .player-status-identity span, .player-status-error, .player-status-empty {
+  color: var(--color-text-muted); font-size: .8rem;
+}
+.player-status-count { font-weight: 500; text-align: right; }
+.player-status-content { padding: 0 1rem 1rem; }
+.player-status-reminder { margin: 0 0 .75rem; padding: .7rem; border-radius: var(--radius-md); background: rgba(123,47,190,.08); font-size: .85rem; }
+.player-status-list { max-height: 18rem; overflow-y: auto; }
+.player-status-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem .25rem; border-top: 1px solid var(--color-border); }
+.player-status-identity { display: flex; min-width: 0; flex-direction: column; gap: .15rem; }
+.player-status-identity strong, .player-status-identity span { overflow-wrap: anywhere; }
+.player-state { flex: 0 0 auto; padding: .25rem .55rem; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+.player-state--alive { background: rgba(72,187,120,.12); color: var(--color-success); }
+.player-state--ghost { background: rgba(144,144,168,.14); color: var(--color-text-muted); }
+
 .dash-nav {
   display: flex;
   flex-wrap: wrap;
@@ -52,6 +71,11 @@
   color: var(--color-danger);
   font-size: .8rem;
   font-weight: 700;
+}
+
+.murderer-badge--uncertain {
+  background: rgba(237, 137, 54, .16);
+  color: #ed8936;
 }
 
 .grid,

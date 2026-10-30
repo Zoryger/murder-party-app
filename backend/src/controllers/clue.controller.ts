@@ -60,7 +60,7 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
             .map((unlock) => unlock.cluePasswordId)
             .filter((id): id is number => id !== null),
         },
-        attributes: ["physicalClueId"],
+        attributes: ["physicalClueId", "qrClueId"],
       })
     : [];
   const unlockedPhysicalIds = cluePasswords
@@ -76,6 +76,15 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
     where: { id: templateIds },
   });
   const templateById = new Map(templates.map((t) => [t.id, t]));
+  const unlockedQrIds = cluePasswords
+    .map((entry) => entry.qrClueId)
+    .filter((id): id is number => id !== null);
+  const qrClues =
+    result.game.scenarioId && unlockedQrIds.length
+      ? await ScenarioQrClue.findAll({
+          where: { id: unlockedQrIds, scenarioId: result.game.scenarioId },
+        })
+      : [];
 
   const visionActive = await hasActiveVisionAbsolue(player.id);
 
@@ -88,41 +97,52 @@ export async function getClueBoard(req: Request, res: Response): Promise<void> {
   });
   const nameById = new Map(characters.map((c) => [c.id, c.name]));
 
+  const physicalClues = clues.map((c) => {
+    const t = templateById.get(c.physicalClueId)!;
+    const originalName = t.relatedCharacterId
+      ? nameById.get(t.relatedCharacterId)
+      : undefined;
+    const falsifiedName = c.currentCharacterId
+      ? nameById.get(c.currentCharacterId)
+      : undefined;
+    const canRewriteAttribution =
+      c.isFalsified &&
+      originalName !== undefined &&
+      falsifiedName !== undefined &&
+      originalName !== falsifiedName;
+    const displayText = (text: string): string =>
+      canRewriteAttribution
+        ? replaceCharacterAttribution(text, originalName, falsifiedName)
+        : text;
+    const base = {
+      id: c.id,
+      type: "physical" as const,
+      name: displayText(t.name),
+      support: displayText(t.support),
+      location: displayText(t.location),
+      effect: displayText(t.effect),
+    };
+    if (!visionActive) return base;
+    return {
+      ...base,
+      isFalsified: c.isFalsified,
+      trueAttribution:
+        c.isFalsified && t.relatedCharacterId ? (originalName ?? "???") : null,
+    };
+  });
+  const qrClueCards = qrClues.map((clue) => ({
+    id: clue.id,
+    type: "qr" as const,
+    name: clue.title,
+    support: "Document QR",
+    location: "",
+    effect: "Ouvrir le document pour consulter son contenu et sa révélation.",
+    slug: clue.slug,
+  }));
+
   res.json({
     success: true,
-    data: clues.map((c) => {
-      const t = templateById.get(c.physicalClueId)!;
-      const originalName = t.relatedCharacterId
-        ? nameById.get(t.relatedCharacterId)
-        : undefined;
-      const falsifiedName = c.currentCharacterId
-        ? nameById.get(c.currentCharacterId)
-        : undefined;
-      const canRewriteAttribution =
-        c.isFalsified &&
-        originalName !== undefined &&
-        falsifiedName !== undefined &&
-        originalName !== falsifiedName;
-      const displayText = (text: string): string =>
-        canRewriteAttribution
-          ? replaceCharacterAttribution(text, originalName, falsifiedName)
-          : text;
-      const base = {
-        id: c.id,
-        name: displayText(t.name),
-        support: displayText(t.support),
-        location: displayText(t.location),
-        effect: displayText(t.effect),
-      };
-      if (!visionActive) return base;
-      return {
-        ...base,
-        isFalsified: c.isFalsified,
-        trueAttribution: c.isFalsified && t.relatedCharacterId
-          ? (originalName ?? "???")
-          : null,
-      };
-    }),
+    data: [...physicalClues, ...qrClueCards],
   });
 }
 

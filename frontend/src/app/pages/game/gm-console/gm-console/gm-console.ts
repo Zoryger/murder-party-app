@@ -21,6 +21,7 @@ export class GmConsole implements OnInit, OnDestroy {
   private gm = inject(GmService);
   private gameService = inject(GameService);
   private socketService = inject(SocketService);
+  private statusHandler = (): void => this.loadOverview();
 
   gameId!: number;
   tab: 'players' | 'alchemist' | 'qr' = 'players';
@@ -51,13 +52,13 @@ export class GmConsole implements OnInit, OnDestroy {
     this.socketService.joinLobby(this.gameId);
     this.socketService.on('alchemist:update', () => this.loadAll());
     this.socketService.on('money:update', () => this.loadOverview());
-    this.socketService.on('player:status', () => this.loadOverview());
+    this.socketService.on('player:status', this.statusHandler);
   }
 
   ngOnDestroy(): void {
     this.socketService.off('alchemist:update');
     this.socketService.off('money:update');
-    this.socketService.off('player:status');
+    this.socketService.off('player:status', this.statusHandler);
   }
 
   get pending(): GmAlchemistRequest[] {

@@ -43,6 +43,7 @@ export class Wallet implements OnInit, OnDestroy {
   askMsg = '';
   askError = '';
   isAsking = false;
+  private statusHandler = (): void => this.loadAll();
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
@@ -52,13 +53,13 @@ export class Wallet implements OnInit, OnDestroy {
     this.socketService.joinLobby(this.gameId);
     this.socketService.on('money:update', () => this.loadAll());
     this.socketService.on('alchemist:update', () => this.loadAll());
-    this.socketService.on('player:status', () => this.loadAll());
+    this.socketService.on('player:status', this.statusHandler);
   }
 
   ngOnDestroy(): void {
     this.socketService.off('money:update');
     this.socketService.off('alchemist:update');
-    this.socketService.off('player:status');
+    this.socketService.off('player:status', this.statusHandler);
   }
 
   get livingOthers(): PublicPlayer[] {

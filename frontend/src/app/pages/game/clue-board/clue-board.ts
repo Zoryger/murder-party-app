@@ -56,12 +56,6 @@ export class ClueBoard implements OnInit {
       next: (res) => {
         this.feedback = res.message ?? 'Indice débloqué.';
         this.password = '';
-        if (res.data.type === 'qr' && res.data.slug) {
-          this.isUnlocking = false;
-          this.changeDetector.markForCheck();
-          void this.router.navigate(['/qr', res.data.slug]);
-          return;
-        }
         this.clueService.getClueBoard(this.gameId).subscribe({
           next: (board) => {
             this.clues = board.data;
@@ -82,6 +76,12 @@ export class ClueBoard implements OnInit {
         this.isUnlocking = false;
         this.changeDetector.markForCheck();
       },
+    });
+  }
+
+  openQrClue(slug: string): void {
+    void this.router.navigate(['/qr', slug], {
+      queryParams: { gameId: this.gameId },
     });
   }
 }

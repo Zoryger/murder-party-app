@@ -33,22 +33,35 @@
     </form>
 
     <div class="clues-grid">
-      @for (c of clues; track c.id) {
-        <div class="clue-card card">
-          <h2>{{ c.name }}</h2>
-          <p class="meta"><strong>Support :</strong> {{ c.support }}</p>
-          <p class="meta"><strong>Lieu :</strong> {{ c.location }}</p>
-          <p class="effect">{{ c.effect }}</p>
-          @if (c.isFalsified !== undefined) {
-            @if (c.isFalsified) {
-              <div class="vision-alert">
-                👁️ Falsifié — attribution réelle : <strong>{{ c.trueAttribution }}</strong>
-              </div>
-            } @else {
-              <div class="vision-ok">👁️ Authentique</div>
+      @for (c of clues; track c.type + ':' + c.id) {
+        @if (c.type === 'qr' && c.slug) {
+          <button
+            type="button"
+            class="clue-card card qr-clue-card"
+            (click)="openQrClue(c.slug)"
+          >
+            <span class="qr-card-tag">📡 Indice QR · Cliquez pour ouvrir</span>
+            <h2>{{ c.name }}</h2>
+            <p class="meta"><strong>Type :</strong> Document confidentiel</p>
+            <p class="effect">{{ c.effect }}</p>
+          </button>
+        } @else {
+          <div class="clue-card card">
+            <h2>{{ c.name }}</h2>
+            <p class="meta"><strong>Support :</strong> {{ c.support }}</p>
+            <p class="meta"><strong>Lieu :</strong> {{ c.location }}</p>
+            <p class="effect">{{ c.effect }}</p>
+            @if (c.isFalsified !== undefined) {
+              @if (c.isFalsified) {
+                <div class="vision-alert">
+                  👁️ Falsifié — attribution réelle : <strong>{{ c.trueAttribution }}</strong>
+                </div>
+              } @else {
+                <div class="vision-ok">👁️ Authentique</div>
+              }
             }
-          }
-        </div>
+          </div>
+        }
       } @empty {
         <p class="empty-clues">Aucun indice débloqué pour le moment. Trouvez un mot de passe pour révéler un indice dans votre dossier.</p>
       }

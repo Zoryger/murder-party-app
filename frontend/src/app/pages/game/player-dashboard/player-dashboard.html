@@ -32,9 +32,54 @@
       >
     </div>
 
+    <details class="player-status-panel">
+      <summary>
+        <span>👥 Personnages et statuts</span>
+        <span class="player-status-count">
+          {{ players.length }} joueur(s), {{ ghostCount }} fantôme(s)
+        </span>
+      </summary>
+      <div class="player-status-content">
+        <p class="player-status-reminder">
+          💬 Rappel : les joueurs vivants peuvent parler uniquement aux vivants ; les fantômes
+          peuvent parler uniquement aux fantômes.
+        </p>
+        @if (playersError) {
+          <p class="player-status-error" role="alert">{{ playersError }}</p>
+        } @else {
+          <div class="player-status-list">
+            @for (player of players; track player.id) {
+              <div class="player-status-row">
+                <div class="player-status-identity">
+                  <strong>{{
+                    player.isAssigned ? player.characterName : 'Personnage non assigné'
+                  }}</strong>
+                  <span>{{ player.username || 'Joueur' }}</span>
+                </div>
+                <span
+                  class="player-state"
+                  [class.player-state--ghost]="player.status === 'ghost'"
+                  [class.player-state--alive]="player.status === 'alive'"
+                >
+                  {{ player.status === 'ghost' ? '👻 Fantôme' : '🟢 Vivant' }}
+                </span>
+              </div>
+            } @empty {
+              <p class="player-status-empty">Aucun joueur dans cette partie pour le moment.</p>
+            }
+          </div>
+        }
+      </div>
+    </details>
+
     <div class="char-header">
       @if (sheet.character.isMurderer) {
-        <span class="murderer-badge">🔪 Meurtrier</span>
+        <span
+          class="murderer-badge"
+          [class.murderer-badge--uncertain]="sheet.character.murderKnowledge === 'none'"
+        >
+          {{ sheet.character.murderKnowledge === 'none' ? '❓ Meurtrier ?' : '🔪 Meurtrier' }}
+        </span>
       }
       <h1>{{ sheet.character.name }}</h1>
       <p class="title">{{ sheet.character.title }}</p>

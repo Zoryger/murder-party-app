@@ -1,0 +1,48 @@
+@if (isVisible) {
+  <section class="player-status-bar" aria-label="Statut des joueurs">
+    <button
+      type="button"
+      class="status-toggle"
+      [attr.aria-expanded]="isExpanded"
+      (click)="isExpanded = !isExpanded"
+    >
+      <span class="status-summary">
+        <strong>{{ myStatus === 'ghost' ? '👻 Fantôme' : '🟢 Vivant' }}</strong>
+        <span class="ghost-list">{{ ghosts.length }} fantôme(s) : {{ ghostNames || 'aucun' }}</span>
+      </span>
+      <span class="status-reminder">💬 Vivants ↔ vivants · Fantômes ↔ fantômes</span>
+      <span aria-hidden="true">{{ isExpanded ? '⌄' : '⌃' }}</span>
+    </button>
+
+    @if (isExpanded) {
+      <div class="status-details">
+        @if (loadError) {
+          <p class="status-error" role="alert">{{ loadError }}</p>
+        } @else {
+          <p class="status-rule">
+            Vous pouvez parler uniquement aux joueurs de votre état. Les statuts sont aussi
+            indiqués dans les choix de cible des pouvoirs.
+          </p>
+          <div class="player-groups">
+            <section>
+              <h2>🟢 Vivants ({{ livingPlayers.length }})</h2>
+              @for (player of livingPlayers; track player.id) {
+                <span class="player-label">{{ playerLabel(player) }}</span>
+              } @empty {
+                <span class="player-empty">Aucun joueur vivant.</span>
+              }
+            </section>
+            <section>
+              <h2>👻 Fantômes ({{ ghosts.length }})</h2>
+              @for (player of ghosts; track player.id) {
+                <span class="player-label">{{ playerLabel(player) }}</span>
+              } @empty {
+                <span class="player-empty">Aucun fantôme.</span>
+              }
+            </section>
+          </div>
+        }
+      </div>
+    }
+  </section>
+}

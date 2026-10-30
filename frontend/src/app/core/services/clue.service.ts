@@ -5,10 +5,12 @@ import { environment } from '../../../environments/environment';
 
 export interface GameClue {
   id: number;
+  type: 'physical' | 'qr';
   name: string;
   support: string;
   location: string;
   effect: string;
+  slug?: string;
   isFalsified?: boolean;
   trueAttribution?: string | null;
 }
