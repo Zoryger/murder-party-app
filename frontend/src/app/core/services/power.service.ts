@@ -42,12 +42,11 @@ export class PowerService {
 
   useVoyante(
     gameId: number,
-  ): Observable<
-    ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>
-  > {
-    return this.http.post<
-      ApiResponse<{ characterTitle: string; powerName: string; powerCategory: string }[]>
-    >(`${this.API}/games/${gameId}/powers/voyante`, {});
+  ): Observable<ApiResponse<{ name: string; description: string }[]>> {
+    return this.http.post<ApiResponse<{ name: string; description: string }[]>>(
+      `${this.API}/games/${gameId}/powers/voyante`,
+      {},
+    );
   }
 
   useAnalyseurRelations(

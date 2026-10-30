@@ -77,12 +77,13 @@
 
 .voyante-list { margin-top: 1.25rem; display: flex; flex-direction: column; gap: .4rem; }
 .voyante-row {
-  display: flex; justify-content: space-between;
+  display: flex; flex-direction: column; gap: .2rem;
   padding: .5rem .75rem;
   background: var(--color-surface-2);
   border-radius: var(--radius-sm);
   font-size: .85rem;
   strong { color: var(--color-primary); }
+  p { color: var(--color-text-muted); line-height: 1.5; }
 }
 
 .relation-result {

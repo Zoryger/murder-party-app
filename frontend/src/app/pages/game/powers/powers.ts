@@ -57,8 +57,7 @@ export class Powers implements OnInit, OnDestroy {
   fakeContent = '';
 
   // Résultats structurés
-  voyanteResult: { characterTitle: string; powerName: string; powerCategory: string }[] | null =
-    null;
+  voyanteResult: { name: string; description: string }[] | null = null;
   relationResult: { player1: string; player2: string; relationType: string } | null = null;
 
   // Vision absolue

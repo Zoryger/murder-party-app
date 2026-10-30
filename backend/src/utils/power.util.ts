@@ -78,6 +78,7 @@ export function computeAvailability(
         "Les fantômes ne peuvent plus utiliser leur pouvoir. Seul un Nécromancien peut vous réanimer.",
     };
   }
+  if (slug === "voyante") return { canUse: true, lockedReason: null };
   if (maxUses > 0 && usesRemaining <= 0)
     return { canUse: false, lockedReason: "Vous avez épuisé ce pouvoir." };
   return { canUse: true, lockedReason: null };
@@ -113,7 +114,7 @@ export async function resolvePowerAccess(
       ownPower.slug,
       ownPower.maxUses,
     );
-    if (ownPower.maxUses > 0 && usesRemaining <= 0)
+    if (ownPower.slug !== "voyante" && ownPower.maxUses > 0 && usesRemaining <= 0)
       return { error: "Vous avez épuisé ce pouvoir.", status: 400 };
     return {
       game,
@@ -142,7 +143,11 @@ export async function resolvePowerAccess(
             borrowedPower.slug,
             borrowedPower.maxUses,
           );
-          if (borrowedPower.maxUses > 0 && usesRemaining <= 0) {
+          if (
+            borrowedPower.slug !== "voyante" &&
+            borrowedPower.maxUses > 0 &&
+            usesRemaining <= 0
+          ) {
             return {
               error: "Ce pouvoir emprunté n'a plus d'utilisations.",
               status: 400,

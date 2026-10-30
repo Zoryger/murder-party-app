@@ -48,7 +48,7 @@ function powerInfo(
     name: power.name,
     category: power.category,
     description: power.description,
-    maxUses: power.maxUses,
+    maxUses: power.slug === "voyante" ? 0 : power.maxUses,
     durationSeconds: power.durationSeconds,
     usesRemaining,
     canUse,
@@ -142,8 +142,6 @@ export async function useVoyante(req: Request, res: Response): Promise<void> {
     denied(res, access);
     return;
   }
-  const { actor, owner } = access;
-
   const players = await GamePlayer.findAll({ where: { gameId } });
   const characterIds = players
     .map((p) => p.scenarioCharacterId)
@@ -152,22 +150,15 @@ export async function useVoyante(req: Request, res: Response): Promise<void> {
     where: { id: characterIds },
     order: [["displayOrder", "ASC"]],
   });
-  const powers = await Power.findAll();
-  const powerById = new Map(powers.map((p) => [p.id, p]));
-
-  await PowerUse.create({
-    gameId,
-    gamePlayerId: actor.id,
-    ownerPlayerId: owner.id,
-    powerSlug: "voyante",
+  const powers = await Power.findAll({
+    where: { id: [...new Set(characters.map((character) => character.powerId))] },
   });
 
   res.json({
     success: true,
-    data: characters.map((c) => ({
-      characterTitle: c.title,
-      powerName: powerById.get(c.powerId)?.name ?? "???",
-      powerCategory: powerById.get(c.powerId)?.category ?? "???",
+    data: powers.map((power) => ({
+      name: power.name,
+      description: power.description,
     })),
   });
 }

@@ -49,7 +49,9 @@
         }
         <p>{{ power.description }}</p>
         <div class="uses">
-          @if (power.maxUses === 0) {
+          @if (power.slug === 'voyante') {
+            <span class="badge">Utilisations illimitées</span>
+          } @else if (power.maxUses === 0) {
             <span class="badge">Pouvoir passif</span>
           } @else {
             <span class="badge"
@@ -63,7 +65,7 @@
         <div class="action-card card">
           <p class="soon">{{ power.lockedReason }}</p>
         </div>
-      } @else if (power.maxUses === 0) {
+      } @else if (power.maxUses === 0 && power.slug !== 'voyante') {
         <div class="action-card card">
           <p class="soon">Ce pouvoir est passif — rien à activer ici.</p>
         </div>
@@ -76,14 +78,14 @@
                 [disabled]="isActivating"
                 (click)="activateVoyante()"
               >
-                {{ isActivating ? 'Consultation...' : '🔮 Consulter tous les rôles et pouvoirs' }}
+                {{ isActivating ? 'Consultation...' : '🔮 Consulter les pouvoirs en jeu' }}
               </button>
               @if (voyanteResult) {
                 <div class="voyante-list">
-                  @for (r of voyanteResult; track r.characterTitle) {
+                  @for (r of voyanteResult; track r.name) {
                     <div class="voyante-row">
-                      <span>{{ r.characterTitle }}</span
-                      ><strong>{{ r.powerName }}</strong>
+                      <strong>{{ r.name }}</strong>
+                      <p>{{ r.description }}</p>
                     </div>
                   }
                 </div>

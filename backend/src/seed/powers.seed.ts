@@ -25,8 +25,8 @@ export async function seedPowers(): Promise<void> {
       slug: "voyante",
       category: "info" as const,
       description:
-        "Consulte la liste complète de tous les rôles et pouvoirs en jeu, sans savoir qui les détient.",
-      maxUses: 1,
+        "Consulte autant de fois que souhaité la liste des pouvoirs en jeu et leurs effets, sans savoir qui les détient.",
+      maxUses: 0,
       durationSeconds: null,
     },
     {
@@ -148,7 +148,13 @@ export async function seedPowers(): Promise<void> {
   ];
 
   for (const p of powersData) {
-    await Power.findOrCreate({ where: { slug: p.slug }, defaults: p });
+    const [power] = await Power.findOrCreate({
+      where: { slug: p.slug },
+      defaults: p,
+    });
+    if (p.slug === "voyante") {
+      await power.update({ maxUses: p.maxUses, description: p.description });
+    }
   }
 
   console.log("✅ Pouvoirs synchronisés (15 au total)");
