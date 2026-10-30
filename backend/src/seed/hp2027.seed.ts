@@ -52,7 +52,7 @@ export async function seedHp2027(): Promise<void> {
     return p.id;
   };
 
-  // 3. Les 15 personnages
+  // 3. Les 20 personnages
   const charactersData = [
     {
       key: "lockhart",
@@ -290,6 +290,86 @@ export async function seedHp2027(): Promise<void> {
         "Son drone défectueux a détruit une récolte rare de Chourave juste avant le meurtre.",
       objective:
         "Découvrir l'identité du ou des meurtrier(s), la chaîne des événements et le ou leurs mobile(s).",
+    },
+    {
+      key: "roxy",
+      name: "Roxane « Roxy » Zabini",
+      title: "Journaliste vedette de la Gazette 2.0",
+      group: "visiteurs_ministere" as const,
+      powerSlug: "moldue",
+      isMurderer: false,
+      murderKnowledge: "not_applicable" as const,
+      displayOrder: 16,
+      backstory:
+        "Journaliste ambitieuse et influenceuse média, elle privilégie les scoops viraux et l'impact immédiat.",
+      linkToVictim:
+        "Son interview tendue de Chourave sur la privatisation des serres a fini en altercation virale, quelques minutes avant le meurtre.",
+      objective:
+        "Tu détiens secrètement l'enregistrement d'un micro-espion caché dans la serre. Garde-le pour le scoop idéal tout en découvrant qui a tué Chourave.",
+    },
+    {
+      key: "silas",
+      name: "Silas Vane",
+      title: "Technicien réseau de Poudlard",
+      group: "visiteurs_ministere" as const,
+      powerSlug: "chasseur-de-primes",
+      isMurderer: false,
+      murderKnowledge: "not_applicable" as const,
+      displayOrder: 17,
+      backstory:
+        "Technicien méthodique, il maintient les verrous numériques, les capteurs et les serveurs de Poudlard.",
+      linkToVictim:
+        "Il a réinitialisé le verrou de la serre le soir du meurtre et fut l'un des derniers à accéder à ses commandes.",
+      objective:
+        "Tu as découvert une session distante ouverte avec les identifiants de Rusard pour modifier les horaires de fermeture. Avoue ce que tu sais sans révéler ta négligence technique.",
+    },
+    {
+      key: "althea",
+      name: "Dr. Althéa Sanguin",
+      title: "Médecin légiste et experte en créatures magiques",
+      group: "visiteurs_ministere" as const,
+      powerSlug: "moldue",
+      isMurderer: false,
+      murderKnowledge: "not_applicable" as const,
+      displayOrder: 18,
+      backstory:
+        "Consultante du Ministère, elle analyse les blessures et toxines avec une rigueur implacable.",
+      linkToVictim:
+        "Elle connaissait Chourave et contestait l'usage de créatures dangereuses pour stimuler les plantes carnivores.",
+      objective:
+        "Ton examen révèle des griffures, des traces de contrainte et une toxine altérant les réflexes. Établis ce qui s'est passé sans céder aux rumeurs.",
+    },
+    {
+      key: "orson",
+      name: "Orson Flint",
+      title: "Lobbyiste du Conseil d'Administration",
+      group: "visiteurs_ministere" as const,
+      powerSlug: "necromancien",
+      isMurderer: false,
+      murderKnowledge: "not_applicable" as const,
+      displayOrder: 19,
+      backstory:
+        "Représentant d'un consortium d'investisseurs, il veut rentabiliser Poudlard et commercialiser ses brevets.",
+      linkToVictim:
+        "Chourave refusait de céder les brevets de la Silice Magique, mettant en péril un contrat majeur de son consortium.",
+      objective:
+        "Tu as soudoyé Régis Delacour pour obtenir les comptes secrets des serres et préparer la saisie des brevets. Cache ces versements et protège les intérêts du consortium.",
+    },
+    {
+      key: "callisto",
+      name: "Callisto Blackwood",
+      title: "Élève de 7e année et hackeuse de baguettes",
+      group: "eleves" as const,
+      powerSlug: "moldue",
+      isMurderer: false,
+      murderKnowledge: "not_applicable" as const,
+      displayOrder: 20,
+      backstory:
+        "Élève solitaire et experte en magie numérique, elle pirate les réseaux et les puces des baguettes modernes.",
+      linkToVictim:
+        "Cachée près des serres pour intercepter des données, elle a entendu une altercation avant de fuir au déclenchement des alarmes.",
+      objective:
+        "Tu as intercepté un paquet chiffré envoyé par le panneau de la serre au moment du verrouillage. Protège ta trace numérique et décide à qui révéler cette preuve.",
     },
   ];
 
@@ -820,6 +900,142 @@ export async function seedHp2027(): Promise<void> {
       false,
       "💥",
     ],
+    [
+      "roxy",
+      "chloe",
+      "negative",
+      "Ta rivale de presse : tu la trouves trop lente et naïve, elle te juge sans éthique. Tu veux publier avant elle.",
+      false,
+      "📰",
+    ],
+    [
+      "roxy",
+      "londubat",
+      "neutral",
+      "Tu le trouves trop calme et cherches à le faire craquer en direct sur ses allées et venues autour des serres.",
+      false,
+      "🎙️",
+    ],
+    [
+      "roxy",
+      "pendelton",
+      "negative",
+      "Tu mets le Ministre sous pression en direct pour le forcer à réagir aux scandales de Poudlard.",
+      false,
+      "📺",
+    ],
+    [
+      "silas",
+      "rusard",
+      "negative",
+      "Il te traite avec mépris mais utilise tes systèmes. Tu sais que ses identifiants ont servi à modifier à distance les horaires du verrou de la serre.",
+      true,
+      "🔒",
+    ],
+    [
+      "silas",
+      "stark",
+      "neutral",
+      "Ta collègue et rivale : tu respectes ses compétences en matériel moldu, mais te méfies de son comportement autour des accès aux serres.",
+      false,
+      "🔌",
+    ],
+    [
+      "silas",
+      "vector",
+      "positive",
+      "Ta supérieure supervise tes accès aux serveurs. Tu la respectes comme une scientifique exigeante mais juste.",
+      false,
+      "📉",
+    ],
+    [
+      "silas",
+      "seamus",
+      "negative",
+      "Ses drones et prototypes provoquent des pannes et abîment les câbles ; tu passes ton temps à réparer ses dégâts.",
+      false,
+      "⚡",
+    ],
+    [
+      "althea",
+      "dragonneau",
+      "negative",
+      "Tu connais la férocité des Grims de Rolf et comptes vérifier si des traces de sa créature sont liées à l'attaque.",
+      false,
+      "🐾",
+    ],
+    [
+      "althea",
+      "dylan",
+      "neutral",
+      "Tu as remarqué sa fatigue extrême et des micro-lésions sur ses mains ; tu le gardes sous surveillance.",
+      false,
+      "🩺",
+    ],
+    [
+      "orson",
+      "roxy",
+      "positive",
+      "Tu la finances discrètement pour orienter l'opinion publique en faveur de la commercialisation des serres.",
+      true,
+      "📰",
+    ],
+    [
+      "orson",
+      "althea",
+      "negative",
+      "Tu la presses d'accélérer ses conclusions pour faire classer l'affaire et faciliter la saisie des brevets.",
+      false,
+      "⚖️",
+    ],
+    [
+      "orson",
+      "silas",
+      "negative",
+      "Tu le vois comme un obstacle à l'accès aux données confidentielles et cherches des failles dans sa maintenance pour le faire céder.",
+      false,
+      "🔒",
+    ],
+    [
+      "orson",
+      "delacour",
+      "positive",
+      "Tu l'as soudoyé pour obtenir les états financiers secrets des serres et préparer la saisie des brevets.",
+      true,
+      "💰",
+    ],
+    [
+      "callisto",
+      "lestrange",
+      "negative",
+      "Ton rival informatique : tu le trouves imprudent et brouillon, mais reconnais ses capacités.",
+      false,
+      "💻",
+    ],
+    [
+      "callisto",
+      "seamus",
+      "positive",
+      "Tu apprécies ses expériences : les pannes de ses drones créent le chaos et neutralisent parfois les systèmes de sécurité.",
+      false,
+      "⚡",
+    ],
+    [
+      "callisto",
+      "althea",
+      "negative",
+      "Tu crains que son expertise ne révèle la signature magique de ta baguette et ne t'identifie près des serres.",
+      false,
+      "🩺",
+    ],
+    [
+      "callisto",
+      "orson",
+      "negative",
+      "Tu acceptes son argent pour intercepter des données, mais sais qu'il pourrait te sacrifier si tes activités étaient découvertes.",
+      true,
+      "🕵️",
+    ],
   ];
 
   for (const [from, to, type, desc, secret, emoji] of relationsData) {
@@ -940,7 +1156,10 @@ export async function seedHp2027(): Promise<void> {
     ],
   ];
 
-  for (const [i, [key, title, description, secretCode]] of riddlesData.entries()) {
+  for (const [
+    i,
+    [key, title, description, secretCode],
+  ] of riddlesData.entries()) {
     const riddleData = {
       scenarioId: scenario.id,
       characterId: characters[key]!.id,
