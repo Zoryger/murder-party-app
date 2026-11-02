@@ -404,6 +404,7 @@ export async function seedHp2027(): Promise<void> {
     string,
     boolean,
     string,
+    boolean?,
   ];
   const relationsData: RelSeed[] = [
     [
@@ -528,6 +529,14 @@ export async function seedHp2027(): Promise<void> {
       false,
       "🩺",
     ],
+    [
+      "dylan",
+      "althea",
+      "negative",
+      "Tu redoutes le Dr. Sanguin : son œil clinique pourrait découvrir ta lycanthropie. Ses questions sur tes blessures te font craindre qu'elle relie ton amnésie au meurtre.",
+      true,
+      "🩺",
+    ],
 
     [
       "flitwick",
@@ -552,6 +561,22 @@ export async function seedHp2027(): Promise<void> {
       "Le Ministre avec qui il négocie la modernisation raisonnée de l'école.",
       false,
       "👔",
+    ],
+    [
+      "flitwick",
+      "pince",
+      "positive",
+      "Tu respectes l'amour de Pince pour les livres anciens et sa rigueur. Vous préférez tous deux l'école aux dérives commerciales de Lockhart.",
+      false,
+      "📚",
+    ],
+    [
+      "flitwick",
+      "delacour",
+      "negative",
+      "Tu te méfies de la gestion financière de Delacour. Il pourrait manipuler les budgets électoraux en faveur de Lockhart.",
+      false,
+      "💼",
     ],
 
     [
@@ -594,6 +619,14 @@ export async function seedHp2027(): Promise<void> {
       false,
       "👁️",
     ],
+    [
+      "londubat",
+      "roxy",
+      "negative",
+      "Tu te méfies de Roxane et de ses méthodes sensationnalistes. Tu évites ses caméras, de peur qu'elle déforme tes propos ou révèle tes secrets.",
+      false,
+      "🎙️",
+    ],
 
     [
       "pince",
@@ -602,6 +635,14 @@ export async function seedHp2027(): Promise<void> {
       "Son plus fidèle soutien dans sa lutte anti-technologie.",
       false,
       "❤️",
+    ],
+    [
+      "pince",
+      "flitwick",
+      "positive",
+      "Tu respectes la rigueur de Flitwick et son attachement aux livres anciens. Tu le soutiens contre Lockhart, que tu juges dangereux pour Poudlard.",
+      true,
+      "📚",
     ],
     [
       "pince",
@@ -652,6 +693,30 @@ export async function seedHp2027(): Promise<void> {
       false,
       "📉",
     ],
+    [
+      "vector",
+      "chloe",
+      "positive",
+      "Tu fais confiance au sérieux de Chloé. Tu lui transmets tes analyses sur le programme irréaliste de Lockhart pour publication.",
+      true,
+      "📊",
+    ],
+    [
+      "vector",
+      "silas",
+      "positive",
+      "Tu comptes sur Silas, technicien compétent, pour maintenir le réseau. Son travail garantit à tes supercalculateurs puissance et haut débit.",
+      false,
+      "🔌",
+    ],
+    [
+      "vector",
+      "seamus",
+      "negative",
+      "Tu redoutes les bricolages de Seamus. Ses drones pourraient provoquer une surtension et détruire tes calculs ou équipements.",
+      false,
+      "⚡",
+    ],
 
     [
       "lestrange",
@@ -676,6 +741,22 @@ export async function seedHp2027(): Promise<void> {
       "La journaliste dont il pirate régulièrement le blog pour s'amuser.",
       false,
       "🕵️‍♂️",
+    ],
+    [
+      "lestrange",
+      "delacour",
+      "negative",
+      "En modifiant tes notes, tu as découvert les comptes occultes de Delacour. Tu le fais chanter pour protéger tes propres piratages.",
+      true,
+      "💰",
+    ],
+    [
+      "lestrange",
+      "callisto",
+      "neutral",
+      "Tu respectes les talents informatiques de Callisto, mais te méfies de son secret. Tu testes ses défenses et crains qu'elle découvre tes piratages de notes.",
+      false,
+      "💻",
     ],
 
     [
@@ -721,9 +802,17 @@ export async function seedHp2027(): Promise<void> {
     ],
     [
       "chloe",
+      "vector",
+      "positive",
+      "Tu considères le Professeur Vector comme une source scientifique d'une valeur inestimable et d'une fiabilité absolue.",
+      false,
+      "📊",
+    ],
+    [
+      "chloe",
       "stark",
       "negative",
-      "L'ingénieure qu'elle surveille, la suspectant d'espionnage.",
+      "Tu soupçonnes Cynthia de cacher sa vraie mission : ses appareils autour des serres dépassent la simple maintenance réseau. Tu la surveilles.",
       false,
       "🛠️",
     ],
@@ -739,11 +828,28 @@ export async function seedHp2027(): Promise<void> {
       "chloe",
       "lestrange",
       "negative",
-      "Le hacker qui pollue son site web et qu'elle veut faire exclure.",
+      "Quelqu'un pirate ton site web et tu veux faire exclure cette personne, mais tu ignores son identité.",
       false,
       "🕵️‍♂️",
+      true,
+    ],
+    [
+      "chloe",
+      "roxy",
+      "negative",
+      "Tu méprises le sensationnalisme de Roxane, qui privilégie le buzz à la vérité. Tu crains que ses rumeurs nuisent à l'enquête.",
+      false,
+      "📰",
     ],
 
+    [
+      "stark",
+      "silas",
+      "neutral",
+      "Tu reconnais les compétences de Silas, mais te méfies de sa surveillance du réseau. Tu évites d'attirer son attention sur ton matériel secret près des serres.",
+      false,
+      "🔌",
+    ],
     [
       "stark",
       "pince",
@@ -809,6 +915,22 @@ export async function seedHp2027(): Promise<void> {
       false,
       "💼",
     ],
+    [
+      "delacour",
+      "lestrange",
+      "negative",
+      "Tu as tracé jusqu'à Lestrange un accès suspect à tes comptes. Tu le surveilles, car il pourrait révéler tes détournements.",
+      true,
+      "💻",
+    ],
+    [
+      "delacour",
+      "flitwick",
+      "negative",
+      "Tu vois Flitwick comme un risque pour tes intérêts : il pourrait contrôler les budgets de campagne. Tu préfères Lockhart, plus facile à manipuler.",
+      false,
+      "💼",
+    ],
 
     [
       "pendelton",
@@ -841,6 +963,14 @@ export async function seedHp2027(): Promise<void> {
       "L'expert qu'il a embauché pour sécuriser les lieux sans créer d'émeute.",
       false,
       "📜",
+    ],
+    [
+      "pendelton",
+      "roxy",
+      "negative",
+      "Tu vois Roxy comme une menace pour le Ministère : ses directs pourraient déclencher un scandale. Tu contrôles l'information pour éviter une crise médiatique.",
+      false,
+      "📺",
     ],
 
     [
@@ -875,6 +1005,14 @@ export async function seedHp2027(): Promise<void> {
       false,
       "📜",
     ],
+    [
+      "dragonneau",
+      "althea",
+      "negative",
+      "Tu respectes les compétences du Dr. Sanguin, mais redoutes son approche froide. Tu crains qu'elle prenne des griffures pour une preuve contre ton Grim sans examiner les autres pistes.",
+      false,
+      "🩺",
+    ],
 
     [
       "seamus",
@@ -901,6 +1039,30 @@ export async function seedHp2027(): Promise<void> {
       "💥",
     ],
     [
+      "seamus",
+      "silas",
+      "negative",
+      "Silas passe son temps à réparer les courts-circuits et pannes réseau causés par tes prototypes : un cauchemar technique.",
+      false,
+      "⚡",
+    ],
+    [
+      "seamus",
+      "callisto",
+      "positive",
+      "Callisto est ta complice : elle profite de tes pannes pour s'infiltrer dans les serveurs du château.",
+      false,
+      "💻",
+    ],
+    [
+      "seamus",
+      "vector",
+      "neutral",
+      "Tu admires les serveurs de Vector, mais trouves ses méthodes trop rigides. Tu proposes tes améliorations techno-magiques, qu'elle refuse par peur d'endommager le réseau.",
+      false,
+      "⚡",
+    ],
+    [
       "roxy",
       "chloe",
       "negative",
@@ -925,10 +1087,26 @@ export async function seedHp2027(): Promise<void> {
       "📺",
     ],
     [
+      "roxy",
+      "orson",
+      "positive",
+      "Tu échanges des informations exclusives sur les candidats avec Orson Flint contre des financements et des scoops financiers de son consortium.",
+      true,
+      "📰",
+    ],
+    [
       "silas",
       "rusard",
       "negative",
       "Il te traite avec mépris mais utilise tes systèmes. Tu sais que ses identifiants ont servi à modifier à distance les horaires du verrou de la serre.",
+      true,
+      "🔒",
+    ],
+    [
+      "rusard",
+      "silas",
+      "negative",
+      "Tu méprises Silas et exploites ses accès pour verrouiller la serre. Tu comptes lui faire porter le blâme d'une panne technique.",
       true,
       "🔒",
     ],
@@ -957,6 +1135,14 @@ export async function seedHp2027(): Promise<void> {
       "⚡",
     ],
     [
+      "silas",
+      "orson",
+      "negative",
+      "Tu méprises les méthodes d'Orson Flint, qui t'a proposé de l'argent pour accéder aux logs du serveur et aux caméras des serres. Tu as refusé, déterminé à protéger le réseau des ingérences du Conseil d'Administration.",
+      false,
+      "🔒",
+    ],
+    [
       "althea",
       "dragonneau",
       "negative",
@@ -969,6 +1155,22 @@ export async function seedHp2027(): Promise<void> {
       "dylan",
       "neutral",
       "Tu as remarqué sa fatigue extrême et des micro-lésions sur ses mains ; tu le gardes sous surveillance.",
+      false,
+      "🩺",
+    ],
+    [
+      "althea",
+      "orson",
+      "negative",
+      "Tu méprises les pressions d'Orson, qui veut tes conclusions pour accélérer la vente des brevets. Tu refuses son argent et restes impartiale.",
+      false,
+      "⚖️",
+    ],
+    [
+      "althea",
+      "callisto",
+      "negative",
+      "Tu surveilles Callisto : tes relevés ont révélé des micro-fréquences de baguettes modifiées près de la serre. Tu crains que ses appareils non autorisés et ses bidouillages aient altéré des preuves.",
       false,
       "🩺",
     ],
@@ -1005,6 +1207,14 @@ export async function seedHp2027(): Promise<void> {
       "💰",
     ],
     [
+      "orson",
+      "callisto",
+      "positive",
+      "Tu emploies discrètement Callisto pour intercepter les données confidentielles et les échanges cryptés des professeurs et du Ministère. Ces informations te donnent une longueur d'avance dans tes négociations financières.",
+      true,
+      "🕵️",
+    ],
+    [
       "callisto",
       "lestrange",
       "negative",
@@ -1038,7 +1248,15 @@ export async function seedHp2027(): Promise<void> {
     ],
   ];
 
-  for (const [from, to, type, desc, secret, emoji] of relationsData) {
+  for (const [
+    from,
+    to,
+    type,
+    desc,
+    secret,
+    emoji,
+    isIdentityHidden = false,
+  ] of relationsData) {
     const relationData = {
       scenarioId: scenario.id,
       characterId: characters[from]!.id,
@@ -1046,6 +1264,7 @@ export async function seedHp2027(): Promise<void> {
       relationType: type,
       description: desc,
       isSecret: secret,
+      isIdentityHidden,
       emoji,
     };
     const existingRelation = await ScenarioRelation.findOne({

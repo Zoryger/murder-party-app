@@ -213,6 +213,7 @@ export async function syncDatabase(): Promise<void> {
     // `alter` peut multiplier les index MySQL à chaque démarrage et modifier des tables en place.
     const alter = process.env["DB_SYNC_MODE"] === "alter";
     await sequelize.sync(alter ? { alter: true } : undefined);
+    await ensureScenarioRelationSchema();
     await ensureCluePasswordSchema();
     await seedPowers();
     await seedHp2027();
@@ -222,6 +223,19 @@ export async function syncDatabase(): Promise<void> {
   } catch (error) {
     console.error("❌ Erreur de connexion MySQL :", error);
     process.exit(1);
+  }
+}
+
+async function ensureScenarioRelationSchema(): Promise<void> {
+  const queryInterface = sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable("scenario_relations");
+
+  if (!("isIdentityHidden" in table)) {
+    await queryInterface.addColumn("scenario_relations", "isIdentityHidden", {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    });
   }
 }
 

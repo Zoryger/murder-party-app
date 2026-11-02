@@ -33,6 +33,7 @@ export interface ScenarioRelation {
   relationType:       RelationType;
   description:        string;
   isSecret:           boolean;
+  isIdentityHidden:   boolean;
   emoji?:             string;
 }
 
