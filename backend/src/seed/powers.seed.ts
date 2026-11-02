@@ -152,9 +152,7 @@ export async function seedPowers(): Promise<void> {
       where: { slug: p.slug },
       defaults: p,
     });
-    if (p.slug === "voyante") {
-      await power.update({ maxUses: p.maxUses, description: p.description });
-    }
+    await power.update({ description: p.description });
   }
 
   console.log("✅ Pouvoirs synchronisés (15 au total)");
