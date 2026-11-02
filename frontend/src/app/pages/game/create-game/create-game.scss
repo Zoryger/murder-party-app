@@ -26,7 +26,7 @@
   font-size: .8rem;
   cursor: pointer;
   transition: all .2s;
-  &:hover { border-color: var(--color-primary); color: var(--color-primary); background: rgba(123,47,190,.05); }
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); background: rgba(0,128,128,.05); }
 }
 
 .char-count { font-size: .75rem; color: var(--color-text-muted); text-align: right; display: block; margin-top: .25rem; }
@@ -71,7 +71,7 @@
   span   { font-size: .75rem; color: var(--color-text-muted); }
 
   &:hover    { border-color: var(--color-primary); }
-  &.selected { border-color: var(--color-primary); background: rgba(123,47,190,.08); }
+  &.selected { border-color: var(--color-primary); background: rgba(0,128,128,.08); }
 }
 
 @media (max-width: 768px) {

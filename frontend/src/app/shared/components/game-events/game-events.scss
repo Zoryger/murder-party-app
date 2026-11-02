@@ -57,7 +57,7 @@
 
   &.blackout  { border-color: rgba(245, 197, 24, .45); }
   &.duel      { border-color: rgba(229, 62, 62, .45); }
-  &.inversion { border-color: rgba(123, 47, 190, .5); }
+  &.inversion { border-color: rgba(0,128,128, .5); }
   &.error     { border-color: rgba(229, 62, 62, .45); color: var(--color-danger); }
 
   .btn { margin-top: .6rem; }

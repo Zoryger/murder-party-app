@@ -1,15 +1,15 @@
 // ── Variables ────────────────────────────────────────────────────────────
 :root {
-  --color-primary:     #7B2FBE;
-  --color-primary-h:   #6B1FAE;
-  --color-accent:      #F5C518;
+  --color-primary:     #008080; /* Vert-bleu / Cyan sombre intense */
+  --color-primary-h:   #006666; /* Cyan assombri */
+  --color-accent:      #00E5FF; /* Cyan néon brillant pour les CTA / Indices */
   --color-danger:      #E53E3E;
   --color-success:     #38A169;
-  --color-background:  #0F0F1A;
-  --color-surface:     #1A1B2E;
-  --color-surface-2:   #252640;
-  --color-text:        #E8E8F0;
-  --color-text-muted:  #9090A8;
+  --color-background:  #0B0E14; /* Nuit polaire très sombre */
+  --color-surface:     #131822; /* Bleu-gris nuit */
+  --color-surface-2:   #1C2333;
+  --color-text:        #E6ECF5;
+  --color-text-muted:  #8A99AD;
   --color-border:      rgba(255,255,255,0.08);
 
   --radius-sm: 6px;
@@ -72,7 +72,7 @@ a {
 
   &--waiting  { background: rgba(245,197,24,.12); color: var(--color-accent);  }
   &--active   { background: rgba(56,161,105,.12); color: var(--color-success); }
-  &--voting   { background: rgba(123,47,190,.12); color: var(--color-primary); }
+  &--voting   { background: rgba(0,128,128,.12); color: var(--color-primary); }
   &--finished { background: rgba(144,144,168,.12); color: var(--color-text-muted); }
   &--alive    { background: rgba(56,161,105,.12); color: var(--color-success); }
   &--ghost    { background: rgba(144,144,168,.12); color: var(--color-text-muted); }

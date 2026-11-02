@@ -70,7 +70,7 @@
   .preview.empty { font-style: italic; }
 
   &:hover    { border-color: var(--color-border); }
-  &.selected { border-color: var(--color-primary); background: rgba(123,47,190,.08); }
+  &.selected { border-color: var(--color-primary); background: rgba(0,128,128,.08); }
   &.base { border-left: 3px solid var(--color-primary); }
   &.hacked { border-left: 3px solid var(--color-accent); }
   &.power { border-left: 3px solid #e879f9; }
@@ -96,7 +96,7 @@
   border-radius: var(--radius-md);
   font-size: .8rem;
   cursor: pointer;
-  &:hover { background: rgba(123,47,190,.08); }
+  &:hover { background: rgba(0,128,128,.08); }
 }
 
 .thread {

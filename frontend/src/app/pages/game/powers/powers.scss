@@ -29,7 +29,7 @@
   color: var(--color-text-muted);
   font-size: .85rem;
   cursor: pointer;
-  &.active { border-color: var(--color-primary); color: var(--color-primary); background: rgba(123,47,190,.08); }
+  &.active { border-color: var(--color-primary); color: var(--color-primary); background: rgba(0,128,128,.08); }
 }
 
 .power-summary {
@@ -40,7 +40,7 @@
 }
 
 .uses .badge {
-  background: rgba(123,47,190,.1);
+  background: rgba(0,128,128,.1);
   color: var(--color-primary);
   padding: .3rem .8rem;
   border-radius: 20px;
@@ -72,7 +72,7 @@
   background: var(--color-surface-2);
   font-size: .8rem;
   cursor: pointer;
-  &.selected { border-color: var(--color-primary); background: rgba(123,47,190,.1); color: var(--color-primary); }
+  &.selected { border-color: var(--color-primary); background: rgba(0,128,128,.1); color: var(--color-primary); }
 }
 
 .voyante-list { margin-top: 1.25rem; display: flex; flex-direction: column; gap: .4rem; }

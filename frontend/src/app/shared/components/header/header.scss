@@ -46,7 +46,7 @@
     transition: color .15s, background .15s;
 
     &:hover { color: var(--color-text); background: rgba(255,255,255,.05); text-decoration: none; }
-    &.active { color: var(--color-primary); background: rgba(123,47,190,.1); }
+    &.active { color: var(--color-primary); background: rgba(0,128,128,.1); }
   }
 }
 
@@ -95,7 +95,7 @@
     &:hover,
     &.open {
       background: var(--color-surface-2);
-      border-color: rgba(123, 47, 190, .45);
+      border-color: rgba(0,128,128, .45);
     }
   }
 
@@ -124,7 +124,7 @@
       &:hover { background: var(--color-surface-2); }
       &.active {
         color: var(--color-text);
-        background: rgba(123, 47, 190, .2);
+        background: rgba(0,128,128, .2);
       }
     }
   }
