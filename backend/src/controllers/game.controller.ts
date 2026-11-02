@@ -425,10 +425,8 @@ export async function getMyCharacterSheet(req: Request, res: Response): Promise<
       description:       rel.description,
       isSecret:          rel.isSecret,
       emoji:             rel.emoji,
-      withCharacterName: rel.isIdentityHidden ? '???' : withPlayer?.characterName ?? '???',
-      withUsername:      rel.isIdentityHidden || !withPlayer?.userId
-        ? null
-        : usernameById.get(withPlayer.userId) ?? null,
+      withCharacterName: withPlayer?.characterName ?? '???',
+      withUsername:      withPlayer?.userId ? usernameById.get(withPlayer.userId) ?? null : null,
     };
   });
 
