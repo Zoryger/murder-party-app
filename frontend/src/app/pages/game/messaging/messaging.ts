@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { SocketService } from '../../../core/services/socket.service';
 @Component({
   selector: 'app-messaging',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './messaging.html',
   styleUrl: './messaging.scss',
 })

@@ -130,6 +130,7 @@
               <div class="message">
                 <strong>{{ m.senderName }}</strong>
                 <p>{{ m.content }}</p>
+                <time>{{ m.sentAt | date: 'dd/MM/yyyy HH:mm' }}</time>
               </div>
             }
             @if (messages.length === 0) {

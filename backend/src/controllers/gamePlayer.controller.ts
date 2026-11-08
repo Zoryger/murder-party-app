@@ -7,6 +7,8 @@ import {
   ScenarioCharacter,
   ScenarioRelation,
   ScenarioRiddle,
+  Conversation,
+  Message,
   User,
   Power,
   GameClue,
@@ -15,6 +17,7 @@ import {
 } from "../models/sequelize";
 import { getIO } from "../sockets";
 import { startingMoney } from "../config/game.rules";
+import { HP2027_PREDEFINED_MESSAGES } from "../seed/hp2027.conversations";
 
 function generateMessagingCode(): string {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -484,6 +487,81 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (game.scenarioId) {
+    const scenario = await Scenario.findByPk(game.scenarioId);
+    if (scenario?.slug === "hp2027") {
+      const characters = await ScenarioCharacter.findAll({
+        where: { scenarioId: game.scenarioId },
+      });
+      const characterNameById = new Map(
+        characters.map((character) => [character.id, character.name]),
+      );
+      const playerByCharacterName = new Map(
+        players.flatMap((player) => {
+          const characterName = player.scenarioCharacterId
+            ? characterNameById.get(player.scenarioCharacterId)
+            : undefined;
+          return characterName ? [[characterName, player] as const] : [];
+        }),
+      );
+      const conversations = await Conversation.findAll({
+        where: { gameId, isFake: false },
+      });
+      const conversationByPair = new Map(
+        conversations.map((conversation) => [
+          [conversation.player1Id, conversation.player2Id]
+            .sort((a, b) => a - b)
+            .join(":"),
+          conversation,
+        ]),
+      );
+
+      for (const predefinedMessage of HP2027_PREDEFINED_MESSAGES) {
+        const sender = playerByCharacterName.get(
+          predefinedMessage.senderCharacterName,
+        );
+        const recipient = playerByCharacterName.get(
+          predefinedMessage.recipientCharacterName,
+        );
+        if (!sender || !recipient) continue;
+
+        const [player1Id, player2Id] = [sender.id, recipient.id].sort(
+          (a, b) => a - b,
+        );
+        const pairKey = `${player1Id}:${player2Id}`;
+        let conversation = conversationByPair.get(pairKey);
+        if (!conversation) {
+          conversation = await Conversation.create({
+            gameId,
+            player1Id,
+            player2Id,
+            isFake: false,
+          });
+          conversationByPair.set(pairKey, conversation);
+        }
+
+        const sentAt = new Date(predefinedMessage.sentAt);
+        const existingMessage = await Message.findOne({
+          where: {
+            conversationId: conversation.id,
+            senderId: sender.id,
+            content: predefinedMessage.content,
+            createdAt: sentAt,
+          },
+        });
+        if (!existingMessage) {
+          await Message.create({
+            conversationId: conversation.id,
+            senderId: sender.id,
+            content: predefinedMessage.content,
+            createdAt: sentAt,
+            updatedAt: sentAt,
+          });
+        }
+      }
+    }
+  }
+
   game.status = "active";
   game.startedAt = new Date();
   await game.save();
@@ -506,6 +584,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     }
   }
 
+  getIO().to(`game:${gameId}`).emit("conversation:update");
   getIO().to(`game:${gameId}`).emit("game:started");
 
   res.json({ success: true, data: game });
