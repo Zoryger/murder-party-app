@@ -1281,7 +1281,7 @@ export async function seedHp2027(): Promise<void> {
     }
   }
 
-  // 5. Les 15 énigmes
+  // 5. Les énigmes et codes de conversation
   const riddlesData: [string, string, string, string][] = [
     [
       "dylan",
@@ -1372,6 +1372,30 @@ export async function seedHp2027(): Promise<void> {
       "Les dés du tricheur",
       "9 dés à 6 faces dont on lit la face visible dans l'ordre.",
       "123264662",
+    ],
+    [
+      "roxy",
+      "Code de conversation de Roxane",
+      "Code secret de conversation attribué à Roxane « Roxy » Zabini.",
+      "57194028",
+    ],
+    [
+      "silas",
+      "Code de conversation de Silas",
+      "Code secret de conversation attribué à Silas Vane.",
+      "51237415",
+    ],
+    [
+      "althea",
+      "Code de conversation d'Althéa",
+      "Code secret de conversation attribué au Dr. Althéa Sanguin.",
+      "4267287654452",
+    ],
+    [
+      "orson",
+      "Code de conversation d'Orson",
+      "Code secret de conversation attribué à Orson Flint.",
+      "618753294",
     ],
   ];
 
@@ -1551,6 +1575,6 @@ export async function seedHp2027(): Promise<void> {
   }
 
   console.log(
-    "✅ Scénario HP2027 synchronisé — 15 personnages, 65 relations, 15 énigmes, 4 indices, 6 QR codes, 4 intrigues",
+    "✅ Scénario HP2027 synchronisé — 15 personnages, 65 relations, 19 énigmes, 4 indices, 6 QR codes, 4 intrigues",
   );
 }

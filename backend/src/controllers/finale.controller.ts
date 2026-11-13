@@ -13,7 +13,10 @@ import {
   FinalAccusation,
 } from "../models/sequelize";
 import { buildResults } from "../utils/results.util";
-import { MURDERERS_COUNT } from "../config/game.rules";
+import {
+  MAX_FINAL_ACCUSATIONS,
+  MIN_FINAL_ACCUSATIONS,
+} from "../config/game.rules";
 import { getIO } from "../sockets";
 
 function notifyPhase(gameId: number, status: string): void {
@@ -128,7 +131,8 @@ export async function getFinalForm(req: Request, res: Response): Promise<void> {
     data: {
       status: game.status,
       readOnly: game.status === "finished",
-      required: MURDERERS_COUNT,
+      minAccusations: MIN_FINAL_ACCUSATIONS,
+      maxAccusations: MAX_FINAL_ACCUSATIONS,
       myPlayerId: me.id,
       players: players.map((p) => ({
         id: p.id,
@@ -154,7 +158,7 @@ export async function getFinalForm(req: Request, res: Response): Promise<void> {
 }
 
 // ── POST /api/games/:id/final ────────────────────────────────────────────────
-// body : { accusations: [{ playerId, mobile } × 3], weapon, subplots, objectiveNotes }
+// body : { accusations: [{ playerId, mobile } × 1..4], weapon, subplots, objectiveNotes }
 export async function submitFinal(req: Request, res: Response): Promise<void> {
   const gameId = Number(req.params["id"]);
 
@@ -184,12 +188,16 @@ export async function submitFinal(req: Request, res: Response): Promise<void> {
   }
 
   const raw = req.body.accusations;
-  if (!Array.isArray(raw) || raw.length !== MURDERERS_COUNT) {
+  if (
+    !Array.isArray(raw) ||
+    raw.length < MIN_FINAL_ACCUSATIONS ||
+    raw.length > MAX_FINAL_ACCUSATIONS
+  ) {
     res
       .status(400)
       .json({
         success: false,
-        message: `Désignez exactement ${MURDERERS_COUNT} meurtriers.`,
+        message: `Désignez entre ${MIN_FINAL_ACCUSATIONS} et ${MAX_FINAL_ACCUSATIONS} personnes.`,
       });
     return;
   }
@@ -201,12 +209,12 @@ export async function submitFinal(req: Request, res: Response): Promise<void> {
     }),
   );
 
-  if (new Set(accusations.map((a) => a.playerId)).size !== MURDERERS_COUNT) {
+  if (new Set(accusations.map((a) => a.playerId)).size !== accusations.length) {
     res
       .status(400)
       .json({
         success: false,
-        message: "Désignez trois personnes différentes.",
+        message: "Désignez des personnes différentes.",
       });
     return;
   }

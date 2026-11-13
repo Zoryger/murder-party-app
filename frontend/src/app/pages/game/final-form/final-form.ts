@@ -32,10 +32,9 @@ export class FinalFormPage implements OnInit {
     return this.submitting();
   }
 
-  // Trois personnes désignées, chacune avec son mobile
-  slots = [0, 1, 2];
-  accused: (number | null)[] = [null, null, null];
-  mobiles: string[] = ['', '', ''];
+  slots = [0];
+  accused: (number | null)[] = [null];
+  mobiles: string[] = [''];
 
   weapon = '';
   subplots = '';
@@ -60,6 +59,9 @@ export class FinalFormPage implements OnInit {
   // Reprend la réponse déjà rendue (le formulaire reste modifiable jusqu'à la révélation)
   private prefill(d: FinalFormData): void {
     if (!d.mine) return;
+    this.slots = d.mine.accusations.map((_, i) => i);
+    this.accused = this.slots.map(() => null);
+    this.mobiles = this.slots.map(() => '');
     d.mine.accusations.forEach((a, i) => {
       this.accused[i] = a.playerId;
       this.mobiles[i] = a.mobile;
@@ -78,9 +80,24 @@ export class FinalFormPage implements OnInit {
     return this.accused.some((id, i) => i !== slot && id === playerId);
   }
 
+  addAccusation(): void {
+    if (!this.data || this.slots.length >= this.data.maxAccusations) return;
+    this.slots.push(this.slots.length);
+    this.accused.push(null);
+    this.mobiles.push('');
+  }
+
+  removeAccusation(): void {
+    if (!this.data || this.slots.length <= this.data.minAccusations) return;
+    this.slots.pop();
+    this.accused.pop();
+    this.mobiles.pop();
+  }
+
   get canSubmit(): boolean {
     const ids = this.accused.filter((id): id is number => id !== null);
     return (
+      ids.length >= (this.data?.minAccusations ?? 1) &&
       ids.length === this.slots.length &&
       new Set(ids).size === ids.length &&
       this.mobiles.every((m) => m.trim().length >= 2) &&
@@ -97,9 +114,9 @@ export class FinalFormPage implements OnInit {
 
     this.finale
       .submit(this.gameId, {
-        accusations: this.slots.map((i) => ({
-          playerId: this.accused[i] as number,
-          mobile: (this.mobiles[i] ?? '').trim(),
+        accusations: this.slots.map((_, i) => ({
+          playerId: this.accused[i]!,
+          mobile: this.mobiles[i]!.trim(),
         })),
         weapon: this.weapon.trim(),
         subplots: this.subplots.trim(),

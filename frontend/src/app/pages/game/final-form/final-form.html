@@ -25,14 +25,14 @@
     </div>
 
     <div class="card block">
-      <h2>🔪 Les meurtriers</h2>
+      <h2>🔪 Le ou les meurtriers</h2>
       <p class="hint">
-        Désigne {{ d.required }} personnes différentes, et explique le mobile de chacune.
+        Désigne le ou les meurtriers et explique le mobile de chacun.
       </p>
 
       @for (i of slots; track i) {
         <div class="slot">
-          <label>Meurtrier n°{{ i + 1 }}</label>
+          <label>Personne désignée n°{{ i + 1 }}</label>
           <select [(ngModel)]="accused[i]" [disabled]="d.readOnly">
             <option [ngValue]="null">Choisir une personne...</option>
             @for (p of d.players; track p.id) {
@@ -44,8 +44,22 @@
             maxlength="1000"
             [(ngModel)]="mobiles[i]"
             [disabled]="d.readOnly"
-            placeholder="Son mobile : pourquoi a-t-il / elle voulu la mort de Chourave ?"
+            placeholder="Pourquoi cette personne aurait-elle voulu la mort de Chourave ?"
           ></textarea>
+        </div>
+      }
+      @if (!d.readOnly) {
+        <div class="accusation-actions">
+          @if (slots.length < d.maxAccusations) {
+            <button type="button" class="btn btn--ghost" (click)="addAccusation()">
+              + Ajouter une personne
+            </button>
+          }
+          @if (slots.length > d.minAccusations) {
+            <button type="button" class="btn btn--ghost" (click)="removeAccusation()">
+              Retirer la dernière personne
+            </button>
+          }
         </div>
       }
     </div>
@@ -95,8 +109,8 @@
         </button>
         @if (!canSubmit) {
           <p class="hint">
-            Il faut {{ d.required }} personnes différentes, un mobile pour chacune et l'arme / le
-            mode opératoire.
+            Désigne le ou les meurtriers sans doublon, indique le mobile de chacun et décris
+            l'arme / le mode opératoire.
           </p>
         }
         @if (submitError) {

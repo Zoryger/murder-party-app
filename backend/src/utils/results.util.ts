@@ -131,7 +131,7 @@ export async function buildResults(game: Game) {
       };
     }
 
-    // Innocents : démasquer les trois meurtriers
+    // Innocents : identifier tous les meurtriers sans accuser d'innocent
     const investigate = {
       objectiveKind: "investigate" as const,
       objectiveLabel:
@@ -148,9 +148,14 @@ export async function buildResults(game: Game) {
     const correct = accusationsOf(submission.id).filter((a) =>
       murdererIds.has(a.accusedPlayerId),
     ).length;
+    const totalAccusations = accusationsOf(submission.id).length;
     return {
       ...investigate,
-      verdict: correct === MURDERERS_COUNT ? "won" : "lost",
+      verdict:
+        correct === MURDERERS_COUNT &&
+        totalAccusations === murdererIds.size
+          ? "won"
+          : "lost",
       detail: `${correct}/${MURDERERS_COUNT} meurtriers identifiés`,
     };
   };

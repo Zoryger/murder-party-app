@@ -15,7 +15,8 @@ export interface PhaseInfo {
 export interface FinalFormData {
   status: 'voting' | 'finished';
   readOnly: boolean;
-  required: number;
+  minAccusations: number;
+  maxAccusations: number;
   myPlayerId: number;
   players: { id: number; characterName: string }[];
   objective: string;
