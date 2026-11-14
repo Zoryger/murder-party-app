@@ -412,8 +412,19 @@ export async function getMyCharacterSheet(req: Request, res: Response): Promise<
     include: [{ model: Power, as: 'power' }],
   });
 
-  const relations    = await ScenarioRelation.findAll({ where: { characterId: player.scenarioCharacterId } });
   const otherPlayers  = await GamePlayer.findAll({ where: { gameId } });
+  const gameCharacterIds = otherPlayers
+    .map((gamePlayer) => gamePlayer.scenarioCharacterId)
+    .filter((id): id is number => id !== null);
+  const relations = game.scenarioId === null
+    ? []
+    : await ScenarioRelation.findAll({
+        where: {
+          scenarioId: game.scenarioId,
+          characterId: player.scenarioCharacterId,
+          relatedCharacterId: { [Op.in]: gameCharacterIds },
+        },
+      });
   const otherUserIds  = otherPlayers.map(p => p.userId).filter((id): id is number => id !== null);
   const otherUsers    = await User.findAll({ where: { id: otherUserIds } });
   const usernameById  = new Map(otherUsers.map(u => [u.id, u.username]));
